@@ -5,18 +5,6 @@ const http = require('http');
 // init env variables
 require('dotenv').config();
 
-// Creating static html page
-// +========================================+ //
-http.createServer((req, res) => {
-	res.writeHead(200, {
-		'Content-type': 'text/plain'
-	});
-		res.write('Hey');
-		res.end();
-		console.log('html server active!')
-	}).listen(4000);
-// +========================================+ //
-
 // Require the necessary discord.js classes
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 // Create a new client instance
