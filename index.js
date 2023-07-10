@@ -13,6 +13,7 @@ http.createServer((req, res) => {
 	});
 		res.write('Hey');
 		res.end();
+		console.log('html server active!')
 	}).listen(4000);
 // +========================================+ //
 
