@@ -1,9 +1,19 @@
+// init env variables
+require('dotenv').config();
+
 const fs = require('node:fs');
 const path = require('node:path');
 const http = require('http');
+const { Configuration, OpenAIApi } = require("openai");
 
-// init env variables
-require('dotenv').config();
+// creating config object to authenticate openai requests
+const configuration = new Configuration({
+	apiKey: process.env.OPENAI_API_KEY,
+  
+});
+
+const openai = new OpenAIApi(configuration);
+
 
 // Require the necessary discord.js classes
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
@@ -46,3 +56,7 @@ for (const file of eventFiles) {
 
 // Log in to Discord with your client's token
 client.login(TOKEN);
+
+module.exports = {
+	openai
+}
