@@ -17,6 +17,9 @@ module.exports = {
 				.setDescription('What is your question?')
 				.setRequired(true)),
 	async execute(interaction) {
+        const username = interaction.user.username;
+        await interaction.reply(`${username} asked me a question, so I'm thinking :thinking:...`);
+        
 		const question = await interaction.options.getString('question', true).toLowerCase();
 
         try {
@@ -27,11 +30,13 @@ module.exports = {
                 });
     
             const chatgptResponse = completion.data.choices[0].text;
-            await interaction.reply({
+            await interaction.editReply({
                 content:
                 `The question asked was - ${question}\n
-                My response is...\n
-                ${chatgptResponse}`,
+                My response is...
+                ${chatgptResponse}
+                hope that helps :blush:!
+                `,
                 ephemeral: false
             });
         } catch (error) {
