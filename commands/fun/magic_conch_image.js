@@ -20,30 +20,28 @@ module.exports = {
         const username = interaction.user.username;
 		const description = await interaction.options.getString('description', true).toLowerCase();
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
-
-        try {
-            const completion = await openai.createImage({
-                prompt: description,
-                });
-
-            const imageUrl = completion.data.data[0].url;
-
-            const embed = new EmbedBuilder()
-            .setURL(imageUrl)
-            .setThumbnail(imageUrl)
-            await interaction.editReply({ 
-                content: `Here is your picture ${username} :blush:!`,
-                embeds: [
-                embed]});
-
-        } catch (error) {
-            console.error(error);
-            await interaction.reply(
-                {
-                    content: `There was an error generating your image!`,
+        await openai.createImage({
+            prompt: description,
+            })
+            .then(async completion => {
+                const imageUrl = completion.data.data[0].url;
+                const embed = new EmbedBuilder()
+                .setTitle(`${username}'s Image of ${description}`)
+                .setURL(imageUrl)
+                .setImage(imageUrl)
+                await interaction.editReply({ 
+                    content: `Here is your picture ${username} :blush:!`,
+                    embeds: [
+                    embed]});
+            })
+            .catch(error => {
+                interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
+                `);
+                interaction.followUp({
+                    content: `What you told me to create: ${description}`,
                     ephemeral: true,
-                }
-            )
-        }
+                })
+            });
+
 	},
 };
