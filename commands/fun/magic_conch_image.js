@@ -34,10 +34,10 @@ module.exports = {
                     embeds: [
                     embed]});
             })
-            .catch(error => {
-                interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
+            .catch(async _err => {
+                await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
                 `);
-                interaction.followUp({
+                await interaction.followUp({
                     content: `What you told me to create: ${description}`,
                     ephemeral: true,
                 })
