@@ -22,31 +22,21 @@ module.exports = {
         
 		const question = await interaction.options.getString('question', true).toLowerCase();
 
-        try {
-            const completion = await openai.createCompletion({
+            await openai.createCompletion({
                 model: "text-davinci-003",
                 prompt: question,
-                max_tokens:4000
+                max_tokens: 4000
+                }).then(async completion => {
+                    const chatgptResponse = completion.data.choices[0].text;
+                    await interaction.editReply(
+                        `The question asked was - ${question}\n
+                        My response is...
+                        ${chatgptResponse}
+                        hope that helps :blush:!
+                        `);
+                }).catch(async error => {
+                    await interaction.editReply(`Sorry ${username}, I've run into an issue attempting to answer your question.`)
                 });
-    
-            const chatgptResponse = completion.data.choices[0].text;
-            await interaction.editReply({
-                content:
-                `The question asked was - ${question}\n
-                My response is...
-                ${chatgptResponse}
-                hope that helps :blush:!
-                `,
-                ephemeral: false
-            });
-        } catch (error) {
-            console.error(error);
-            await interaction.reply(
-                {
-                    content: `There was an error handling your question!`,
-                    ephemeral: true,
-                }
-            )
-        }
+
 	},
 };
