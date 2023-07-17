@@ -10,7 +10,10 @@ const userInfoCommand: Command = {
 		const guildMember = interaction?.member as GuildMember;
 		// interaction.user is the object representing the User who ran the command
 		// interaction.member is the GuildMember object, which represents the user in the specific guild
-		await interaction.reply(`This command was run by ${interaction.user.username}, who joined on ${guildMember.joinedAt}.`);
+		await interaction.reply({
+			content: `This command was run by ${interaction.user.username}, who joined on ${guildMember.joinedAt}.`,
+			ephemeral: true,
+		});
 	},
 };
 
