@@ -1,13 +1,12 @@
+import { REST, Routes } from 'discord.js';
+import * as fs from 'fs';
+import * as path from 'path';
+
 // init env variables
 require('dotenv').config();
 
-const { REST, Routes } = require('discord.js');
-const fs = require('node:fs');
-const path = require('node:path');
-
-const CLIENT_ID = process.env.CLIENT_ID;
-const GUILD_ID = process.env.GUILD_ID;
-const TOKEN = process.env.DISCORD_TOKEN;
+const CLIENT_ID = process.env.CLIENT_ID as string;
+const TOKEN = process.env.DISCORD_TOKEN as string;
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
@@ -17,7 +16,7 @@ const commandFolders = fs.readdirSync(foldersPath);
 for (const folder of commandFolders) {
 	// Grab all the command files from the commands directory you created earlier
 	const commandsPath = path.join(foldersPath, folder);
-	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
 	// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
@@ -40,9 +39,9 @@ const rest = new REST().setToken(TOKEN);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = await rest.put(
-			Routes.applicationCommands(CLIENT_ID, GUILD_ID),
+			Routes.applicationCommands(CLIENT_ID),
 			{ body: commands },
-		);
+		) as any[];
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {

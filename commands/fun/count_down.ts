@@ -1,20 +1,21 @@
-const { SlashCommandBuilder } = require('discord.js');
+import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandIntegerOption } from "discord.js";
+import { Command } from "../../shared/discord-js-types";
 
-module.exports = {
+const countDownCommand: Command = {
 	cooldown: 5,
 	data: new SlashCommandBuilder()
 		.setName('count_down')
 		.setDescription('Start a count down!')
-		.addIntegerOption(countStart =>
+		.addIntegerOption((countStart: SlashCommandIntegerOption) =>
 			countStart.setName('count')
 			.setDescription('Count down timer starting value')
 			.setRequired(true)),
-	async execute(interaction) {
+	async execute(interaction: ChatInputCommandInteraction) {
 		let count = interaction.options.getInteger('count', true);
 		await interaction.reply(`Beginning Countdown!`);
 		const message = await interaction.fetchReply();
 
-		let intervalId
+		let intervalId: NodeJS.Timer;
 		 intervalId = setInterval(async () => {
 			await interaction.editReply(`${count}!`);
 			count--
@@ -27,3 +28,5 @@ module.exports = {
 		1000)
 		}
 };
+
+export = countDownCommand;

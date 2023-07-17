@@ -1,30 +1,24 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { Configuration, OpenAIApi } = require('openai');
+import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { Command } from "../../shared/discord-js-types";
+import { OpenAi } from "../..";
 
-// creating config object to authenticate openai requests
-const configuration = new Configuration({
-	apiKey: process.env.OPENAI_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
-module.exports = {
+const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName('magic_conch_image')
 		.setDescription('Ask the all knowing magic conch shell to generate an image')
-		.addStringOption(option =>
+		.addStringOption((option: SlashCommandStringOption) =>
 			option.setName('description')
 				.setDescription('Describe the image you want generated')
 				.setRequired(true)),
-	async execute(interaction) {
+	async execute(interaction: ChatInputCommandInteraction) {
         const username = interaction.user.username;
 		const description = await interaction.options.getString('description', true).toLowerCase();
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
-        await openai.createImage({
+        await OpenAi.createImage({
             prompt: description,
             })
             .then(async completion => {
-                const imageUrl = completion.data.data[0].url;
+                const imageUrl = completion.data.data[0].url as string;
                 const embed = new EmbedBuilder()
                 .setTitle(`${username}'s Image of ${description}`)
                 .setURL(imageUrl)
@@ -45,3 +39,5 @@ module.exports = {
 
 	},
 };
+
+export = aiImageGenerateCommand;

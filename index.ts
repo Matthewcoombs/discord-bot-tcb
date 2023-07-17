@@ -1,13 +1,27 @@
+import { Client, Collection, GatewayIntentBits } from "discord.js";
+import * as fs from 'fs';
+import { Configuration, OpenAIApi } from "openai";
+import * as path from 'path';
+
 // init env variables
 require('dotenv').config();
 
-const fs = require('node:fs');
-const path = require('node:path');
+// creating config object to authenticate openai requests
+const configuration = new Configuration({
+	apiKey: process.env.OPENAI_API_KEY,
+});
+
+export const OpenAi = new OpenAIApi(configuration);
 
 
-// Require the necessary discord.js classes
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
 // Create a new client instance
+declare module "discord.js" {
+    export interface Client {
+        commands: Collection<unknown, any>
+		cooldowns: Collection<unknown, any>
+    }
+}
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 client.commands = new Collection();
 client.cooldowns = new Collection();
@@ -18,7 +32,7 @@ const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
     const commandsPath = path.join(foldersPath, folder);
-	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+	const commandFiles = fs.readdirSync(commandsPath).filter((file: string) => file.endsWith('.ts'));
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
@@ -32,10 +46,10 @@ for (const folder of commandFolders) {
 }
 
 const eventsPath = path.join(__dirname, 'events');
-const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+const eventFiles = fs.readdirSync(eventsPath).filter((file: string) => file.endsWith('.ts'));
 
 for (const file of eventFiles) {
-	const filePath = path.join(eventsPath, file);
+	const filePath = path .join(eventsPath, file);
 	const event = require(filePath);
 	if (event.once) {
 		client.once(event.name, (...args) => event.execute(...args));

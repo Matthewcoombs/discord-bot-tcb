@@ -1,17 +1,18 @@
-const { Events, Collection } = require('discord.js');
+import { Collection, CommandInteraction, Events } from "discord.js";
+import { Command } from "../shared/discord-js-types";
 
-module.exports = {
+const createInteractionCommand: Command = {
 	name: Events.InteractionCreate,
-	async execute(interaction) {
+	async execute(interaction: CommandInteraction) {
 		const { cooldowns } = interaction.client;
-		const command = interaction.client.commands.get(interaction.commandName);
+		const command = interaction.client.commands.get(interaction.commandName) as Command;
 		
-		if (!cooldowns.has(command.data.name)) {
-			cooldowns.set(command.data.name, new Collection());
+		if (!cooldowns.has(command?.data?.name)) {
+			cooldowns.set(command?.data?.name, new Collection());
 		}
 
 		const now = Date.now();
-		const timestamps = cooldowns.get(command.data.name);
+		const timestamps = cooldowns.get(command?.data?.name);
 		const defaultCooldownDuration = 3;
 		const cooldownAmount = (command.cooldown ?? defaultCooldownDuration) * 1000;
 
@@ -20,7 +21,7 @@ module.exports = {
 
 			if (now < expirationTime) {
 				const expiredTimestamp = Math.round(expirationTime / 1000);
-				return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command.data.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, ephemeral: true });
+				return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command?.data?.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, ephemeral: true });
 			}
 
 			timestamps.set(interaction.user.id, now);
@@ -36,9 +37,11 @@ module.exports = {
 
 		try {
 			await command.execute(interaction);
-		} catch (error) {
+		} catch (_err) {
 			console.error(`Error executing ${interaction.commandName}`);
-			console.error(error);
+			console.error(_err);
 		}
 	},
 };
+
+export = createInteractionCommand;
