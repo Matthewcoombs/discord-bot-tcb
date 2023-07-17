@@ -1,29 +1,28 @@
-const { SlashCommandBuilder } = require('discord.js');
-const { Configuration, OpenAIApi } = require('openai');
+import { ChatInputCommandInteraction, CommandInteraction, Options, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { OpenAi } from "../..";
+import { Command } from "../../shared/discord-js-types";
+import { config } from "../../config";
 
-// creating config object to authenticate openai requests
-const configuration = new Configuration({
-	apiKey: process.env.OPENAI_API_KEY,
-});
+const { completionModel } = config.openAi;
 
-const openai = new OpenAIApi(configuration);
 
-module.exports = {
+
+const aiSingleResponseCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName('magic_conch')
 		.setDescription('Ask the all knowing magic conch shell')
-		.addStringOption(option =>
+		.addStringOption((option: SlashCommandStringOption) =>
 			option.setName('question')
 				.setDescription('What is your question?')
 				.setRequired(true)),
-	async execute(interaction) {
+	async execute(interaction: ChatInputCommandInteraction) {
         const username = interaction.user.username;
         await interaction.reply(`${username} asked me a question, so I'm thinking :thinking:...`);
         
 		const question = await interaction.options.getString('question', true).toLowerCase();
 
-            await openai.createCompletion({
-                model: "text-davinci-003",
+            await  OpenAi.createCompletion({
+                model: completionModel,
                 prompt: question,
                 max_tokens: 4000
                 }).then(async completion => {
@@ -34,9 +33,11 @@ module.exports = {
                         ${chatgptResponse}
                         hope that helps :blush:!
                         `);
-                }).catch(async error => {
+                }).catch(async _err => {
                     await interaction.editReply(`Sorry ${username}, I've run into an issue attempting to answer your question.`)
                 });
 
 	},
 };
+
+export = aiSingleResponseCommand;
