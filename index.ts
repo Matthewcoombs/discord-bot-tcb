@@ -1,17 +1,12 @@
-import { Client, Collection, GatewayIntentBits } from "discord.js";
-import * as fs from 'fs';
-import { Configuration, OpenAIApi } from "openai";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { configureOpenAi } from './openAIClient/index';
+import * as fs from 'fs'; 
 import * as path from 'path';
 
 // init env variables
 require('dotenv').config();
 
-// creating config object to authenticate openai requests
-const configuration = new Configuration({
-	apiKey: process.env.OPENAI_API_KEY,
-});
-
-export const OpenAi = new OpenAIApi(configuration);
+export const OpenAi = configureOpenAi();
 
 
 // Create a new client instance
@@ -19,12 +14,20 @@ declare module "discord.js" {
     export interface Client {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
+		singleInstanceCommands: Collection<unknown, unknown>
     }
 }
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({ intents: [
+	GatewayIntentBits.Guilds, 
+	GatewayIntentBits.DirectMessages, 
+	GatewayIntentBits.GuildMessages,
+	GatewayIntentBits.MessageContent, 
+], partials: [Partials.Channel] });
+
 client.commands = new Collection();
 client.cooldowns = new Collection();
+client.singleInstanceCommands = new Collection();
 const TOKEN = process.env.DISCORD_TOKEN;
 
 const foldersPath = path.join(__dirname, 'commands');
