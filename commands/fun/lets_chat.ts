@@ -2,7 +2,7 @@ import { ChannelType, ChatInputCommandInteraction, MessageCollector, SlashComman
 import { Command } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import { formatChatCompletionMessages } from "../../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
 
 
 const letsChatCommand: Command = {
@@ -24,7 +24,7 @@ const letsChatCommand: Command = {
             const collected = Array.from(collector.collected.values());
 
             if (message.author.bot === false) {
-                const chatCompletionMessages = formatChatCompletionMessages(collected);
+                const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected);
                 OpenAi.createChatCompletion({
                     model: config.openAi.chatCompletionModel,
                     messages: chatCompletionMessages,
