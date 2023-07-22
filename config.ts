@@ -7,5 +7,5 @@ export const config = {
         singleInstanceCommands: [
             'lets_chat',
         ],
-    }
+    },
 }

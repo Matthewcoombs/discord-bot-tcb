@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, CommandInteraction, Options, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
 import { OpenAi } from "../..";
 import { Command } from "../../shared/discord-js-types";
 import { config } from "../../config";

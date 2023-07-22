@@ -1,11 +1,16 @@
 import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
-import { configureOpenAi } from './openAIClient/index';
+import { configureOpenAi } from './openAIClient/init';
 import * as fs from 'fs'; 
 import * as path from 'path';
+import { connectToPG } from "./database/init";
 
 // init env variables
 require('dotenv').config();
 
+// Init Postgres
+export const sql = connectToPG();
+
+// Init openAI
 export const OpenAi = configureOpenAi();
 
 
@@ -23,6 +28,8 @@ const client = new Client({ intents: [
 	GatewayIntentBits.DirectMessages, 
 	GatewayIntentBits.GuildMessages,
 	GatewayIntentBits.MessageContent, 
+	GatewayIntentBits.GuildPresences,
+	GatewayIntentBits.GuildMembers,
 ], partials: [Partials.Channel] });
 
 client.commands = new Collection();
