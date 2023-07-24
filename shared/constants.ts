@@ -9,3 +9,4 @@ Have fun and enjoy your time here :blush:!`;
 }
 
 export const GENERAL_CHANNEL = 'general';
+export const CHAT_GPT_CHAT_TIMEOUT = 180000;
