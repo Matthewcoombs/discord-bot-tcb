@@ -44,7 +44,6 @@ const letsChatCommand: Command = {
                     }).catch(async err => {
                         console.error(err);
                         collector.stop();
-                        clearTimeout(userResponseTimeout);
                         await interaction.followUp('Sorry looks like something went wrong in my head :disappointed_relieved:.');
 
                     })
@@ -57,6 +56,7 @@ const letsChatCommand: Command = {
 
             collector.on('end', collected => {
                 console.log('The chat has been terminated');
+                clearTimeout(userResponseTimeout);
                 collected.clear();
                 interaction.client.singleInstanceCommands.clear();
             })
