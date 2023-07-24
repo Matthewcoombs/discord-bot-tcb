@@ -1,4 +1,4 @@
-import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { ChannelType, Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { configureOpenAi } from './openAIClient/init';
 import * as fs from 'fs'; 
 import * as path from 'path';
@@ -19,7 +19,7 @@ declare module "discord.js" {
     export interface Client {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
-		singleInstanceCommands: Collection<unknown, unknown>
+		singleInstanceCommands: Collection<string, { channelType: ChannelType | undefined, channelName: string | null, name: string, user:string }>
     }
 }
 
