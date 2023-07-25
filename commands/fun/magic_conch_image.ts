@@ -16,19 +16,25 @@ const aiImageGenerateCommand: Command = {
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
         await OpenAi.createImage({
             prompt: description,
+            n: 4,
             })
             .then(async completion => {
-                const imageUrl = completion.data.data[0].url as string;
-                const embed = new EmbedBuilder()
-                .setTitle(`${username}'s Image of ${description}`)
-                .setURL(imageUrl)
-                .setImage(imageUrl)
+                // const imageUrl = completion.data.data[0].url as string;
+                const imageUrls = completion.data.data.map( genImage => { return genImage.url as string });
+                const embeds = imageUrls.map(imageUrl => {
+                    return  new EmbedBuilder()
+                    .setTitle(`${username}'s Image of ${description}`)
+                    // .setURL(imageUrl)
+                    .setImage(imageUrl)
+                });
+
+                embeds[0].setTitle(`${username}'s Image of ${description}`);
                 await interaction.editReply({ 
                     content: `Here is your picture ${username} :blush:!`,
-                    embeds: [
-                    embed]});
+                    embeds: embeds});
             })
-            .catch(async _err => {
+            .catch(async err => {
+                console.error(err)
                 await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
                 `);
                 await interaction.followUp({
