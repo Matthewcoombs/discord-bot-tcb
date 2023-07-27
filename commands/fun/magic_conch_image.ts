@@ -35,7 +35,8 @@ const aiImageGenerateCommand: Command = {
 	async execute(interaction: ChatInputCommandInteraction) {
         const username = interaction.user.username;
 		const description = await interaction.options.getString('description', true).toLowerCase();
-        const imageCount = await interaction.options.getInteger('image_count', false);
+        let imageCount = await interaction.options.getInteger('image_count', false);
+        imageCount = imageCount ? imageCount : 1;
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
         await OpenAi.createImage({
             prompt: description,
