@@ -24,3 +24,5 @@ extremely good at...`;
 export const GENERAL_CHANNEL = 'general';
 export const CHAT_GPT_CHAT_TIMEOUT = 180000;
 export const PROFILES_LIMIT = 4;
+// Setting 4mb image size limit
+export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4194304;
