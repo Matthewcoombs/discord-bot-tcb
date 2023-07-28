@@ -1,27 +1,43 @@
 import * as fs from 'fs'; 
-import axios from 'axios';
-import { ChatInputCommandInteraction, Collection, Message, SlashCommandBuilder } from "discord.js";
+import * as path from 'path';
+import axios, { AxiosError } from 'axios';
+import { Attachment, BaseGuild, ChatInputCommandInteraction, Collection, Message, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
+import { IMAGE_TOUCH_UP_SIZE_LIMIT } from '../../shared/constants';
+import { OpenAi } from '../..';
 
 
-// async function validateUploadedImage(response: Collection<string, Message>) {
+async function validateUploadedImage(response: Collection<string, Message>) {
+    const messageKey = response.firstKey() as string;
+    const message = response.get(messageKey);
+    const attachments = message?.attachments as Collection<string, Attachment>;
+
+    if (attachments.size > 1) {
+        throw Error('Please attach only one image.');
+    }
+
+    const attachmentKey = attachments.firstKey() as string;
+    const attachment = attachments.get(attachmentKey);
+
+    console.log(attachment?.contentType);
     
-//     response.forEach(async data => {
-//         const { attachments } = data;
+    if (attachment?.contentType !== 'image/png') {
+        throw Error(`Sorry only jpeg images are supported at this time.`);
+    }
 
-//         if (attachments.size > 1) {
-//             throw Error('Please attach only one image.');
-//         }
+    if (attachment.size > IMAGE_TOUCH_UP_SIZE_LIMIT) {
+        throw Error(`Sorry the maximum image size allowed is 4mb at this time.`);
+    }
 
-//         if (attachments.contentType !== 'image/jpeg') {
-//             throw Error('Only jpeg images are supported at this time');
-//         }
-//         const res = await axios.get(attachment.url)
-//         console.log(res.data);
-//     })
+    try {
+        const res = await axios.get(attachment.url);
+        const imageData = res.data;
+        return imageData;
+    } catch (_err) {
+        throw Error(`Sorry there was an error retrieving the image for processing.`);
+    }
 
-
-// }
+}
 
 const aiImageVariotionCommand: Command = {
     data: new SlashCommandBuilder()
@@ -37,8 +53,8 @@ const aiImageVariotionCommand: Command = {
                 { name: '4', value: 4})), 
     async execute(interaction: ChatInputCommandInteraction) {
         const username = interaction.user.username;
-        const imageCount = interaction.options.getInteger('image_count', false);
-
+        let imageCount = interaction.options.getInteger('image_count', false) as number;
+        imageCount = imageCount ? imageCount : 1;
 
         const collectorFilter = (response: Message) => {
             return response.author.username === username && !response.author.bot; 
@@ -48,10 +64,32 @@ const aiImageVariotionCommand: Command = {
             .then(() => {
                 interaction?.channel?.awaitMessages({ filter: collectorFilter, max: 1, time: 30000, errors: ['time'] })
 			.then(async collected => {
-                // await validateUploadedImage(collected);
+                const imageData = await validateUploadedImage(collected);
+                // const tempFolderPath = path.resolve()
+                // const tempImagePath = `${tempFolderPath}/${interaction.id}/imageTouchUp.jpeg`;
+                // fs.writeFile(tempImagePath, imageData, "binary", (err) => {
+                //     if (err) {
+                //         throw Error(`Sorry there was an error processing your image.`);
+                //     }
+                // });
+
+                const imageBuffer = new (Buffer as any).from(imageData);
+                imageBuffer.name = `image.png`;
+                console.log(imageBuffer);
+                console.log(imageBuffer.length);
+                await OpenAi.createImageVariation(
+                    imageBuffer,
+                    imageCount,
+                ).then(async completion => {
+                    const data = completion.data;
+                    console.log(data);
+                })
+
+
 				interaction.followUp(`${username} RESPONDED TESTNG`);
 			})
-			.catch(_ => {
+			.catch((err: AxiosError) => {
+                console.error(err.response?.data);
 				interaction.followUp('Something bad happened lol');
 			});
             })
