@@ -67,6 +67,9 @@ export default {
                 (discord_id, opt_in)
             VALUES
                 (${discordId}, ${optIn})
+            ON CONFLICT 
+                (discord_id) 
+            DO NOTHING
         `
     },
 
