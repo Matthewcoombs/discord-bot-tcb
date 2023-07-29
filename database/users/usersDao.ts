@@ -10,6 +10,14 @@ export interface DiscordUser {
     updatedAt: string;
 }
 
+export interface UserOptInData {
+    id: string;
+    discordId: string;
+    optIn: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface NewUser {
     discordId: string;
     username: string;
@@ -50,5 +58,32 @@ export default {
             WHERE
                 discord_id = ${discordId}
         `;
+    },
+
+    async insertUserOptIn(discordId: string, optIn: boolean) {
+        await sql`
+            INSERT INTO
+                user_opt_in
+                (discord_id, opt_in)
+            VALUES
+                (${discordId}, ${optIn})
+        `
+    },
+
+    async getUserOptIn(discordId: string) {
+        const userOptInData = await sql<UserOptInData[]>`
+            SELECT
+                id,
+                discord_id AS "discordId",
+                opt_in AS "optIn",
+                created_at AS "createdAt",
+                updated_at AS "updatedAt"
+            FROM
+                user_opt_in
+            WHERE
+                discord_id = ${discordId}
+        `;
+
+        return userOptInData[0];
     }
 }
