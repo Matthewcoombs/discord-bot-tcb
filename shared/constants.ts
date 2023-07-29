@@ -14,7 +14,7 @@ My creator would like to ask for your permission to track and record conversatio
 This data will be used in the following way:\n
 - Refinements in my logic to have more tailored and personal conversations.\n
 - New features such as custom profiles and the ability to select my personality and expertise.\n
-- Overall improvements to assist you quickly and in a manner that improved efficiency!\n\n
+- Overall improvements to assist you quickly and in a manner that is more efficient!\n\n
 If you would like to not have you data tracked and saved by me, you can opt out :blush:.`;
 }
 
