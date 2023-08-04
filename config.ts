@@ -1,3 +1,5 @@
+import { optInCommands, singleInstanceCommands } from "./shared/discord-js-types";
+
 export const config = {
     openAi: {
         completionModel: 'text-davinci-003',
@@ -5,7 +7,10 @@ export const config = {
     },
     commands: {
         singleInstanceCommands: [
-            'lets_chat',
+            singleInstanceCommands.LETS_CHAT,
         ],
+        optInCommands: [
+            optInCommands.CREATE_PROFILE,
+        ]
     },
 }

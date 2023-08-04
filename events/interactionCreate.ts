@@ -1,13 +1,15 @@
-import { ChannelType, Collection, CommandInteraction, DMChannel, Events, TextBasedChannel, TextChannel } from "discord.js";
-import { Command } from "../shared/discord-js-types";
+import { ChannelType, ChatInputCommandInteraction, Collection, Events, ModalSubmitInteraction, TextBasedChannel, TextChannel } from "discord.js";
+import { Command, optInCommands, singleInstanceCommands } from "../shared/discord-js-types";
 import { config } from "../config";
+import usersDao from "../database/users/usersDao";
+import modalsService from "../modals/modals.service";
 
 const createInteractionEvent: Command = {
 	name: Events.InteractionCreate,
-	async execute(interaction: CommandInteraction) {
+	async execute(interaction: ChatInputCommandInteraction | ModalSubmitInteraction ) {
 		const { cooldowns, singleInstanceCommands } = interaction.client;
-		const command = interaction.client.commands.get(interaction.commandName) as Command;
-		const { user, commandName } = interaction;
+		const { user, commandName } = interaction as ChatInputCommandInteraction;
+		const command = interaction.client.commands.get(commandName) as Command;
 		const channel = interaction.channel as TextChannel | TextBasedChannel;
 
 		const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
@@ -17,9 +19,28 @@ const createInteractionEvent: Command = {
 			cooldowns.set(command?.data?.name, new Collection());
 		}
 
+		// Checking to see if the command is an opt in command AND the user has opted in
+		// to utilize the command
+		if (config.commands.optInCommands.includes(commandName as optInCommands)) {
+			const userOptInRecord = await usersDao.getUserOptIn(user.id);
+			const { optIn } = userOptInRecord;
+			if (!optIn) {
+				return interaction.reply({
+					content: `You do not have access to this command. Only users opted into sharing data can use this command.`,
+					ephemeral: true,
+				})
+			}
+		}
+
+		// handling modal interactions
+		if (interaction.isModalSubmit() === true) {
+			const response = await modalsService.handleModalSubmit(interaction as ModalSubmitInteraction);
+			return response;
+		}
+
 		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
 		// This logic is set to be applied to directMessage and non direct message channels.
-		if (config.commands.singleInstanceCommands.includes(commandName)) {
+		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommands)) {
 			const commandMatch = isInteractionInDirectMessage ?
 				singleInstanceCommands.find((singleInstanceCommand) => 
 					singleInstanceCommand.name === commandName && singleInstanceCommand.user === userName && singleInstanceCommand.channelType === ChannelType.DM) :

@@ -19,7 +19,7 @@ const aiSingleResponseCommand: Command = {
         const username = interaction.user.username;
         await interaction.reply(`${username} asked me a question, so I'm thinking :thinking:...`);
         
-		const question = await interaction.options.getString('question', true).toLowerCase();
+		const question = interaction.options.getString('question', true).toLowerCase();
 
             await  OpenAi.createCompletion({
                 model: completionModel,
