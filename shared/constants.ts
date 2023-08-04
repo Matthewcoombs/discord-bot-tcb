@@ -18,5 +18,9 @@ This data will be used in the following way:\n
 If you would like to not have you data tracked and saved by me, you can opt out :blush:.`;
 }
 
+export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
+extremely good at...`;
+
 export const GENERAL_CHANNEL = 'general';
 export const CHAT_GPT_CHAT_TIMEOUT = 180000;
+export const PROFILES_LIMIT = 4;
