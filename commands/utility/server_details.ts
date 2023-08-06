@@ -1,10 +1,11 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
 
 const serverDetailsCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName('server_details')
-		.setDescription('Provides information about the server.'),
+		.setDescription('Provides information about the server.')
+		.setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 	async execute(interaction: ChatInputCommandInteraction) {
 		const guildName = interaction?.guild?.name;
 		const serverMemberCount = interaction?.guild?.memberCount;
