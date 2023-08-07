@@ -13,6 +13,6 @@ jobs:
             host: ${{ secrets.SSH_HOST }}
             port: 22
             privateKey:  ${{ secrets.SSH_PRIVATE_KEY }}
-            localPath: ./*
+            localPath: '.'
             remotePath: /
 
