@@ -12,10 +12,10 @@ jobs:
       - name: Deploy Bot
         uses: wlixcc/SFTP-Deploy-Action@v1.2.1
         with:
-            username: root
+            username: 'root'
             server: ${{ secrets.SSH_HOST }}
             port: 22
             ssh_private_key:  ${{ secrets.SSH_PRIVATE_KEY }}
-            local_path: ./*
-            remote_path: /
+            local_path: './*'
+            remote_path: '/'
 
