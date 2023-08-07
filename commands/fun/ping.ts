@@ -9,6 +9,6 @@ const pingCommand: Command = {
 	async execute(interaction : CommandInteraction) {
 		await interaction.reply('Pong!');
 	}
-}
+};
 
 export = pingCommand;

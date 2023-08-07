@@ -12,10 +12,10 @@ function connectToPG() {
         database: process.env.POSTGRES_DATABASE,
     });
 
-    console.log(`Connected to postgres!`)
+    console.log(`Connected to postgres!`);
     return sql;
 }
 
 export {
     connectToPG,
-}
+};

@@ -15,17 +15,16 @@ const countDownCommand: Command = {
 		await interaction.reply(`Beginning Countdown!`);
 		const message = await interaction.fetchReply();
 
-		let intervalId: NodeJS.Timer;
-		 intervalId = setInterval(async () => {
+		const intervalId = setInterval(async () => {
 			await interaction.editReply(`${count}!`);
-			count--
+			count--;
 			if (count === -1) {
 				await interaction.deleteReply(message);
 				await interaction.followUp(`Go for it!`);
 				clearInterval(intervalId);
 			}
 		},
-		1000)
+		1000);
 		}
 };
 

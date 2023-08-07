@@ -18,13 +18,13 @@ const createAProfileCommand: Command = {
             return interaction.reply({
                 content: `You have reached the maximum profile limit of ${PROFILES_LIMIT}`,
                 ephemeral: true,
-            })
+            });
         }
 
         const newProfileModal = createProfileModal.generateNewProfileModal();
 
         await interaction.showModal(newProfileModal);        
     }
-}
+};
 
 export = createAProfileCommand;

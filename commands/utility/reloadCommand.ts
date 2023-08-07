@@ -48,7 +48,7 @@ const reloadCommand: Command = {
             await interaction.reply({
                 content: `Command \`${commandName}\` was reloaded!`,
                 ephemeral: true,
-            })
+            });
         } catch (error) {
             console.error(error);
             await interaction.reply({

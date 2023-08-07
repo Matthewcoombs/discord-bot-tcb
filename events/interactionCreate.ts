@@ -1,5 +1,5 @@
 import { ChannelType, ChatInputCommandInteraction, Collection, Events, ModalSubmitInteraction, TextBasedChannel, TextChannel } from "discord.js";
-import { Command, optInCommands, singleInstanceCommands } from "../shared/discord-js-types";
+import { Command, optInCommands, singleInstanceCommandsEnum } from "../shared/discord-js-types";
 import { config } from "../config";
 import usersDao from "../database/users/usersDao";
 import modalsService from "../modals/modals.service";
@@ -28,7 +28,7 @@ const createInteractionEvent: Command = {
 				return interaction.reply({
 					content: `You do not have access to this command. Only users opted into sharing data can use this command.`,
 					ephemeral: true,
-				})
+				});
 			}
 		}
 
@@ -40,7 +40,7 @@ const createInteractionEvent: Command = {
 
 		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
 		// This logic is set to be applied to directMessage and non direct message channels.
-		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommands)) {
+		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
 			const commandMatch = isInteractionInDirectMessage ?
 				singleInstanceCommands.find((singleInstanceCommand) => 
 					singleInstanceCommand.name === commandName && singleInstanceCommand.user === userName && singleInstanceCommand.channelType === ChannelType.DM) :

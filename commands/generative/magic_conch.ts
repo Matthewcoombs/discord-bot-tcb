@@ -33,8 +33,8 @@ const aiSingleResponseCommand: Command = {
                         ${chatgptResponse}
                         hope that helps :blush:!
                         `);
-                }).catch(async _err => {
-                    await interaction.editReply(`Sorry ${username}, I've run into an issue attempting to answer your question.`)
+                }).catch(async () => {
+                    await interaction.editReply(`Sorry ${username}, I've run into an issue attempting to answer your question.`);
                 });
 
 	},

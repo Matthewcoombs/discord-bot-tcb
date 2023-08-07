@@ -20,7 +20,7 @@ export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
     // If the amount of profiles the user has is less than the PROFILES_LIMIT, the
     // profile count is valid. Otherwise it is invalid and the user cannot create
     // more profiles at this time.
-    return userProfiles.length < PROFILES_LIMIT ? true : false
+    return userProfiles.length < PROFILES_LIMIT;
 }
 
 export default {
@@ -67,7 +67,7 @@ export default {
                 (discord_id, name, profile)
             VALUES
                 (${discordId}, ${name}, ${profile})
-        `
+        `;
     },
 
     async deleteUserProfile(profileId: string) {
@@ -76,6 +76,6 @@ export default {
                 user_profiles
             WHERE
                 id = ${profileId}
-        `
+        `;
     }
-}
+};

@@ -1,5 +1,5 @@
 import { ChannelType, ChatInputCommandInteraction, CollectedInteraction, InteractionResponse, MessageCollector, SlashCommandBuilder } from "discord.js";
-import { Command, singleInstanceCommands } from "../../shared/discord-js-types";
+import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
@@ -15,7 +15,7 @@ async function sendInitResponse(interaction: ChatInputCommandInteraction) {
     let initialResponse = isDirectMessage ? 
     `Hi ${interaction?.user?.username}! This is just between me and you, so you can share all your dirty little secrets :smirk:.\n` :
     `Hi there, ${user?.username} initiated a chat :wave:! Lets Chat!\n`;
-    initialResponse = initialResponse + `To end this conversation simply tell me "**goodbye**"`
+    initialResponse = initialResponse + `To end this conversation simply tell me "**goodbye**"`;
     const initMessage = await interaction.reply({
         content: initialResponse,
         ephemeral: true,
@@ -24,15 +24,14 @@ async function sendInitResponse(interaction: ChatInputCommandInteraction) {
 }
 
 async function initUserProfile(interaction: ChatInputCommandInteraction, initMessage:InteractionResponse , userProfiles: UserProfile[]) {
-    let selectedProfile: UserProfile;
-    let { content: initialMessage } = await initMessage.fetch();
+    const { content: initialMessage } = await initMessage.fetch();
     
     const actionRowComponent = chatCompletionService.generateUserProfileDisplay(userProfiles);
     const profileSelectResponse = await initMessage.edit({
         content: `${initialMessage}\nPlease select who you would like to speak to :performing_arts::`,
         components: [actionRowComponent as any],
     });
-    const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === interaction.user.id;}
+    const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === interaction.user.id;};
     // If the user does not respond in 1 minutes (60000) the message is deleted.
     const userProfileChoice = await profileSelectResponse?.awaitMessageComponent({
         filter: collectorFilter,
@@ -40,11 +39,11 @@ async function initUserProfile(interaction: ChatInputCommandInteraction, initMes
     }).catch(() => {
         initMessage.delete();
         throw USER_RESPONSE_TIMEOUT;
-    })
+    });
 
 
     const profileId = userProfileChoice?.customId as string;
-    selectedProfile = await userProfilesDao.getUserProfileById(profileId);
+    const selectedProfile = await userProfilesDao.getUserProfileById(profileId);
     await interaction.followUp({
         content: `${selectedProfile.name} selected`,
         ephemeral: true,
@@ -59,7 +58,7 @@ async function initUserProfile(interaction: ChatInputCommandInteraction, initMes
 
 const letsChatCommand: Command = {
     data: new SlashCommandBuilder()
-        .setName(singleInstanceCommands.LETS_CHAT)
+        .setName(singleInstanceCommandsEnum.LETS_CHAT)
         .setDescription('Talk to me!'),
     async execute(interaction: ChatInputCommandInteraction) {
         try {
@@ -78,7 +77,7 @@ const letsChatCommand: Command = {
 
             const collector = interaction?.channel?.createMessageCollector() as MessageCollector;
 
-            let userResponseTimeout = setTimeout(async () => { 
+            const userResponseTimeout = setTimeout(async () => { 
                 collector.stop();
                 await interaction.followUp(`Looks like you're no longer there ${interaction.user.username}. Our chat has ended :disappointed:.`);
 
@@ -100,7 +99,7 @@ const letsChatCommand: Command = {
                         console.error(err);
                         collector.stop();
                         await interaction.followUp('Sorry looks like something went wrong in my head :disappointed_relieved:.');
-                    })
+                    });
                 }
 
                 if (message.content.toLowerCase() === 'goodbye' && message.author.username === interaction.user.username) {
@@ -113,10 +112,10 @@ const letsChatCommand: Command = {
                 clearTimeout(userResponseTimeout);
                 collected.clear();
                 interaction.client.singleInstanceCommands.clear();
-            })
+            });
         } catch (err: any) {
             const errorMessage = err?.errorData?.code === USER_TIMEOUT_CODE ? 
-                err.errorData.error : `Sorry there was an error running my chat service!`
+                err.errorData.error : `Sorry there was an error running my chat service!`;
             await interaction.followUp({
                 content: errorMessage,
                 ephemeral: true,
@@ -125,6 +124,6 @@ const letsChatCommand: Command = {
         }
         
     }
-}
+};
 
 export = letsChatCommand;

@@ -49,13 +49,13 @@ const aiImageGenerateCommand: Command = {
                     embeds: embeds});
             })
             .catch(async err => {
-                console.error(err)
+                console.error(err);
                 await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
                 `);
                 await interaction.followUp({
                     content: `What you told me to create: ${description}`,
                     ephemeral: true,
-                })
+                });
             });
 
 	},

@@ -1,4 +1,4 @@
-import { BaseInteraction, ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandBuilder } from "discord.js";
 
 export interface Command {
     name?: string;
@@ -17,7 +17,7 @@ export interface Command {
         argsTwo?: Presence): any
 }
 
-export enum singleInstanceCommands {
+export enum singleInstanceCommandsEnum {
     LETS_CHAT = 'lets_chat',
 }
 

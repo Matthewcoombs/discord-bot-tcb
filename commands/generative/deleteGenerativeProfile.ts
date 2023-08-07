@@ -26,7 +26,7 @@ const deleteGenerativeProfileCommand: Command = {
             ephemeral: true,
         });
 
-        const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === user.id;}
+        const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === user.id;};
         try {
             // If the user does not respond in 1 minutes (60000) the message is deleted.
             const userProfileToDelete = await response?.awaitMessageComponent({
@@ -38,13 +38,13 @@ const deleteGenerativeProfileCommand: Command = {
             await interaction.followUp({
                 content: `The profile has been deleted.`,
                 ephemeral: true,
-            })
+            });
             await interaction?.deleteReply();
         } catch (err) {
             console.error(err);
             await interaction.deleteReply();
         }
     }
-}
+};
 
 export = deleteGenerativeProfileCommand;

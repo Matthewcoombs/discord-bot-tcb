@@ -16,7 +16,7 @@ function generateSystemContentMessage(profile: string): ChatCompletionMessage {
     return {
         role: chatCompletionRoles.SYSTEM,
         content: profile,
-    }
+    };
 }
 
 export default {
@@ -49,4 +49,4 @@ export default {
 
         return row;
     }
-}
+};
