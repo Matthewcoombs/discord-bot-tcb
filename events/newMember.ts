@@ -19,12 +19,12 @@ const newMemberEvent: Command = {
             await generalChannel.send(`Hey Everyone! Lets welcome ${username} to the server :tada:!`);
             await member.user.send({
                 content: generateWelcomeCopy(username),
-            })
+            });
 
         }
 
 
     }
-}
+};
 
 export = newMemberEvent;

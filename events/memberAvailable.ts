@@ -42,7 +42,7 @@ const memberAvailableEvent: Command = {
                 const userDmChannel = await user?.dmChannel?.fetch();
                 const optInMessage = userDmChannel?.lastMessage;
 
-                const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === userId;}
+                const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === userId;};
                 try {
                     // If the user does not respond in 2 minutes (120000) the optIn Message is deleted, and we will
                     // ask again later.
@@ -50,7 +50,7 @@ const memberAvailableEvent: Command = {
                         filter: collectorFilter,
                         time: 120000,
                     }) as ButtonInteraction;
-                    const isOptIn = optInResponse.customId === CONFIRM_ID ? true : false;
+                    const isOptIn = optInResponse.customId === CONFIRM_ID;
                     await usersDao.insertUserOptIn(userId, isOptIn);
                     await user?.send(`Thank you for responding :slight_smile:.`);
                     await user?.send(`You are now opted ${isOptIn ? 
@@ -63,6 +63,6 @@ const memberAvailableEvent: Command = {
             }
         }
     }
-}
+};
 
 export = memberAvailableEvent;

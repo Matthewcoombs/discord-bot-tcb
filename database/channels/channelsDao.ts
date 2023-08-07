@@ -17,7 +17,7 @@ export default {
             ${
                 channelId ? sql`WHERE channel_id = ${channelId}` : sql``
             }
-        `
+        `;
     
             return channels;
     },
@@ -31,8 +31,8 @@ export default {
                 discord_channels
             WHERE
                 name ILIKE ${channelName}
-        `
+        `;
     
         return channels[0];
     }
-}
+};

@@ -11,4 +11,4 @@ function configureOpenAi() {
 
 export {
     configureOpenAi
-}
+};

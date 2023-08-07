@@ -70,7 +70,7 @@ export default {
             ON CONFLICT 
                 (discord_id) 
             DO NOTHING
-        `
+        `;
     },
 
     async getUserOptIn(discordId: string) {
@@ -89,4 +89,4 @@ export default {
 
         return userOptInData[0];
     }
-}
+};

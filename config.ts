@@ -13,4 +13,4 @@ export const config = {
             optInCommands.CREATE_PROFILE,
         ]
     },
-}
+};

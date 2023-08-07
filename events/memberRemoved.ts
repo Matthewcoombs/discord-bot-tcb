@@ -10,6 +10,6 @@ const newMemberEvent: Command = {
         await usersDao.deleteUser(discordId);
 
     }
-}
+};
 
 export = newMemberEvent;

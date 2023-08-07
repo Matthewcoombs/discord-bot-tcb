@@ -1,6 +1,5 @@
-import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, GuildMember, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
-import { GuildMember } from "discord.js";
 
 const userInfoCommand: Command = {
 	data: new SlashCommandBuilder()
