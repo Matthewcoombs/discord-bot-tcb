@@ -8,6 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - run: echo "$PWD"
       - name: Deploy Bot
         uses: wlixcc/SFTP-Deploy-Action@v1.2.1
         with:
@@ -17,3 +18,4 @@ jobs:
             ssh_private_key:  ${{ secrets.SSH_PRIVATE_KEY }}
             local_path: ./*
             remote_path: /
+
