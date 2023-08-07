@@ -1,8 +1,6 @@
 name: Update Discord Bot
 run-name: ${{ github.actor }} is updating the production discord bot
-on:
-    push:
-        branches: [ci-cd-test-branch]
+on: [push]
 jobs:
   deploy:
     runs-on: ubuntu-latest
