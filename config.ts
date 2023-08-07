@@ -1,4 +1,4 @@
-import { optInCommands, singleInstanceCommands } from "./shared/discord-js-types";
+import { optInCommands, singleInstanceCommandsEnum } from "./shared/discord-js-types";
 
 export const config = {
     openAi: {
@@ -7,7 +7,7 @@ export const config = {
     },
     commands: {
         singleInstanceCommands: [
-            singleInstanceCommands.LETS_CHAT,
+            singleInstanceCommandsEnum.LETS_CHAT,
         ],
         optInCommands: [
             optInCommands.CREATE_PROFILE,
