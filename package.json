@@ -2,13 +2,16 @@
   "name": "discord-bot",
   "version": "1.0.0",
   "description": "discord bot",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "husky install",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
-    "lint": "eslint . --ext .ts --fix"
+    "lint": "eslint . --ext .ts --fix",
+    "start": "tsc && node dist/index.js",
+    "compile": "tsc && node dist/index.js",
+    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run compile\""
   },
   "author": "matthew c",
   "license": "ISC",
@@ -23,6 +26,7 @@
     "@typescript-eslint/parser": "^6.2.1",
     "eslint": "^8.46.0",
     "husky": "^8.0.3",
+    "nodemon": "^3.0.1",
     "typescript": "^5.1.6"
   }
 }
