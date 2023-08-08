@@ -9,5 +9,10 @@
 
     /* Type Checking */
     "strict": true,                                      /* Enable all strict type-checking options. */
+
+    "outDir": "dist",
+    "rootDir": ".",
+    
+    "skipLibCheck": true
   }
 }

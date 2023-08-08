@@ -25,7 +25,7 @@ const reloadCommand: Command = {
         let commandFilePath;
         const cachedFilePaths = Object.keys(require.cache);
         for (const filePath of cachedFilePaths) {
-            if (filePath.includes(`${commandName}.ts`)) {
+            if (filePath.includes(`${commandName}.js`)) {
                 commandFilePath = filePath;
                 break;
             }
