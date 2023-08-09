@@ -1,5 +1,8 @@
-name: Deploy Production Bot
-on: [push]
+name: Deploy Discord Bot
+run-name: ${{ github.actor }} is updating the production discord bot
+on:
+    push:
+        branches: [master]
 env:
     REPO_NAME: ${{ github.event.repository.name }}
 jobs:
