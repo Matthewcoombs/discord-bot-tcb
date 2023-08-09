@@ -15,4 +15,25 @@ jobs:
                 port: 22
                 privateKey:  ${{ secrets.SSH_PRIVATE_KEY }}
                 localPath: '.'
-                remotePath: /root/testCopy
+                remotePath: /root/${{ env.REPO_NAME }}
+
+    add-bot-token:
+        needs: [ deploy-via-sftp ]
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+        env:
+            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+        steps:
+            - id: add-bot-token
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    cd ~
+                    touch token.0
+                    echo ${{ env.BOT_TOKEN }} > token.0
+                    echo $?
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+
