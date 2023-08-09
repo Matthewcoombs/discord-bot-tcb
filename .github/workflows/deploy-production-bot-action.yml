@@ -18,29 +18,9 @@ jobs:
                 localPath: '.'
                 remotePath: /root/${{ env.REPO_NAME }}
 
-    # Adding the discord bot token into the remote server
-    add-bot-token:
-        needs: [ deploy-via-sftp ]
-        runs-on: ubuntu-latest
-        timeout-minutes: 2
-        env:
-            BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-        steps:
-            - id: add-bot-token
-              uses: fifsky/ssh-action@master
-              with:
-                command: |
-                    cd ~
-                    touch token.0
-                    echo ${{ env.BOT_TOKEN }} > token.0
-                    echo $?
-                host: ${{ secrets.SSH_HOST }}
-                user: root
-                key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     # Creating systemctl service to compile the project
     build-step:
-        needs: [ deploy-via-sftp, add-bot-token]
+        needs: [ deploy-via-sftp]
         runs-on: ubuntu-latest
         timeout-minutes: 2
         steps:
@@ -59,7 +39,7 @@ jobs:
 
     # Creating systemctl service to start the bot
     create-systemctl-service:
-        needs: [add-bot-token, deploy-via-sftp, build-step]
+        needs: [deploy-via-sftp, build-step]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-service
@@ -71,7 +51,14 @@ jobs:
                     After=multi.user.target
                     [Service]
                     Type=simple
-                    Environment=DISCORD_TOKEN=${{ secrets.BOT_TOKEN }}
+                    Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+                    Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
+                    Environment=GUILD_ID=${{ secrets.GUILD_ID }}
+                    Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+                    Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
+                    Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
+                    Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+                    Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
                     WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
                     ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node index.js
                     User=root
