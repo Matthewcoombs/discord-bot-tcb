@@ -11,7 +11,7 @@ jobs:
               uses: Creepios/sftp-action@v1.0.3
               with:
                 username: root
-                host: ß${{ secrets.SSH_HOST }}
+                host: ${{ secrets.SSH_HOST }}
                 port: 22
                 privateKey:  ${{ secrets.SSH_PRIVATE_KEY }}
                 localPath: '.'
