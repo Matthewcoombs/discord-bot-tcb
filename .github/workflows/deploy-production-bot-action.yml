@@ -58,32 +58,33 @@ jobs:
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     # Creating systemctl service to start the bot
-    # create-systemctl-service:
-    #     needs: [add-bot-token, deploy-via-sftp]
-    #     runs-on: ubuntu-latest
-    #     steps:
-    #         - id: create-systemctl-service
-    #           uses: fifsky/ssh-action@master
-    #           with:
-    #             command: |
-    #                 echo "[Unit]
-    #                 Description=Production Discord Bot
-    #                 After=multi.user.target
-    #                 [Service]
-    #                 Type=simple
-    #                 WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
-    #                 ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node index.js
-    #                 User=root
-    #                 Group=root
-    #                 Restart=on-failure
-    #                 RestartSec=30
-    #                 [Install]
-    #                 WantedBy=multi-user.target" >> /etc/systemd/system/start-bot.service
-    #                 chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
-    #                 sudo systemctl enable start-bot.service
-    #                 sudo systemctl daemon-reload
-    #                 sudo systemctl start start-bot.service
-    #             host: ${{ secrets.SSH_HOST }}
-    #             user: root
-    #             key: ${{ secrets.SSH_PRIVATE_KEY }}
+    create-systemctl-service:
+        needs: [add-bot-token, deploy-via-sftp, build-step]
+        runs-on: ubuntu-latest
+        steps:
+            - id: create-systemctl-service
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    echo "[Unit]
+                    Description=Production Discord Bot
+                    After=multi.user.target
+                    [Service]
+                    Type=simple
+                    Environment=DISCORD_TOKEN=${{ secrets.BOT_TOKEN }}
+                    WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node index.js
+                    User=root
+                    Group=root
+                    Restart=on-failure
+                    RestartSec=30
+                    [Install]
+                    WantedBy=multi-user.target" >> /etc/systemd/system/start-bot.service
+                    chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
+                    sudo systemctl enable start-bot.service
+                    sudo systemctl daemon-reload
+                    sudo systemctl start start-bot.service
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
 
