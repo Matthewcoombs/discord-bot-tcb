@@ -49,7 +49,7 @@ jobs:
               with:
                 command: |
                     cd /root/${{ env.REPO_NAME }}
-                    tsc
+                    yarn build
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
