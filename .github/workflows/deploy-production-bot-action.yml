@@ -73,7 +73,7 @@ jobs:
                     chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
                     sudo systemctl enable start-bot.service
                     sudo systemctl daemon-reload
-                    sudo systemctl start start-bot.service
+                    sudo systemctl restart start-bot.service
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
