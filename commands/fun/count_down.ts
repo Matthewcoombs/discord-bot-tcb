@@ -20,7 +20,7 @@ const countDownCommand: Command = {
 			count--;
 			if (count === -1) {
 				await interaction.deleteReply(message);
-				await interaction.followUp(`Go for it!`);
+				await interaction.followUp(`Ta da :confetti_ball:!`);
 				clearInterval(intervalId);
 			}
 		},
