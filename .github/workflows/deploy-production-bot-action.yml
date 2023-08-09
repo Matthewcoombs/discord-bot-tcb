@@ -66,7 +66,7 @@ jobs:
                     Restart=on-failure
                     RestartSec=30
                     [Install]
-                    WantedBy=multi-user.target" >> /etc/systemd/system/start-bot.service
+                    WantedBy=multi-user.target" > /etc/systemd/system/start-bot.service
                     chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
                     sudo systemctl enable start-bot.service
                     sudo systemctl daemon-reload
