@@ -8,7 +8,7 @@ const andTheySayCommand: Command = {
 		.setName('and_they_say')
 		.setDescription('Replies with Chivalry is Dead!'),
 	async execute(interaction: ChatInputCommandInteraction) {
-		await interaction.reply('Chivalry is dead!');
+		await interaction.reply('Chivalry is dead :zany_face:!');
 	},
 };
 
