@@ -1,0 +1,18 @@
+name: Deploy Production Bot
+on: [push]
+env:
+    REPO_NAME: ${{ github.event.repository.name }}
+jobs:
+    deploy-via-sftp:
+        runs-on: ubuntu-late
+        steps:
+            - uses: actions/checkout@v3
+            - id: SFTPDeploy
+              uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+              with:
+                username: root
+                server: ${{ secrets.SSH_HOST }}
+                port: 22
+                ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+                local_path: ./*
+                remote_path: /testCopy
