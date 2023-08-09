@@ -10,7 +10,7 @@
     "postpack": "pinst --enable",
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
-    "compile": "tsc && node dist/index.js",
+    "build": "yarn && tsc",
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run compile\""
   },
   "author": "matthew c",

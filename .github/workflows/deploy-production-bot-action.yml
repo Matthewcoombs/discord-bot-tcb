@@ -1,0 +1,80 @@
+name: Deploy Discord Bot
+run-name: ${{ github.actor }} is updating the production discord bot
+on:
+    push:
+        branches: [master]
+env:
+    REPO_NAME: ${{ github.event.repository.name }}
+jobs:
+    # Copying the copy project via sftp into the remote server
+    deploy-via-sftp:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - id: SFTPDeploy
+              uses: Creepios/sftp-action@v1.0.3
+              with:
+                username: root
+                host: ${{ secrets.SSH_HOST }}
+                port: 22
+                privateKey:  ${{ secrets.SSH_PRIVATE_KEY }}
+                localPath: '.'
+                remotePath: /root/${{ env.REPO_NAME }}
+
+    # Creating systemctl service to compile the project
+    build-step:
+        needs: [ deploy-via-sftp]
+        runs-on: ubuntu-latest
+        timeout-minutes: 2
+        steps:
+            - id: build-step
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    export NVM_DIR=~/.nvm
+                    source ~/.nvm/nvm.sh
+                    cd /root/${{ env.REPO_NAME }}
+                    yarn build
+                    echo $?
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # Creating systemctl service to start the bot
+    create-systemctl-service:
+        needs: [deploy-via-sftp, build-step]
+        runs-on: ubuntu-latest
+        steps:
+            - id: create-systemctl-service
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    echo "[Unit]
+                    Description=Production Discord Bot
+                    After=multi.user.target
+                    [Service]
+                    Type=simple
+                    Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+                    Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
+                    Environment=GUILD_ID=${{ secrets.GUILD_ID }}
+                    Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+                    Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
+                    Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
+                    Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+                    Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
+                    WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node index.js
+                    User=root
+                    Group=root
+                    Restart=on-failure
+                    RestartSec=30
+                    [Install]
+                    WantedBy=multi-user.target" > /etc/systemd/system/start-bot.service
+                    chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
+                    sudo systemctl enable start-bot.service
+                    sudo systemctl daemon-reload
+                    sudo systemctl start start-bot.service
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+
