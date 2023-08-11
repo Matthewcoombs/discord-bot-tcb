@@ -1,20 +1,7 @@
-import { ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
-import { ImagesResponse } from "openai";
-
-function generateImageEmbeds(generatedImages: ImagesResponse, username: string, description: string) {
-    const embeds = generatedImages.data.map(image => {
-        const imageUrl = image?.url as string;
-        return new EmbedBuilder()
-            .setURL(imageUrl)
-            .setImage(imageUrl);
-    });
-
-    embeds[0].setTitle(`${username}'s image(s) of ${description}`);
-
-    return embeds;
-}
+import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
 
 const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -43,7 +30,7 @@ const aiImageGenerateCommand: Command = {
             n: imageCount,
             })
             .then(async completion => {
-                const embeds = generateImageEmbeds(completion.data, username, description);
+                const embeds = chatCompletionService.generateImageEmbeds(completion.data, username, description);
                 await interaction.editReply({ 
                     content: `Here is your picture ${username} :blush:!`,
                     embeds: embeds});

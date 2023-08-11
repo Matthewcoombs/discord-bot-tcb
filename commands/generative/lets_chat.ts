@@ -6,7 +6,7 @@ import chatCompletionService from "../../openAIClient/chatCompletion/chatComplet
 import { CHAT_GPT_CHAT_TIMEOUT } from "../../shared/constants";
 import usersDao from "../../database/users/usersDao";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
-import { USER_RESPONSE_TIMEOUT, USER_TIMEOUT_CODE } from "../../shared/errors";
+import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
 
 async function sendInitResponse(interaction: ChatInputCommandInteraction) {
     const { user, channel } = interaction;
@@ -35,10 +35,12 @@ async function initUserProfile(interaction: ChatInputCommandInteraction, initMes
     // If the user does not respond in 1 minutes (60000) the message is deleted.
     const userProfileChoice = await profileSelectResponse?.awaitMessageComponent({
         filter: collectorFilter,
-        time: 6000,
+        time: 60000,
     }).catch(() => {
         initMessage.delete();
-        throw USER_RESPONSE_TIMEOUT;
+        throw new InteractionTimeOutError({
+            error:  `Interaction timeout reached`,
+        });
     });
 
 

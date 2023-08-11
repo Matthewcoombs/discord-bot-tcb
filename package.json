@@ -11,11 +11,13 @@
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
     "build": "yarn && tsc",
-    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run start\""
+    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run start\"",
+    "update-commands": "node ./dist/deploy-command.js"
   },
   "author": "matthew c",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.4.0",
     "discord.js": "^14.11.0",
     "dotenv": "^16.3.1",
     "openai": "^3.3.0",
