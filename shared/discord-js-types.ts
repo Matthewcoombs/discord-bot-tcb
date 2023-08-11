@@ -25,15 +25,3 @@ export enum optInCommands {
     CREATE_PROFILE = 'create_profile',
     DELETE_PROFILE = 'delete_profile'
 }
-
-type baseInteractionError = {
-    error: string;
-    code: string;
-}
-
-export class InteractionError {
-    errorData: baseInteractionError;
-    constructor(errorData: baseInteractionError) {
-        this.errorData = errorData;
-    }
-}

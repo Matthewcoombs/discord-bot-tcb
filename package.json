@@ -11,7 +11,8 @@
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
     "build": "yarn && tsc",
-    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run start\""
+    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run start\"",
+    "update-commands": "node ./dist/deploy-command.js"
   },
   "author": "matthew c",
   "license": "ISC",
