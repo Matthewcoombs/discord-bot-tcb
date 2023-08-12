@@ -35,11 +35,42 @@ jobs:
                     source ~/.nvm/nvm.sh
                     cd /root/${{ env.REPO_NAME }}
                     yarn build
-                    node dist/deploy-command.js
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # Creating systemctl service to update the bot commands
+    create-systemctl-command-service:
+        needs: [deploy-via-sftp, build-step]
+        runs-on: ubuntu-latest
+        steps:
+            - id: create-systemctl-service
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    echo "[Unit]
+                    Description=Production Discord Bot
+                    After=multi.user.target
+                    [Service]
+                    Type=oneshot
+                    Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+                    Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
+                    WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node deploy-command.js
+                    User=root
+                    Group=root
+                    [Install]
+                    WantedBy=multi-user.target" > /etc/systemd/system/update-bot-commands.service
+                    chmod +x /root/${{ env.REPO_NAME }}/dist/deploy-command.js
+                    sudo systemctl enable update-bot-commands.service
+                    sudo systemctl daemon-reload
+                    sudo systemctl restart update-bot-commands.service
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    
 
     # Creating systemctl service to start the bot
     create-systemctl-service:
