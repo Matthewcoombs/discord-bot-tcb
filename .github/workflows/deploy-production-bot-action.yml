@@ -94,8 +94,8 @@ jobs:
                     Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
                     Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
                     Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
-                    WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
-                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node index.js
+                    WorkingDirectory=/root
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node ${{ env.REPO_NAME }}/dist/index.js
                     User=root
                     Group=root
                     Restart=on-failure
