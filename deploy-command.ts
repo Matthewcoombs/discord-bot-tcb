@@ -1,6 +1,7 @@
 import { REST, Routes } from 'discord.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as process from 'process';
 
 // init env variables
 require('dotenv').config();
@@ -44,6 +45,8 @@ const rest = new REST().setToken(TOKEN);
 		) as any[];
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		process.exit();
+
 	} catch (error) {
 		// And of course, make sure you catch and log any errors!
 		console.error(error);

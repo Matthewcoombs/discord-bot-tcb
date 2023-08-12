@@ -35,6 +35,7 @@ jobs:
                     source ~/.nvm/nvm.sh
                     cd /root/${{ env.REPO_NAME }}
                     yarn build
+                    node dist/deploy-command.js
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
