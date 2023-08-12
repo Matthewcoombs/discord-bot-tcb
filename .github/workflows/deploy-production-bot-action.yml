@@ -45,7 +45,7 @@ jobs:
         needs: [deploy-via-sftp, build-step]
         runs-on: ubuntu-latest
         steps:
-            - id: create-systemctl-service
+            - id: create-systemctl-command-service
               uses: fifsky/ssh-action@master
               with:
                 command: |
@@ -74,7 +74,7 @@ jobs:
 
     # Creating systemctl service to start the bot
     create-systemctl-service:
-        needs: [deploy-via-sftp, build-step]
+        needs: [deploy-via-sftp, build-step, create-systemctl-command-service]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-service
