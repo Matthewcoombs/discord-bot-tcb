@@ -34,7 +34,7 @@ jobs:
                     export NVM_DIR=~/.nvm
                     source ~/.nvm/nvm.sh
                     cd /root/${{ env.REPO_NAME }}
-                    yarn build
+                    yarn build-prod
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
