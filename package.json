@@ -10,8 +10,8 @@
     "postpack": "pinst --enable",
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
-    "build": "yarn && tsc --build --force",
-    "build-prod": "yarn install --prod && tsc --build --force",
+    "build": "yarn && tsc --build",
+    "build-prod": "yarn install --prod && tsc --build",
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"npm run start\"",
     "update-commands": "node ./dist/deploy-command.js"
   },
