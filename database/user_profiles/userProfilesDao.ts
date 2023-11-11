@@ -8,12 +8,14 @@ export interface UserProfile {
     profile: string;
     createdAt: string;
     updatedAt: string;
+    assistantId: string;
 }
 
 export interface NewProfile {
     name: string;
     profile: string;
     discordId: string;
+    assistantId: string;
 }
 
 export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
@@ -32,7 +34,8 @@ export default {
                 name,
                 profile,
                 created_at AS "createdAt",
-                updated_at AS "updatedAt"
+                updated_at AS "updatedAt",
+                assistant_id AS "assistantId"
             FROM
                 user_profiles
             WHERE
@@ -50,7 +53,8 @@ export default {
                 name,
                 profile,
                 created_at AS "createdAt",
-                updated_at AS "updatedAt"
+                updated_at AS "updatedAt",
+                assistant_id AS "assistantId"
             FROM
                 user_profiles
             WHERE
@@ -60,13 +64,13 @@ export default {
     },
 
     async insertUserProfile(newProfile: NewProfile) {
-        const { name, profile, discordId } = newProfile;
+        const { name, profile, discordId, assistantId} = newProfile;
         await sql`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile)
+                (discord_id, name, profile, assistant_id)
             VALUES
-                (${discordId}, ${name}, ${profile})
+                (${discordId}, ${name}, ${profile}, ${assistantId})
         `;
     },
 
