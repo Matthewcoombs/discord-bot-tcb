@@ -25,12 +25,12 @@ const aiImageGenerateCommand: Command = {
         let imageCount = await interaction.options.getInteger('image_count', false);
         imageCount = imageCount ? imageCount : 1;
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
-        await OpenAi.createImage({
+        await OpenAi.images.generate({
             prompt: description,
             n: imageCount,
             })
             .then(async completion => {
-                const embeds = chatCompletionService.generateImageEmbeds(completion.data, username, description);
+                const embeds = chatCompletionService.generateImageEmbeds(completion, username, description);
                 await interaction.editReply({ 
                     content: `Here is your picture ${username} :blush:!`,
                     embeds: embeds});

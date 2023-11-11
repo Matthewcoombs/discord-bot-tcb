@@ -91,11 +91,11 @@ const letsChatCommand: Command = {
                 if (message.author.bot === false && message.author.username === interaction.user.username) {
                     const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile?.profile);
 
-                    OpenAi.createChatCompletion({
+                    OpenAi.chat.completions.create({
                         model: config.openAi.chatCompletionModel,
                         messages: chatCompletionMessages,
                     }).then(async chatCompletion => {
-                        const response = chatCompletion.data.choices[0].message;
+                        const response = chatCompletion.choices[0].message;
                         await interaction.followUp(response?.content as string);
                     }).catch(async err => {
                         console.error(err);

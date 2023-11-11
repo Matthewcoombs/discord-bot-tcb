@@ -21,12 +21,12 @@ const aiSingleResponseCommand: Command = {
         
 		const question = interaction.options.getString('question', true).toLowerCase();
 
-            await  OpenAi.createCompletion({
+            await  OpenAi.completions.create({
                 model: completionModel,
                 prompt: question,
                 max_tokens: 4000
                 }).then(async completion => {
-                    const chatgptResponse = completion.data.choices[0].text;
+                    const chatgptResponse = completion.choices[0].text;
                     await interaction.editReply(
                         `The question asked was - ${question}\n
                         My response is...

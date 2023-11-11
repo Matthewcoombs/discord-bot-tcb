@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message } from "discord.js";
 import { UserProfile } from "../../database/user_profiles/userProfilesDao";
-import { ImagesResponse } from "openai";
+import { ImagesResponse } from "openai/resources";
 
 export interface ChatCompletionMessage {
     role: chatCompletionRoles;

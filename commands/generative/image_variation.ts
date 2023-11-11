@@ -98,12 +98,11 @@ const aiImageVariotionCommand: Command = {
             const imageBufferData = await getImageBufferData(imageAttachment);
             const tempImagePath = createTempImageFile(imageBufferData, tempImageName);
     
-            await OpenAi.createImageVariation(
-                fs.createReadStream(tempImagePath) as any,
-                imageCount,
-            ).then(async completion => {
-                const { data } = completion ;
-                const embeds = chatCompletionService.generateImageEmbeds(data, username);
+            await OpenAi.images.createVariation({
+                image: fs.createReadStream(tempImagePath) as any,
+                n: imageCount,
+            }).then(async completion => {
+                const embeds = chatCompletionService.generateImageEmbeds(completion, username);
                 deleteAllTempImages();
                 await interaction.editReply({
                     content: `Here are your image variations ${username} :blush:`,
