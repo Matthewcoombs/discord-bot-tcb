@@ -54,6 +54,7 @@ jobs:
                     After=multi.user.target
                     [Service]
                     Type=oneshot
+                    Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
                     WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
