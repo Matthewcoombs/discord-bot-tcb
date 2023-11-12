@@ -2,6 +2,7 @@ import { ButtonInteraction, CollectedInteraction, CommandInteraction, SlashComma
 import { Command, optInCommands } from "../../shared/discord-js-types";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
+import { OpenAi } from "../..";
 
 
 const deleteGenerativeProfileCommand: Command = {
@@ -34,6 +35,9 @@ const deleteGenerativeProfileCommand: Command = {
                 time: 60000,
             }) as ButtonInteraction;
             const profileId = userProfileToDelete.customId;
+            const selectedProfile = userProfiles.find(profile => profile.id === parseInt(profileId));
+            
+            await OpenAi.beta.assistants.del(selectedProfile?.assistantId as string);
             await userProfilesDao.deleteUserProfile(profileId);
             await interaction.followUp({
                 content: `The profile has been deleted.`,
@@ -43,6 +47,10 @@ const deleteGenerativeProfileCommand: Command = {
         } catch (err) {
             console.error(err);
             await interaction.deleteReply();
+            await interaction.followUp({
+                content: `There was an error deleting your selected profile.`,
+                ephemeral: true,
+            });
         }
     }
 };

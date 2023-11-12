@@ -2,7 +2,7 @@ import { sql } from "../..";
 import { PROFILES_LIMIT } from "../../shared/constants";
 
 export interface UserProfile {
-    id: string;
+    id: string | number;
     discordId: string;
     name: string;
     profile: string;
