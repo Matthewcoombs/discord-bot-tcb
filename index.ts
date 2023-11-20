@@ -20,6 +20,7 @@ declare module "discord.js" {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
 		singleInstanceCommands: Collection<string, { channelType: ChannelType | undefined, channelName: string | null, name: string, user:string }>
+		singleInstanceMessageCollector: Collection<string, {userId: string}>
     }
 }
 
@@ -35,6 +36,7 @@ const client = new Client({ intents: [
 client.commands = new Collection();
 client.cooldowns = new Collection();
 client.singleInstanceCommands = new Collection();
+client.singleInstanceMessageCollector = new Collection();
 const TOKEN = process.env.DISCORD_TOKEN;
 
 const foldersPath = path.join(__dirname, 'commands');
