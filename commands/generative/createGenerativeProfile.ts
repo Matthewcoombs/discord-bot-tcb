@@ -21,7 +21,7 @@ const createAProfileCommand: Command = {
             });
         }
 
-        const newProfileModal = createProfileModal.generateNewProfileModal();
+        const newProfileModal = createProfileModal.generateProfileModal();
 
         await interaction.showModal(newProfileModal);        
     }

@@ -11,7 +11,7 @@ export interface UserProfile {
     assistantId: string;
 }
 
-export interface NewProfile {
+export interface Profile {
     name: string;
     profile: string;
     discordId: string;
@@ -63,7 +63,7 @@ export default {
         return userProfiles[0];
     },
 
-    async insertUserProfile(newProfile: NewProfile) {
+    async insertUserProfile(newProfile: Profile) {
         const { name, profile, discordId, assistantId} = newProfile;
         await sql`
             INSERT INTO

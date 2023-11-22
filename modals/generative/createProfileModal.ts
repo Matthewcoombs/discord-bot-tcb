@@ -1,16 +1,18 @@
 import { ActionRowBuilder, ModalActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
 import { PROFILE_PLACEHOLDER_TEXT } from "../../shared/constants";
-import userProfilesDao from "../../database/user_profiles/userProfilesDao";
+import userProfilesDao, {Profile} from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { config } from "../../config";
+
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
 export const PROFILE_NAME_ID = 'profileName';
 export const PROFILE_ID = 'profile';
+export const IS_DEFAULT_ID = 'default';
 
 
 export default {
-    generateNewProfileModal() {
+    generateProfileModal(profileData?: Profile) {
         const modal = new ModalBuilder()
             .setCustomId(NEW_PROFILE_MODAL_ID)
             .setTitle('New Profile');
@@ -27,6 +29,13 @@ export default {
             .setPlaceholder(PROFILE_PLACEHOLDER_TEXT)
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true);
+        
+
+
+        if (profileData) {
+            profileNameInput.setValue(profileData.name);
+            profileInput.setValue(profileData.profile);
+        }
 
         const firstActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(profileNameInput);
         const secondActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(profileInput);
