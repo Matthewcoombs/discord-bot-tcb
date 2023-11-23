@@ -2,7 +2,7 @@ import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command, optInCommands } from "../../shared/discord-js-types";
 import { PROFILES_LIMIT } from "../../shared/constants";
 import userProfilesDao, { validateUserProfileCount } from "../../database/user_profiles/userProfilesDao";
-import createProfileModal from "../../modals/generative/createProfileModal";
+import profileModal from "../../modals/generative/profileModal";
 
 
 
@@ -21,7 +21,7 @@ const createAProfileCommand: Command = {
             });
         }
 
-        const newProfileModal = createProfileModal.generateProfileModal();
+        const newProfileModal = profileModal.generateProfileModal();
 
         await interaction.showModal(newProfileModal);        
     }

@@ -1,6 +1,6 @@
 import { ButtonInteraction, CollectedInteraction, CommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command, optInCommands } from "../../shared/discord-js-types";
-import userProfilesDao from "../../database/user_profiles/userProfilesDao";
+import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
 
 
@@ -34,7 +34,8 @@ const selectGenerativeProfileCommand: Command = {
                 time: 60000,
             }) as ButtonInteraction;
             const profileId = userProfileToDelete.customId;
-            const selectedProfile = userProfiles.find(profile => profile.id === parseInt(profileId));
+            const selectedProfile = userProfiles.find(profile => profile.id === parseInt(profileId)) as UserProfile;
+            await userProfilesDao.updateProfileSelection(selectedProfile);
 
             await interaction.followUp({
                 content: `Profile ${selectedProfile?.name} selected.`,

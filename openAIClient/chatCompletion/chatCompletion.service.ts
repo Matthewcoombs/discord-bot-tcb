@@ -42,7 +42,7 @@ export default {
             return new ButtonBuilder()
                 .setCustomId(profile.id.toString())
                 .setLabel(profile.name)
-                .setStyle(ButtonStyle.Primary);
+                .setStyle(profile.selected ? ButtonStyle.Success : ButtonStyle.Primary);
         });
 
         const row = new ActionRowBuilder()
