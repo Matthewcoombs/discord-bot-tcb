@@ -1,19 +1,22 @@
 import { ActionRowBuilder, ModalActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
 import { PROFILE_PLACEHOLDER_TEXT } from "../../shared/constants";
-import userProfilesDao from "../../database/user_profiles/userProfilesDao";
+import userProfilesDao, {UserProfile} from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { config } from "../../config";
 
+
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
+export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
 export const PROFILE_NAME_ID = 'profileName';
 export const PROFILE_ID = 'profile';
+export const IS_DEFAULT_ID = 'default';
 
 
 export default {
-    generateNewProfileModal() {
+    generateProfileModal(profileData?: UserProfile) {
         const modal = new ModalBuilder()
-            .setCustomId(NEW_PROFILE_MODAL_ID)
-            .setTitle('New Profile');
+            .setCustomId(profileData ? UPDATE_PROFILE_MODAL_ID : NEW_PROFILE_MODAL_ID)
+            .setTitle(profileData ? `Update Profile: ${profileData.name}` : 'New Profile');
         
         const profileNameInput = new TextInputBuilder()
             .setCustomId(PROFILE_NAME_ID)
@@ -27,6 +30,13 @@ export default {
             .setPlaceholder(PROFILE_PLACEHOLDER_TEXT)
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true);
+        
+
+
+        if (profileData) {
+            profileNameInput.setValue(profileData.name);
+            profileInput.setValue(profileData.profile);
+        }
 
         const firstActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(profileNameInput);
         const secondActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(profileInput);
@@ -51,5 +61,27 @@ export default {
 
         await userProfilesDao.insertUserProfile({ name, profile, discordId: user.id, assistantId });
         return modalInteraction.reply({ content: `Your new profile **${name}** was added successfully!` });
+    },
+
+    async handleUpdateModalInput(modalInteraction: ModalSubmitInteraction) {
+        const { user } = modalInteraction ;
+        const updatedName = modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
+        const updatedProfile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
+
+    
+        const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
+        selectedProfile.name = updatedName;
+        selectedProfile.profile = updatedProfile;
+
+        await OpenAi.beta.assistants.update(selectedProfile.assistantId, {
+            name: updatedName,
+            instructions: updatedProfile,
+        });
+
+        await userProfilesDao.updateUserProfile(selectedProfile);
+        return modalInteraction.reply({ 
+            content: `Profile: ${selectedProfile.name} has been updated.`,
+            ephemeral: true,
+         });
     }
 };
