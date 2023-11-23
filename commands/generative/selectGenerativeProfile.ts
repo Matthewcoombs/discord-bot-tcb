@@ -7,7 +7,7 @@ import chatCompletionService from "../../openAIClient/chatCompletion/chatComplet
 const selectGenerativeProfileCommand: Command = {
     data: new SlashCommandBuilder()
         .setName(optInCommands.SELECT_PROFILE)
-        .setDescription('Select your desired profile(s)'),
+        .setDescription('Select your desired profile'),
     async execute(interaction: CommandInteraction) {
         const { user } = interaction;
         const userProfiles = await userProfilesDao.getUserProfiles(user.id);

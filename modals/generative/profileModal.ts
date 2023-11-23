@@ -16,7 +16,7 @@ export default {
     generateProfileModal(profileData?: UserProfile) {
         const modal = new ModalBuilder()
             .setCustomId(profileData ? UPDATE_PROFILE_MODAL_ID : NEW_PROFILE_MODAL_ID)
-            .setTitle('New Profile');
+            .setTitle(profileData ? `Update Profile: ${profileData.name}` : 'New Profile');
         
         const profileNameInput = new TextInputBuilder()
             .setCustomId(PROFILE_NAME_ID)
