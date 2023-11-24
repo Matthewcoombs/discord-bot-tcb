@@ -4,11 +4,12 @@ import { CHAT_GPT_CHAT_TIMEOUT } from "../shared/constants";
 import chatCompletionService from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
+import userProfilesDao from "../database/user_profiles/userProfilesDao";
 
 
 const directMessageEvent: Command = {
     name: Events.MessageCreate,
-    execute(message: Message) {
+    async execute(message: Message) {
 
         if (message.channel.type === ChannelType.DM) {
             try {
@@ -22,11 +23,13 @@ const directMessageEvent: Command = {
                 // Checking to see if the current user (non bot) has already initiated a direct message with the bot.
                 // If the user has we will skip this process altogether.
                 if (!setUserMsgCol && !isBot) {
-                    user.send(`Hello ${user.username} lets talk.\n To end this conversation simply tell me "**${endChatKey}**"`);
+                    const selectedProfile = await userProfilesDao.getSelectedProfile(userId);
+                    await user.send(`Hello ${user.username} lets talk.\n To end this conversation simply tell me "**${endChatKey}**"`);
                     const collector = message.channel.createMessageCollector() as MessageCollector;
                     singleInstanceMessageCollector.set(
-                        message.author.id, {
+                        userId, {
                             userId: userId,
+                            selectedProfile: selectedProfile,
                         }
                     );
             
@@ -42,7 +45,8 @@ const directMessageEvent: Command = {
                         // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
                         if (!newMessage.author.bot) {
                             // Formatting the collected message to match the chatCompletion format the openAI API expects.
-                            const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected);
+                            const userMessageInstance = singleInstanceMessageCollector.get(userId);
+                            const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile?.profile);
                             OpenAi.chat.completions.create({
                                 model: config.openAi.chatCompletionModel,
                                 messages: chatCompletionMessages,
@@ -64,12 +68,12 @@ const directMessageEvent: Command = {
                         console.log('The DM chat has been terminated');
                         clearTimeout(userResponseTimeout);
                         collected.clear();
-                        message.client.singleInstanceMessageCollector.clear();
+                        message.client.singleInstanceMessageCollector.delete(message.author.id);
                     });
                 }
             } catch (err) {
-                message.client.singleInstanceMessageCollector.clear();
-                message.author.send('Sorry looks like there was an issue. Our chat has ended.');
+                message.client.singleInstanceMessageCollector.delete(message.author.id);
+                await message.author.send('Sorry looks like there was an issue. Our chat has ended.');
                 console.error(err);
             }
         }

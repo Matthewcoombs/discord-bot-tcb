@@ -29,11 +29,11 @@ const selectGenerativeProfileCommand: Command = {
         const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === user.id;};
         try {
             // If the user does not respond in 1 minutes (60000) the message is deleted.
-            const userProfileToDelete = await selectResponse?.awaitMessageComponent({
+            const profileToSelect = await selectResponse?.awaitMessageComponent({
                 filter: collectorFilter,
                 time: 60000,
             }) as ButtonInteraction;
-            const profileId = userProfileToDelete.customId;
+            const profileId = profileToSelect.customId;
             const selectedProfile = userProfiles.find(profile => profile.id === parseInt(profileId)) as UserProfile;
             await userProfilesDao.updateProfileSelection(selectedProfile);
 
