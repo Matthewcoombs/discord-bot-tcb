@@ -3,6 +3,7 @@ import { configureOpenAi } from './openAIClient/init';
 import * as fs from 'fs'; 
 import * as path from 'path';
 import { connectToPG } from "./database/init";
+import { UserProfile } from "./database/user_profiles/userProfilesDao";
 
 // init env variables
 require('dotenv').config();
@@ -20,7 +21,7 @@ declare module "discord.js" {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
 		singleInstanceCommands: Collection<string, { channelType: ChannelType | undefined, channelName: string | null, name: string, user:string }>
-		singleInstanceMessageCollector: Collection<string, {userId: string}>
+		singleInstanceMessageCollector: Collection<string, { userId: string, selectedProfile: UserProfile }>
     }
 }
 
