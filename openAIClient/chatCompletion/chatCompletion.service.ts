@@ -10,7 +10,7 @@ export interface ChatCompletionMessage {
 enum chatCompletionRoles {
     SYSTEM = 'system',
     USER = 'user',
-    ASSISTANT = 'assistant'
+    ASSISTANT = 'assistant',
 }
 
 function generateSystemContentMessage(profile: string): ChatCompletionMessage {
