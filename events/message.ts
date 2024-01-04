@@ -10,8 +10,10 @@ import userProfilesDao from "../database/user_profiles/userProfilesDao";
 const directMessageEvent: Command = {
     name: Events.MessageCreate,
     async execute(message: Message) {
+        const { singleInstanceCommands } = message.client;
 
-        if (message.channel.type === ChannelType.DM) {
+
+        if (message.channel.type === ChannelType.DM && singleInstanceCommands.size < 1) {
             try {
                 const endChatKey = 'goodbye';
                 const { singleInstanceMessageCollector } = message.client;
@@ -26,6 +28,7 @@ const directMessageEvent: Command = {
                     const selectedProfile = await userProfilesDao.getSelectedProfile(userId);
                     await user.send(`Hello ${user.username} lets talk.\n To end this conversation simply tell me "**${endChatKey}**"`);
                     const collector = message.channel.createMessageCollector() as MessageCollector;
+
                     singleInstanceMessageCollector.set(
                         userId, {
                             userId: userId,
@@ -41,6 +44,12 @@ const directMessageEvent: Command = {
                     collector.on('collect', newMessage => {
                         userResponseTimeout.refresh();
                         const collected = Array.from(collector.collected.values());
+
+                        // If a sinlge instance command was initialized after the bot conversation has started, we will stop the
+                        // conversation here.
+                        if (singleInstanceCommands.size > 0) {
+                            collector.stop();
+                        }
 
                         // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
                         if (!newMessage.author.bot) {
