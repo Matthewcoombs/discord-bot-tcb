@@ -38,9 +38,9 @@ jobs:
                     rm -rf dist
                     pnpm build-prod
                     echo $?
-                    host: ${{ secrets.SSH_HOST }}
-                    user: root
-                    key: ${{ secrets.SSH_PRIVATE_KEY }}
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
     # Creating systemctl service to update the bot commands
     create-systemctl-command-service:
         needs: [deploy-via-sftp, build-step]
