@@ -27,6 +27,9 @@ jobs:
         runs-on: ubuntu-latest
         timeout-minutes: 2
         steps:
+            - name: pnpm-setup
+              uses: pnpm/action-setup@v2
+
             - id: build-step
               uses: fifsky/ssh-action@master
               with:
