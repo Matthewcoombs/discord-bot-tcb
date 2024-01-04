@@ -35,6 +35,7 @@ jobs:
                     source ~/.nvm/nvm.sh
                     source ~/.bashrc
                     cd /root/${{ env.REPO_NAME }}
+                    rm -rf dist
                     yarn build-prod
                     echo $?
                     host: ${{ secrets.SSH_HOST }}
