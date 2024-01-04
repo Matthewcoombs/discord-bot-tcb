@@ -41,6 +41,7 @@ const createInteractionEvent: Command = {
 		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
 		// This logic is set to be applied to directMessage and non direct message channels.
 		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
+			const generativeConvoCommands = [singleInstanceCommandsEnum.ASSISTANT, singleInstanceCommandsEnum.LETS_CHAT];
 			const commandMatch = isInteractionInDirectMessage ?
 				singleInstanceCommands.find((singleInstanceCommand) => 
 					singleInstanceCommand.name === commandName && singleInstanceCommand.user === userName && singleInstanceCommand.channelType === ChannelType.DM) :
@@ -48,7 +49,12 @@ const createInteractionEvent: Command = {
 					singleInstanceCommand.name === commandName && singleInstanceCommand.channelName === channel.name);
 
 			if (commandMatch) {
-				return interaction.reply(`Command already initiated. Only one active instance of the command **${command.data?.name}** can exist at a time.`);
+				return interaction.reply(
+					{ content: `Command already initiated. Only one active instance of the command **${command.data?.name}** can exist at a time.`,
+					ephemeral: true});
+			} else if (singleInstanceCommands.size > 0 && generativeConvoCommands.includes(commandName as singleInstanceCommandsEnum) && !isInteractionInDirectMessage) {
+				return interaction.reply(
+					{content: `A generative assistant command has already been initiated in this channel`, ephemeral: true });
 			} else {
 				isInteractionInDirectMessage ? 
 				singleInstanceCommands.set(

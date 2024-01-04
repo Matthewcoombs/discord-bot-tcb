@@ -8,6 +8,7 @@ export const config = {
     commands: {
         singleInstanceCommands: [
             singleInstanceCommandsEnum.LETS_CHAT,
+            singleInstanceCommandsEnum.ASSISTANT,
         ],
         optInCommands: [
             optInCommands.CREATE_PROFILE,

@@ -11,9 +11,7 @@ const directMessageEvent: Command = {
     name: Events.MessageCreate,
     async execute(message: Message) {
         const { singleInstanceCommands } = message.client;
-
-
-        if (message.channel.type === ChannelType.DM && singleInstanceCommands.size < 1) {
+        if (message.channel.type === ChannelType.DM && singleInstanceCommands.size === 0) {
             try {
                 const endChatKey = 'goodbye';
                 const { singleInstanceMessageCollector } = message.client;
@@ -41,7 +39,7 @@ const directMessageEvent: Command = {
                         await user.send(`Looks like you're no longer there ${user.username}. Our chat has ended.`);
                     }, CHAT_GPT_CHAT_TIMEOUT);
 
-                    collector.on('collect', newMessage => {
+                    collector.on('collect', async newMessage => {
                         userResponseTimeout.refresh();
                         const collected = Array.from(collector.collected.values());
 
@@ -53,6 +51,13 @@ const directMessageEvent: Command = {
 
                         // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
                         if (!newMessage.author.bot) {
+                            // If a single instance command was initiated, we will end this dm conversation.
+                            if (singleInstanceCommands.size > 0) {
+                                collector.stop();
+                                await user.send('You have initiated a conversation command, so our chat here has ended.');
+                            }
+
+
                             // Formatting the collected message to match the chatCompletion format the openAI API expects.
                             const userMessageInstance = singleInstanceMessageCollector.get(userId);
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile?.profile);
