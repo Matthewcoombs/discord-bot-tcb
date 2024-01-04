@@ -23,8 +23,8 @@ For information on discordjs see: https://discordjs.guide/
     6. **POSTGRES_DATABASE**
 
 2. Once everything is set we can run the following commands to launch our bot:
-    1. `yarn build`
-    2. `yarn dev`
+    1. `pnpm build`
+    2. `pnpm dev`
 
 
 ## Running in Production
@@ -32,11 +32,11 @@ This project uses github actions for its CI/CD pipeline. You are free to update
 this and use whatever CI/CD service you see fit.
 
 The process is similar to running locally, so once the required production variables
-are set run `yarn build-prod`.
+are set run `pnpm build-prod`.
 
 Starting the bot in production will be at the users discretion
 
 
 ## Deploying Commands
 When you are adding new commands to the bot you can run the following command:
-`yarn update-commands`
+`pnpm update-commands`
