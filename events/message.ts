@@ -10,7 +10,7 @@ import userProfilesDao from "../database/user_profiles/userProfilesDao";
 const directMessageEvent: Command = {
     name: Events.MessageCreate,
     async execute(message: Message) {
-        const singleInstanceCommands = message.client.singleInstanceCommands;
+        const { singleInstanceCommands } = message.client;
 
 
         if (message.channel.type === ChannelType.DM && singleInstanceCommands.size < 1) {
