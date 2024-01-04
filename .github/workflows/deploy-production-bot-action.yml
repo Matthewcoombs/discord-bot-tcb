@@ -33,6 +33,7 @@ jobs:
                 command: |
                     source /root/.bashrc
                     cd /root/${{ env.REPO_NAME }}
+                    rm -rf dist
                     pnpm build-prod
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
