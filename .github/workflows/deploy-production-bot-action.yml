@@ -36,7 +36,7 @@ jobs:
                     source ~/.bashrc
                     cd /root/${{ env.REPO_NAME }}
                     rm -rf dist
-                    yarn build-prod
+                    pnpm build-prod
                     echo $?
                     host: ${{ secrets.SSH_HOST }}
                     user: root
