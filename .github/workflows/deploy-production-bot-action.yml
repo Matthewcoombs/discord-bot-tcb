@@ -31,15 +31,15 @@ jobs:
               uses: fifsky/ssh-action@master
               with:
                 command: |
-                    source /root/.bashrc
+                    export NVM_DIR=~/.nvm
+                    source ~/.nvm/nvm.sh
+                    source ~/.bashrc
                     cd /root/${{ env.REPO_NAME }}
-                    rm -rf dist
-                    pnpm build-prod
+                    yarn build-prod
                     echo $?
-                host: ${{ secrets.SSH_HOST }}
-                user: root
-                key: ${{ secrets.SSH_PRIVATE_KEY }}
-
+                    host: ${{ secrets.SSH_HOST }}
+                    user: root
+                    key: ${{ secrets.SSH_PRIVATE_KEY }}
     # Creating systemctl service to update the bot commands
     create-systemctl-command-service:
         needs: [deploy-via-sftp, build-step]
