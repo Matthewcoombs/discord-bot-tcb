@@ -33,10 +33,9 @@ jobs:
                 command: |
                     export NVM_DIR=~/.nvm
                     source ~/.nvm/nvm.sh
-                    source ~/.bashrc
                     cd /root/${{ env.REPO_NAME }}
                     rm -rf dist
-                    pnpm build-prod
+                    yarn build-prod
                     echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
