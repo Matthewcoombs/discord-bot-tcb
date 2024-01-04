@@ -11,7 +11,7 @@
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
     "build": "pnpm install && tsc",
-    "build-prod": "pnpm install --prod --ignore-scripts && tsc",
+    "build-prod": "yarn install --prod --ignore-scripts && tsc",
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start\"",
     "update-commands": "node ./dist/deploy-command.js"
   },
