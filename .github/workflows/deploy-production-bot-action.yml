@@ -32,7 +32,7 @@ jobs:
               with:
                 command: |
                     cd /root/${{ env.REPO_NAME }}
-                    # rm -rf dist
+                    rm -rf dist
                     echo "[Unit]
                     Description=Production Discord Bot
                     After=multi.user.target
