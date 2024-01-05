@@ -42,7 +42,7 @@ jobs:
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
                     WorkingDirectory=/root/${{ env.REPO_NAME }}
-                    ExecStart=source /root/.local/share/pnpm/pnpm build-prod
+                    ExecStart=/root/.local/share/pnpm/pnpm build-prod
                     User=root
                     Group=root
                     [Install]
