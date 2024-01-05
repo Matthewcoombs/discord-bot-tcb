@@ -31,25 +31,12 @@ jobs:
               uses: fifsky/ssh-action@master
               with:
                 command: |
+                    export NVM_DIR=~/.nvm
+                    source ~/.nvm/nvm.sh
                     cd /root/${{ env.REPO_NAME }}
                     rm -rf dist
-                    echo "[Unit]
-                    Description=Production Discord Bot
-                    After=multi.user.target
-                    [Service]
-                    Type=oneshot
-                    Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-                    Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-                    Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-                    WorkingDirectory=/root/${{ env.REPO_NAME }}
-                    ExecStart=/root/.local/share/pnpm/pnpm build-prod
-                    User=root
-                    Group=root
-                    [Install]
-                    WantedBy=multi-user.target" > /etc/systemd/system/build-bot.service
-                    sudo systemctl enable build-bot.service
-                    sudo systemctl daemon-reload
-                    sudo systemctl restart build-bot.service
+                    /root/.local/share/pnpm/pnpm build-prod
+                    echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
