@@ -48,7 +48,9 @@ const createInteractionEvent: Command = {
 					singleInstanceCommand.name === commandName && singleInstanceCommand.channelName === channel.name);
 
 			if (commandMatch) {
-				return interaction.reply(`Command already initiated. Only one active instance of the command **${command.data?.name}** can exist at a time.`);
+				return interaction.reply(
+					{ content: `Command already initiated. Only one active instance of the command **${command.data?.name}** can exist at a time.`,
+					ephemeral: true});
 			} else {
 				isInteractionInDirectMessage ? 
 				singleInstanceCommands.set(

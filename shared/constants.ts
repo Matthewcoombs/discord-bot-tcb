@@ -18,6 +18,17 @@ This data will be used in the following way:\n
 If you would like to not have you data tracked and saved by me, you can opt out :blush:.`;
 }
 
+export function generateAssistantIntroCopy(profileName: string, username: string) {
+   return `Hello ${username}\n
+I'm your assistant ${profileName}. Simply enter instructions for me in the chat
+and when you're ready for me to proceed enter the phrase: "**${generateAssistantRunKey(profileName)}**".
+To end this session simply say "**goodbye**"`;
+}
+
+export function generateAssistantRunKey(profileName: string) {
+   return `go ${profileName}`;
+}
+
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
 extremely good at...`;
 
@@ -26,3 +37,4 @@ export const CHAT_GPT_CHAT_TIMEOUT = 300000;
 export const PROFILES_LIMIT = 4;
 // Setting 4mb image size limit
 export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
+export const TEMP_FOLDER_PATH = `./temp`;

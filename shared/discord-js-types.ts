@@ -19,6 +19,7 @@ export interface Command {
 
 export enum singleInstanceCommandsEnum {
     LETS_CHAT = 'lets_chat',
+    ASSISTANT = 'assistant',
 }
 
 export enum optInCommands {
