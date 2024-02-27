@@ -26,7 +26,7 @@ To end this session simply say "**goodbye**"`;
 }
 
 export function generateAssistantRunKey(profileName: string) {
-   return `go ${profileName}`;
+   return `go ${profileName}`.toLowerCase();
 }
 
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
