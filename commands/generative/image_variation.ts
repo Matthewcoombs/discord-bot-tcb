@@ -1,14 +1,13 @@
 import axios from 'axios';
 import { Attachment, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
-import { IMAGE_TOUCH_UP_SIZE_LIMIT } from '../../shared/constants';
+import { IMAGE_TOUCH_UP_SIZE_LIMIT, TEMP_FOLDER_PATH } from '../../shared/constants';
 import { OpenAi } from '../..';
 import * as fs from 'fs'; 
 import { InteractionError, InvalidFileError, InvalidFileSizeError, InvalidFileTypeError } from '../../shared/errors';
 import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
 
 const IMAGE_TYPE = 'image/png';
-const TEMP_FOLDER_PATH = `./temp`;
 
 function validateImage(imageAttachment: Attachment) {
     if (imageAttachment.contentType !== IMAGE_TYPE) {

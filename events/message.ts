@@ -11,7 +11,8 @@ const directMessageEvent: Command = {
     name: Events.MessageCreate,
     async execute(message: Message) {
         const { singleInstanceCommands } = message.client;
-        if (message.channel.type === ChannelType.DM && singleInstanceCommands.size === 0) {
+        const dmSingleInstanceCommands = singleInstanceCommands.filter(command => command.channelType === 1);
+        if (message.channel.type === ChannelType.DM && dmSingleInstanceCommands.size === 0) {
             try {
                 const endChatKey = 'goodbye';
                 const { singleInstanceMessageCollector } = message.client;

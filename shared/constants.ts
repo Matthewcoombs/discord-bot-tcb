@@ -21,7 +21,8 @@ If you would like to not have you data tracked and saved by me, you can opt out 
 export function generateAssistantIntroCopy(profileName: string, username: string) {
    return `Hello ${username}\n
 I'm your assistant ${profileName}. Simply enter instructions for me in the chat
-and when you're ready for me to proceed enter the phrase: "**${generateAssistantRunKey(profileName)}**".`;
+and when you're ready for me to proceed enter the phrase: "**${generateAssistantRunKey(profileName)}**".
+To end this session simply say "**goodbye**"`;
 }
 
 export function generateAssistantRunKey(profileName: string) {
@@ -36,3 +37,4 @@ export const CHAT_GPT_CHAT_TIMEOUT = 300000;
 export const PROFILES_LIMIT = 4;
 // Setting 4mb image size limit
 export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
+export const TEMP_FOLDER_PATH = `./temp`;

@@ -113,7 +113,7 @@ const letsChatCommand: Command = {
                 console.log('The chat has been terminated');
                 clearTimeout(userResponseTimeout);
                 collected.clear();
-                interaction.client.singleInstanceCommands.clear();
+                interaction.client.singleInstanceCommands.delete(interaction.id);
             });
         } catch (err: any) {
             const errorMessage = err?.errorData?.code === USER_TIMEOUT_CODE ? 
@@ -122,7 +122,7 @@ const letsChatCommand: Command = {
                 content: errorMessage,
                 ephemeral: true,
             });
-            interaction.client.singleInstanceCommands.clear();
+            interaction.client.singleInstanceCommands.delete(interaction.id);
         }
         
     }
