@@ -88,8 +88,15 @@ const createInteractionEvent: Command = {
 		try {
 			await command.execute(interaction);
 		} catch (_err) {
+			interaction.client.singleInstanceCommands.delete(interaction.id);
 			console.error(`Error executing ${commandName}`);
 			console.error(_err);
+			return interaction.reply(
+				{
+					content: `There was an internal error executing the command ${commandName}.`,
+					ephemeral: true,
+				}
+			);
 		}
 	},
 };
