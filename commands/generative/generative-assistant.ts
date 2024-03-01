@@ -66,10 +66,21 @@ const assistantCommand: Command = {
                     );
 
                     let status;
-                    while (status !== 'completed') {
+                    let retries = 0;
+                    const maxRetries = 10;
+                    const baseDelay = 3000; // 3 seconds
+                    const maxDelay = 120000; // 2 minutes 
+                    while (status !== 'completed' && retries < maxRetries) {
+                        userResponseTimeout.refresh();
                         status = await assistantsService.getAssistantRunStatus(thread.id, run.id);
                         console.log('checking status:', status);
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+
+                        if (status !== 'completed') {
+                            const delay = Math.min(baseDelay * Math.pow(2, retries), maxDelay);
+                            console.log(delay);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            retries++;
+                        }
                     }
 
                     if (status === 'completed') {
