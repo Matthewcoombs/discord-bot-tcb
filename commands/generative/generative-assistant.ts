@@ -53,7 +53,7 @@ const assistantCommand: Command = {
                 } else if (startRun) {
                     console.log('run starting');
                     await interaction.followUp({
-                        content: `Run starting :checkered_flag:.`,
+                        content: `Run starting :checkered_flag:`,
                         ephemeral: true,
                     });
 
@@ -85,7 +85,7 @@ const assistantCommand: Command = {
 
                     if (status === 'completed') {
                         await interaction.followUp({
-                            content: `Run complete :green_circle:.`,
+                            content: `Run complete :green_circle:`,
                             ephemeral: true,
                         });
 
