@@ -39,7 +39,8 @@ const assistantCommand: Command = {
                 userResponseTimeout.refresh();
                 const startRun = message.content.toLowerCase() === generateAssistantRunKey(selectedProfile.name);
                 const isUserMsg = !message.author.bot && message.author.username === interaction.user.username;
-                if (message.content.toLowerCase() === 'goodbye' && message.author.username === interaction.user.username) {
+                const isTerminationMsg = message.content.toLowerCase() === 'goodbye' && isUserMsg;
+                if (isTerminationMsg) {
                     await interaction.followUp({
                         content: `Goodbye.`
                     });
@@ -91,23 +92,20 @@ const assistantCommand: Command = {
                         const messages = await OpenAi.beta.threads.messages.list(
                             thread.id,
                         );
-                        const botResponse = await assistantsService.processAssistantRunMessages(messages, interaction, interactionTag);                        
-                        fs.readdir(TEMP_FOLDER_PATH, async (err, files) => {
-                            if (err) {
-                                console.error(`Error reading /temp directory:`, err);
-                                collector.stop();
-                            }
+                        const { botResponse, combinedFileIds } = assistantsService.processAssistantRunMessages(messages);
 
-                            files = files
-                                .filter(fileName => fileName.includes(user.username) && fileName.includes(interactionTag.toString()))
-                                .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
-                            console.log('files found:', files);
+                        let botResponseFiles: string[] = [];
+                        if (combinedFileIds.length > 0) {
+                            await assistantsService.processAssistantRunFiles(combinedFileIds, user.username, interactionTag);
+                            botResponseFiles = fs.readdirSync(TEMP_FOLDER_PATH);
+                            botResponseFiles = botResponseFiles
+                                                .filter(fileName => fileName.includes(user.username) && fileName.includes(interactionTag.toString()))
+                                                .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
+                        }
 
-                            await interaction.followUp({
-                                content: botResponse,
-                                files,
-                            });
-                            
+                        await interaction.followUp({
+                            content: botResponse,
+                            files: botResponseFiles,
                         });
                     }
                 }

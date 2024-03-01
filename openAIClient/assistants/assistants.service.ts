@@ -1,4 +1,4 @@
-import { Message, ChatInputCommandInteraction } from "discord.js";
+import { Message } from "discord.js";
 import { OpenAi } from "../..";
 import { ThreadMessagesPage } from "openai/resources/beta/threads/messages/messages";
 import * as fs from 'fs';
@@ -45,20 +45,24 @@ export default {
         return status as runStatuses;
     },
 
-    async processAssistantRunMessages(messages: ThreadMessagesPage, interaction: ChatInputCommandInteraction, interactionTag: number) {
-        let response = '';
+    processAssistantRunMessages(messages: ThreadMessagesPage) {
+        let botResponse = '';
+        const fileIds: string[][] = [];
         for (const data of messages.data) {
             
             const { content, file_ids } = data;
             if (data.role === 'assistant' && content[0].type === 'text') {
-                response += `${content[0].text.value}\n`;
-                await this.processOpenAiFiles(file_ids, interaction, interactionTag);
+                botResponse += `${content[0].text.value}\n`;
+                fileIds.push(file_ids);
             }
         }
-        return response;
+
+        const combinedFileIds = fileIds.reduce((acc, curr) => acc.concat(curr), []);
+        
+        return {botResponse, combinedFileIds} ;
     },
 
-    async processOpenAiFiles(fileIds: string[], interaction: ChatInputCommandInteraction, interactionTag: number) {
+    async processAssistantRunFiles(fileIds: string[], userName: string, interactionTag: number) {
         for (const fileId of fileIds) {
             const fileData = await Promise.all([OpenAi.files.retrieve(fileId), OpenAi.files.content(fileId)]);
 
@@ -72,7 +76,7 @@ export default {
             const endingFilePath = match ? match[1] : null;
             
             if (endingFilePath) {
-                const filePath = `${TEMP_FOLDER_PATH}/${interaction.user.username}-${interactionTag}-${endingFilePath}`;
+                const filePath = `${TEMP_FOLDER_PATH}/${userName}-${interactionTag}-${endingFilePath}`;
                 fs.writeFileSync(filePath, bufferView);
             }
 
