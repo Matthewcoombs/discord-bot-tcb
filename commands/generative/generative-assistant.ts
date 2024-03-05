@@ -2,7 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector } fr
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
-import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
+import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey, generateInteractionTag } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
 import * as fs from 'fs';
 
@@ -27,7 +27,7 @@ const assistantCommand: Command = {
                 content: generateAssistantIntroCopy(selectedProfile.name, user.username),
             });
 
-            const interactionTag = Math.floor(10000 + Math.random() * 90000);
+            const interactionTag = generateInteractionTag();
             const thread = await OpenAi.beta.threads.create();
             const collector = interaction?.channel?.createMessageCollector() as MessageCollector;
             const userResponseTimeout = setTimeout(async () => { 
