@@ -10,7 +10,7 @@ import { ImageGenerateParams } from "openai/resources";
 const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName('generate_image')
-		.setDescription('Ask the all knowing magic conch shell to generate an image')
+		.setDescription('Generate images')
 		.addStringOption((strOption: SlashCommandStringOption) =>
 			strOption.setName('description')
 				.setDescription('Describe the image you want generated')
