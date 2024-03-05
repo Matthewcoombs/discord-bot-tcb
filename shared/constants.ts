@@ -3,7 +3,7 @@ export function generateWelcomeCopy(username: string) {
 I'll be your helpful assistant while you're here.\n
 To access my features please utilize the **/** to see a list of my various commands.\n
 For instance if you need an answer to a quick question you can use my **/magic_conch** command.\n
-If you want an image generated you can use **/magic_conch_image** command.\n
+If you want an image generated you can use **/generate_image** command.\n
 If you want to just chat you can use my **/lets_chat** command.\n
 Have fun and enjoy your time here :blush:!`;
 }
@@ -27,6 +27,10 @@ To end this session simply say "**goodbye**"`;
 
 export function generateAssistantRunKey(profileName: string) {
    return `go ${profileName}`.toLowerCase();
+}
+
+export function generateInteractionTag() {
+   return Math.floor(10000 + Math.random() * 90000);
 }
 
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're

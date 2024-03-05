@@ -1,6 +1,10 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message } from "discord.js";
 import { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { ImagesResponse } from "openai/resources";
+import axios from "axios";
+import * as fs from 'fs';
+
+import { TEMP_FOLDER_PATH } from "../../shared/constants";
 
 export interface ChatCompletionMessage {
     role: chatCompletionRoles;
@@ -51,7 +55,7 @@ export default {
         return row;
     },
 
-    generateImageEmbeds(generatedImages: ImagesResponse, username: string, description?: string) {
+    generateImageEmbeds(generatedImages: ImagesResponse, username: string) {
         const embeds = generatedImages.data.map(image => {
             const imageUrl = image?.url as string;
             return new EmbedBuilder()
@@ -59,10 +63,24 @@ export default {
                 .setImage(imageUrl);
         });
 
-        const title = description ? `${username}'s image(s) of ${description}` : `${username}'s image(s)`;
+        const title = `${username}'s image(s)`;
     
         embeds[0].setTitle(title);
     
         return embeds;
+    },
+
+    async downloadAndConvertImagesToJpeg(imageUrls: string[], username: string, interactionTag: number) {
+        for (let i = 0; i < imageUrls.length; i++) {
+            const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i+1}.jpeg`;
+            await axios.get(imageUrls[i], {
+                responseType: 'arraybuffer',
+            }).then(response => {
+                fs.writeFileSync(imageFilePath, response.data);
+                console.log(`Image downloaded [image]: ${imageFilePath}`);
+            }).catch(err => {
+                console.error(`Error downloading image:`, err);
+            });
+        }
     }
 };
