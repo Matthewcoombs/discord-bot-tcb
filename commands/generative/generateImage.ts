@@ -2,10 +2,11 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandStringOpt
 import { Command } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
-import { TEMP_FOLDER_PATH, generateInteractionTag } from "../../shared/constants";
+import { TEMP_FOLDER_PATH } from "../../shared/constants";
 import * as fs from 'fs';
 import { imageModelEnums } from "../../config";
 import { ImageGenerateParams } from "openai/resources";
+import { generateInteractionTag } from "../../shared/utils";
 
 const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()

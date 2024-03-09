@@ -2,15 +2,18 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector } fr
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
-import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey, generateInteractionTag } from "../../shared/constants";
+import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
 import * as fs from 'fs';
+import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData } from "../../shared/utils";
+import filesService from "../../openAIClient/files/files.service";
 
 const assistantCommand: Command = {
     data: new SlashCommandBuilder()
         .setName(singleInstanceCommandsEnum.ASSISTANT)
         .setDescription('Speak to your personal assistant for support'),
     async execute(interaction: ChatInputCommandInteraction) {
+        const interactionTag = generateInteractionTag();
         try {
             const { user } = interaction;
             let userProfiles: UserProfile[] = [];
@@ -26,8 +29,6 @@ const assistantCommand: Command = {
             await interaction.reply({
                 content: generateAssistantIntroCopy(selectedProfile.name, user.username),
             });
-
-            const interactionTag = generateInteractionTag();
             const thread = await OpenAi.beta.threads.create();
             const collector = interaction?.channel?.createMessageCollector() as MessageCollector;
             const userResponseTimeout = setTimeout(async () => { 
@@ -37,6 +38,7 @@ const assistantCommand: Command = {
 
             collector.on('collect', async (message) => {
                 userResponseTimeout.refresh();
+                const isFileAttached = message.attachments.size > 0;
                 const startRun = message.content.toLowerCase() === generateAssistantRunKey(selectedProfile.name);
                 const isUserMsg = !message.author.bot && message.author.username === interaction.user.username;
                 const isTerminationMsg = message.content.toLowerCase() === 'goodbye' && isUserMsg;
@@ -46,13 +48,38 @@ const assistantCommand: Command = {
                     });
                     collector.stop(); 
                 } else if (isUserMsg && !startRun) {
-                    const assistantMessage = assistantsService.generateAssistantMessage(message);
+                    // checking for attached files to process and upload
+                    let fileIds: string[] = [];
+                    if (isFileAttached) {
+                        const asyncFileDataRetrievalList = message.attachments.map(attachment => {
+                            return getRemoteFileBufferData(attachment.url);
+                        });
+    
+                        const bufferDataList = await Promise.all(asyncFileDataRetrievalList);
+                        const tempFilePaths: string[] = [];
+                        for (let i = 0; i < bufferDataList.length; i++) {
+                            const tempFileName = `${user.username}-assistant-${interactionTag}-${i+1}`;
+                            const filePath = createTempFile(bufferDataList[i], tempFileName);
+                            tempFilePaths.push(filePath);
+
+                        }
+    
+                        const asyncOpenAiFileUpload = tempFilePaths.map(filePath => {
+                            return filesService.uploadFile(filePath, 'assistants');
+                        });
+    
+                        const fileObjects = await Promise.all(asyncOpenAiFileUpload);
+                        fileIds = fileObjects.map(fileObject => fileObject.id);
+                    }
+
+                    const assistantMessage = assistantsService.generateAssistantMessage(message, fileIds);
                     await OpenAi.beta.threads.messages.create(
                         thread.id,
-                        assistantMessage
+                        assistantMessage,
+
                     );
                 } else if (startRun) {
-                    console.log('run starting');
+                    console.log(`Run Starting - [interaction-tag]: ${interactionTag}`);
                     await interaction.followUp({
                         content: `Run starting :checkered_flag:`,
                         ephemeral: true,
@@ -113,6 +140,7 @@ const assistantCommand: Command = {
 
             collector.on('end', collected => {
                 console.log('The assistant has been terminated');
+                deleteTempFilesByTag(interactionTag);
                 clearTimeout(userResponseTimeout);
                 collected.clear();
                 interaction.client.singleInstanceCommands.delete(interaction.id);
@@ -120,6 +148,7 @@ const assistantCommand: Command = {
 
         } catch (error: any) {
             await interaction.deleteReply();
+            deleteTempFilesByTag(interactionTag);
             const errorMessage = `Sorry there was an error in the assistant service.`;
             await interaction.followUp({
                 content: errorMessage,
