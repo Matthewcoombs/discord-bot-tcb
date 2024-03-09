@@ -79,7 +79,7 @@ const assistantCommand: Command = {
 
                     );
                 } else if (startRun) {
-                    console.log('run starting');
+                    console.log(`Run Starting - [interaction-tag]: ${interactionTag}`);
                     await interaction.followUp({
                         content: `Run starting :checkered_flag:`,
                         ephemeral: true,
