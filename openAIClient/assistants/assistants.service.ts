@@ -8,7 +8,7 @@ import { TEMP_FOLDER_PATH } from "../../shared/constants";
 export interface AssistantsMessage {
     role: AssistantsRoles;
     content: string;
-
+    file_ids?: string[];
 }
 
 enum AssistantsRoles {
@@ -27,10 +27,11 @@ export enum runStatuses {
 }
 
 export default {
-    generateAssistantMessage (message: Message): AssistantsMessage {
+    generateAssistantMessage (message: Message, fileIds?: string[]): AssistantsMessage {
         const assistantMessage: AssistantsMessage = {
             role: AssistantsRoles.USER,
             content: message.content,
+            file_ids: fileIds,
         };
     
         return assistantMessage;

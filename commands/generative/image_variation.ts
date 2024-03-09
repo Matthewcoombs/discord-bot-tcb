@@ -1,11 +1,11 @@
-import axios from 'axios';
 import { Attachment, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
-import { IMAGE_TOUCH_UP_SIZE_LIMIT, TEMP_FOLDER_PATH } from '../../shared/constants';
+import { IMAGE_TOUCH_UP_SIZE_LIMIT } from '../../shared/constants';
 import { OpenAi } from '../..';
 import * as fs from 'fs'; 
-import { InteractionError, InvalidFileError, InvalidFileSizeError, InvalidFileTypeError } from '../../shared/errors';
+import { InvalidFileSizeError, InvalidFileTypeError } from '../../shared/errors';
 import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
+import { createTempFile, deleteTempFilesByName, getRemoteFileBufferData } from '../../shared/utils';
 
 const IMAGE_TYPE = 'image/png';
 
@@ -21,48 +21,6 @@ function validateImage(imageAttachment: Attachment) {
         throw new InvalidFileSizeError({
             error: `The Image provided is too large. Images should be no more than 4MB`,
             metaData: imageAttachment,
-        });
-    }
-}
-
-async function getImageBufferData(imageAttachment: Attachment) {
-    try {
-        const { data } = await axios.get(imageAttachment.url, {
-            responseType: 'arraybuffer',
-        });
-        return data;
-    } catch (error) {
-        throw new InteractionError({
-            error: `There was an error retrieving the image data`,
-            metaData: error,
-        });
-    }
-}
-
-function createTempImageFile(imageBufferData: string, fileName: string) {
-    const tempImagePath = `${TEMP_FOLDER_PATH}/${fileName}`;
-    try {
-        fs.writeFileSync(tempImagePath, imageBufferData);
-    } catch (err) {
-        throw new InvalidFileError({
-            error: `There was an error creating a temp image file`,
-            metaData: err,
-        });
-    }
-
-    return tempImagePath;
-}
-
-function deleteAllTempImages() {
-    try {
-        const tempImageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
-        for (const imageFile of tempImageFiles) {
-            fs.unlinkSync(`${TEMP_FOLDER_PATH}/${imageFile}`);
-        }
-    } catch (err) {
-        throw new InteractionError({
-            error: `Error deleting temp image`,
-            metaData: err,
         });
     }
 }
@@ -94,15 +52,15 @@ const aiImageVariotionCommand: Command = {
         const tempImageName = `${interaction.id}-${imageAttachment.name}`;
         try {
             validateImage(imageAttachment);
-            const imageBufferData = await getImageBufferData(imageAttachment);
-            const tempImagePath = createTempImageFile(imageBufferData, tempImageName);
+            const imageBufferData = await getRemoteFileBufferData(imageAttachment.url);
+            const tempImagePath = createTempFile(imageBufferData, tempImageName);
     
             await OpenAi.images.createVariation({
                 image: fs.createReadStream(tempImagePath) as any,
                 n: imageCount,
             }).then(async completion => {
                 const embeds = chatCompletionService.generateImageEmbeds(completion, username);
-                deleteAllTempImages();
+                deleteTempFilesByName([tempImageName]);
                 await interaction.editReply({
                     content: `Here are your image variations ${username} :blush:`,
                     embeds: embeds,
@@ -112,7 +70,7 @@ const aiImageVariotionCommand: Command = {
 
         }
         catch (err) {
-            deleteAllTempImages();
+            deleteTempFilesByName([tempImageName]);
             console.error(err);
             await interaction.editReply(`Sorry there was an issue creating an image variation :disappointed:`);
         }
