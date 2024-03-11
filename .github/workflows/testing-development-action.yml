@@ -1,0 +1,19 @@
+name: Test on Push to Non-Master Branch
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Run tests
+      run: |
+        # Add your test commands here
