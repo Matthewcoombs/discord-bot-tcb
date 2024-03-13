@@ -5,7 +5,7 @@ import { OpenAi } from "../..";
 import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
 import * as fs from 'fs';
-import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData } from "../../shared/utils";
+import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, validateBotResponseLength } from "../../shared/utils";
 import filesService from "../../openAIClient/files/files.service";
 
 const assistantCommand: Command = {
@@ -131,7 +131,7 @@ const assistantCommand: Command = {
                         }
 
                         await interaction.followUp({
-                            content: botResponse,
+                            content: validateBotResponseLength(botResponse),
                             files: botResponseFiles,
                         });
                     }

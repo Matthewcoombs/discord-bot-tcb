@@ -31,10 +31,11 @@ export function generateAssistantRunKey(profileName: string) {
 
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
 extremely good at...`;
-
+export const GENERATIVE_RESPONSE_LIMIT_CONTEXT = `\nNOTE - ensure that your response does not exceed 2000 characters in length.`;
 export const GENERAL_CHANNEL = 'general';
 export const CHAT_GPT_CHAT_TIMEOUT = 300000;
 export const PROFILES_LIMIT = 4;
 // Setting 4mb image size limit
 export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
 export const TEMP_FOLDER_PATH = `./temp`;
+export const DISCORD_MAX_REPLY_STRING_LENGTH = 2000;

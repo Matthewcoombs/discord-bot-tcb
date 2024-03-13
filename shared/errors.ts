@@ -3,11 +3,20 @@ export const USER_TIMEOUT_CODE = `i-101`;
 export const INVALID_FILE_CODE = `if-100`;
 export const INVALID_FILE_SIZE_CODE = `if-101`;
 export const INVALID_FILE_TYPE_CODE = `if-102`;
+export const INVALID_RESPONSE_LENGTH_CODE = `ir-100`;
 
 type baseError = {
         error: string;
         code?: string;
         metaData?: any;
+}
+
+export class BotResponseLengthError {
+        errorData: baseError;
+        constructor(errorData: baseError) {
+                this.errorData = errorData;
+                this.errorData.code = INVALID_RESPONSE_LENGTH_CODE;
+        }
 }
 
 export class InteractionError {
