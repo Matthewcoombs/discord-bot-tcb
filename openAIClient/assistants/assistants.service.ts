@@ -49,7 +49,14 @@ export default {
     processAssistantRunMessages(messages: ThreadMessagesPage) {
         let botResponse = '';
         const fileIds: string[][] = [];
-        for (const data of messages.data) {
+
+        // filtering out all non-recent assistant responses
+        const uniqueCompletionList = messages.data.filter((message, index, self) => 
+            index === self.findIndex((t) => (
+                t.role === 'assistant'
+            )));
+
+        for (const data of uniqueCompletionList) {
             
             const { content, file_ids } = data;
             if (data.role === 'assistant' && content[0].type === 'text') {
