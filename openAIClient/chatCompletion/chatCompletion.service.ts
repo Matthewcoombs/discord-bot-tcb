@@ -4,7 +4,7 @@ import { ImagesResponse } from "openai/resources";
 import axios from "axios";
 import * as fs from 'fs';
 
-import { TEMP_FOLDER_PATH } from "../../shared/constants";
+import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, TEMP_FOLDER_PATH } from "../../shared/constants";
 
 export interface ChatCompletionMessage {
     role: chatCompletionRoles;
@@ -36,8 +36,9 @@ export default {
 
         if (profile) {
             ChatCompletionMessages.unshift(generateSystemContentMessage(profile));
+        } else  {
+            ChatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_LIMIT_CONTEXT));
         }
-    
         return ChatCompletionMessages;
     },
 
