@@ -93,7 +93,7 @@ const letsChatCommand: Command = {
                     const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile?.profile);
 
                     OpenAi.chat.completions.create({
-                        model: config.openAi.chatCompletionModel,
+                        model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                         messages: chatCompletionMessages,
                     }).then(async chatCompletion => {
                         const response = chatCompletion.choices[0].message;

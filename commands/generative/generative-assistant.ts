@@ -1,6 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector } from "discord.js";
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
-import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
+import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
@@ -16,12 +16,11 @@ const assistantCommand: Command = {
         const interactionTag = generateInteractionTag();
         try {
             const { user } = interaction;
-            let userProfiles: UserProfile[] = [];
-            userProfiles = await userProfilesDao.getUserProfiles(user.id);
-            const selectedProfile = userProfiles.find(profile => profile.selected);
+            const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
             if (!selectedProfile) {
+                interaction.client.singleInstanceCommands.delete(interaction.id);
                 return interaction.reply({
-                    content: `You do not have any profile selected to use the assistant service at this time`,
+                    content: `:exclamation: You do not have any profile selected to use the assistant service at this time`,
                     ephemeral: true
                 });
             }

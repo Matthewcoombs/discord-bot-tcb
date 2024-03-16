@@ -10,6 +10,7 @@ export interface UserProfile {
     updatedAt: string;
     assistantId: string;
     selected?: boolean;
+    textModel: string;
 }
 
 export interface CreateProfile {
@@ -38,6 +39,7 @@ export default {
                 created_at AS "createdAt",
                 updated_at AS "updatedAt",
                 assistant_id AS "assistantId",
+                text_model AS "textModel",
                 selected
             FROM
                 user_profiles
@@ -58,6 +60,7 @@ export default {
                 created_at AS "createdAt",
                 updated_at AS "updatedAt",
                 assistant_id AS "assistantId",
+                text_model AS "textModel",
                 selected
             FROM
                 user_profiles
@@ -77,6 +80,7 @@ export default {
                 created_at AS "createdAt",
                 updated_at AS "updatedAt",
                 assistant_id AS "assistantId",
+                text_model AS "textModel",
                 selected
             FROM
                 user_profiles
@@ -109,14 +113,15 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected,} = selectedProfile;
+        const { name, profile, selected, textModel} = selectedProfile;
         await sql`
             UPDATE
                 user_profiles
             SET
                 name = ${name},
                 profile = ${profile},
-                selected = ${selected as boolean}
+                selected = ${selected as boolean},
+                text_model = ${textModel}
             WHERE
                 id = ${selectedProfile.id}
         `;

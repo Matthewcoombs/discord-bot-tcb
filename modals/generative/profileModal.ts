@@ -60,7 +60,7 @@ export default {
             instructions: profile,
             name,
             tools: [{ type: "code_interpreter" }],
-            model: config.openAi.chatCompletionModel,
+            model: config.openAi.defaultChatCompletionModel,
         });
 
         await userProfilesDao.insertUserProfile({ name, profile, discordId: user.id, assistantId });
