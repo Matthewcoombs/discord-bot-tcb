@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ModalActionRowComponentBuilder, ModalBuilder, ModalSubmitInteraction, TextInputBuilder, TextInputStyle } from "discord.js";
-import { PROFILE_PLACEHOLDER_TEXT } from "../../shared/constants";
+import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, PROFILE_PLACEHOLDER_TEXT } from "../../shared/constants";
 import userProfilesDao, {UserProfile} from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { config } from "../../config";
@@ -47,7 +47,11 @@ export default {
     async handleNewProfileInput(modalInteraction: ModalSubmitInteraction) {
         const { user } = modalInteraction ;
         const name = modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
-        const profile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
+        let profile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
+
+        // appending additional instructions to ensure the bot response does NOT exceed
+        // discords limit of 2000 characters
+        profile += GENERATIVE_RESPONSE_LIMIT_CONTEXT;
 
         // creating a new openAI assistant. We will default to using the
         // code interpreter tool to start, but we will add the option for
@@ -56,7 +60,7 @@ export default {
             instructions: profile,
             name,
             tools: [{ type: "code_interpreter" }],
-            model: config.openAi.chatCompletionModel,
+            model: config.openAi.defaultChatCompletionModel,
         });
 
         await userProfilesDao.insertUserProfile({ name, profile, discordId: user.id, assistantId });
@@ -66,8 +70,11 @@ export default {
     async handleUpdateModalInput(modalInteraction: ModalSubmitInteraction) {
         const { user } = modalInteraction ;
         const updatedName = modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
-        const updatedProfile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
+        let updatedProfile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
 
+        // appending additional instructions to ensure the bot response does NOT exceed
+        // discords limit of 2000 characters
+        updatedProfile += GENERATIVE_RESPONSE_LIMIT_CONTEXT;
     
         const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
         selectedProfile.name = updatedName;

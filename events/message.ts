@@ -63,7 +63,7 @@ const directMessageEvent: Command = {
                             const userMessageInstance = singleInstanceMessageCollector.get(userId);
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile?.profile);
                             OpenAi.chat.completions.create({
-                                model: config.openAi.chatCompletionModel,
+                                model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                                 messages: chatCompletionMessages,
                             }).then(async chatCompletion => {
                                 const response = chatCompletion.choices[0].message;

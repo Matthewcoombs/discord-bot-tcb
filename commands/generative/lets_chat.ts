@@ -7,6 +7,7 @@ import { CHAT_GPT_CHAT_TIMEOUT } from "../../shared/constants";
 import usersDao from "../../database/users/usersDao";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
+import { validateBotResponseLength } from "../../shared/utils";
 
 async function sendInitResponse(interaction: ChatInputCommandInteraction) {
     const { user, channel } = interaction;
@@ -92,11 +93,11 @@ const letsChatCommand: Command = {
                     const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile?.profile);
 
                     OpenAi.chat.completions.create({
-                        model: config.openAi.chatCompletionModel,
+                        model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                         messages: chatCompletionMessages,
                     }).then(async chatCompletion => {
                         const response = chatCompletion.choices[0].message;
-                        await interaction.followUp(response?.content as string);
+                        await interaction.followUp(validateBotResponseLength(response?.content as string));
                     }).catch(async err => {
                         console.error(err);
                         collector.stop();
