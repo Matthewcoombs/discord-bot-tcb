@@ -3,10 +3,10 @@ import { Command } from "../../shared/discord-js-types";
 
 const reloadCommand: Command = {
 	data: new SlashCommandBuilder()
-		.setName('reload')
+		.setName('reload_command')
 		.setDescription('Reloads a command.')
 		.addStringOption((option: SlashCommandStringOption) =>
-			option.setName('command')
+			option.setName('command_name')
 				.setDescription('The command to reload.')
 				.setRequired(true))
         .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
