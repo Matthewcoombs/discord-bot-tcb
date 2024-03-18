@@ -13,7 +13,8 @@
     "build": "pnpm install && tsc",
     "build-prod": "/root/.local/share/pnpm/pnpm install --prod --ignore-scripts && tsc",
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start\"",
-    "update-commands": "node ./dist/deploy-command.js"
+    "update-commands": "node ./dist/deploy-commands.js",
+    "delete-commands": "node ./dist/delete-commands.js"
   },
   "author": "matthew c",
   "license": "ISC",
