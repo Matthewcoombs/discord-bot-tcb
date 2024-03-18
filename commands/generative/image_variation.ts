@@ -1,11 +1,11 @@
 import { Attachment, ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
-import { IMAGE_TOUCH_UP_SIZE_LIMIT } from '../../shared/constants';
+import { IMAGE_TOUCH_UP_SIZE_LIMIT, TEMP_FOLDER_PATH } from '../../shared/constants';
 import { OpenAi } from '../..';
 import * as fs from 'fs'; 
 import { InvalidFileSizeError, InvalidFileTypeError } from '../../shared/errors';
 import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
-import { createTempFile, deleteTempFilesByName, getRemoteFileBufferData } from '../../shared/utils';
+import { createTempFile, deleteTempFilesByName, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData } from '../../shared/utils';
 
 const IMAGE_TYPE = 'image/png';
 
@@ -43,6 +43,7 @@ const aiImageVariotionCommand: Command = {
                 { name: '3', value: 3},
                 { name: '4', value: 4})), 
     async execute(interaction: ChatInputCommandInteraction) {
+        const interactionTag = generateInteractionTag();
         const username = interaction.user.username;
         await interaction.reply(`Hi ${username}, I'm currently processing your image variation request :art:...`);
 
@@ -59,18 +60,23 @@ const aiImageVariotionCommand: Command = {
                 image: fs.createReadStream(tempImagePath) as any,
                 n: imageCount,
             }).then(async completion => {
-                const embeds = chatCompletionService.generateImageEmbeds(completion, username);
+                const imageUrls = completion.data.map(image => image.url) as string[];
+                await chatCompletionService.downloadAndConvertImagesToJpeg(imageUrls, username, interactionTag);
+                let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
+                imageFiles = imageFiles
+                    .filter(fileName => fileName.includes(username) && fileName.includes(interactionTag.toString()))
+                    .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
                 deleteTempFilesByName([tempImageName]);
                 await interaction.editReply({
                     content: `Here are your image variations ${username} :blush:`,
-                    embeds: embeds,
+                    files: imageFiles,
                 });
+                deleteTempFilesByTag(interactionTag);
             });
-
-
         }
         catch (err) {
             deleteTempFilesByName([tempImageName]);
+            deleteTempFilesByTag(interactionTag);
             console.error(err);
             await interaction.editReply(`Sorry there was an issue creating an image variation :disappointed:`);
         }
