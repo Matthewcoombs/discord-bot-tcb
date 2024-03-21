@@ -20,8 +20,17 @@ declare module "discord.js" {
     export interface Client {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
-		singleInstanceCommands: Collection<string, { channelType: ChannelType | undefined, channelName: string | null, name: string, user:string }>
-		singleInstanceMessageCollector: Collection<string, { userId: string, selectedProfile: UserProfile }>
+		singleInstanceCommands: Collection<string, { 
+			channelType: ChannelType | undefined, 
+			channelId: string | undefined, 
+			channelName: string | null,
+			name: string, 
+			user:string, 
+			userId: string}>
+		singleInstanceMessageCollector: Collection<string, { 
+			userId: string, 
+			selectedProfile: UserProfile, 
+			channelId: string }>
     }
 }
 

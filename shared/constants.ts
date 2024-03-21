@@ -39,3 +39,5 @@ export const PROFILES_LIMIT = 4;
 export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
 export const TEMP_FOLDER_PATH = `./temp`;
 export const DISCORD_MAX_REPLY_STRING_LENGTH = 2000;
+export const MAX_MESSAGE_COLLECTORS = 4;
+export const MAX_USER_SINGLE_INSTANCE_COMMANDS = 4;
