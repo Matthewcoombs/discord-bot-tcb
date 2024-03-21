@@ -12,6 +12,7 @@ export enum textBasedModelEnums {
 }
 
 export const config = {
+    botId: '',
     openAi: {
         defaultCompletionModel: textBasedModelEnums.GPT_DAVINCI,
         defaultChatCompletionModel: textBasedModelEnums.GPT3,

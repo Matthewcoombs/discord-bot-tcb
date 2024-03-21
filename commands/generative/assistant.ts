@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector, Message } from "discord.js";
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
@@ -29,7 +29,12 @@ const assistantCommand: Command = {
                 content: generateAssistantIntroCopy(selectedProfile.name, user.username),
             });
             const thread = await OpenAi.beta.threads.create();
-            const collector = interaction?.channel?.createMessageCollector() as MessageCollector;
+            const collectorFilter = (colMsg: Message) => 
+                // collect message if the message is coming from the user who initiated
+                colMsg.author.id === user.id;
+            const collector = interaction?.channel?.createMessageCollector({
+                filter: collectorFilter,
+            }) as MessageCollector;
             const userResponseTimeout = setTimeout(async () => { 
                 collector.stop();
                 await interaction.followUp(`Looks like you're no longer there ${interaction.user.username}. Our assistant session has ended.`);
@@ -38,15 +43,15 @@ const assistantCommand: Command = {
             collector.on('collect', async (message) => {
                 userResponseTimeout.refresh();
                 const isFileAttached = message.attachments.size > 0;
-                const startRun = message.content.toLowerCase() === generateAssistantRunKey(selectedProfile.name);
                 const isUserMsg = !message.author.bot && message.author.username === interaction.user.username;
+                const startRun = message.content.toLowerCase() === generateAssistantRunKey(selectedProfile.name) && isUserMsg;
                 const isTerminationMsg = message.content.toLowerCase() === 'goodbye' && isUserMsg;
                 if (isTerminationMsg) {
                     await interaction.followUp({
                         content: `Goodbye.`
                     });
                     collector.stop(); 
-                } else if (isUserMsg && !startRun) {
+                } else if (!startRun) {
                     // checking for attached files to process and upload
                     let fileIds: string[] = [];
                     if (isFileAttached) {
@@ -138,7 +143,7 @@ const assistantCommand: Command = {
             });
 
             collector.on('end', collected => {
-                console.log('The assistant has been terminated');
+                console.log(`The assistant has been terminated - [interactionTag]: ${interactionTag}`);
                 deleteTempFilesByTag(interactionTag);
                 clearTimeout(userResponseTimeout);
                 collected.clear();

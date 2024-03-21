@@ -3,17 +3,17 @@ import { Command, optInCommands, singleInstanceCommandsEnum } from "../shared/di
 import { config } from "../config";
 import usersDao from "../database/users/usersDao";
 import modalsService from "../modals/modals.service";
+import { MAX_USER_SINGLE_INSTANCE_COMMANDS } from "../shared/constants";
 
 const createInteractionEvent: Command = {
 	name: Events.InteractionCreate,
 	async execute(interaction: ChatInputCommandInteraction | ModalSubmitInteraction ) {
-		const { cooldowns, singleInstanceCommands } = interaction.client;
+		const { cooldowns, singleInstanceCommands, singleInstanceMessageCollector } = interaction.client;
 		const { user, commandName } = interaction as ChatInputCommandInteraction;
 		const command = interaction.client.commands.get(commandName) as Command;
 		const channel = interaction.channel as TextChannel | TextBasedChannel;
 
 		const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
-		const userName = user.username;
 		
 		if (!cooldowns.has(command?.data?.name)) {
 			cooldowns.set(command?.data?.name, new Collection());
@@ -32,33 +32,60 @@ const createInteractionEvent: Command = {
 			}
 		}
 
+		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
+		// This logic is set to be applied to directMessage and non direct message channels.
+		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
+			
+			// Checking to see if the maximum amount of single instance commands per user has been reached.
+			if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
+				return interaction.reply({
+					content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
+					ephemeral: true,
+				});
+			}
+
+			// If a user initiated a chat with the bot the interaction will be cancelled
+			const userMessageCollector = singleInstanceMessageCollector.get(interaction.user.id);
+			if (userMessageCollector) {
+				const channelName = interaction.client.channels.cache.get(userMessageCollector.channelId);
+				return interaction.reply({
+					content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
+					ephemeral: true,
+				});
+			}
+
+			// Findind all initiated user single instance commands
+			const userSingleInstanceCommands = singleInstanceCommands.filter((colCommand) => {
+				return colCommand.userId === interaction.user.id;
+			});
+
+			// Finding if the user has already initiated a single instance command in the current channel.
+			const activeCommand = userSingleInstanceCommands.find(usrCommand => usrCommand.channelId === interaction.channelId);
+
+			if (activeCommand) {
+				return interaction.reply(
+					{ 
+						content: `You have a single instance command active in this channel. Please terminate the active command to execute: **${commandName}**.`,
+						ephemeral: true
+					});
+			} else {
+				singleInstanceCommands.set(
+					interaction.id, { 
+						channelType: interaction.channel?.type, 
+						channelId: interaction.channel?.id, 
+						channelName: isInteractionInDirectMessage ? null : channel.name, 
+						name: commandName, 
+						user: interaction.user.username, 
+						userId: interaction.user.id,
+					});
+				
+			}
+		}
+
 		// handling modal interactions
 		if (interaction.isModalSubmit() === true) {
 			const response = await modalsService.handleModalSubmit(interaction as ModalSubmitInteraction);
 			return response;
-		}
-
-		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
-		// This logic is set to be applied to directMessage and non direct message channels.
-		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
-			const commandMatch = isInteractionInDirectMessage ?
-				singleInstanceCommands.find((singleInstanceCommand) => 
-					singleInstanceCommand.name === commandName && singleInstanceCommand.user === userName && singleInstanceCommand.channelType === ChannelType.DM) :
-				singleInstanceCommands.find((singleInstanceCommand) => 
-					singleInstanceCommand.name === commandName && singleInstanceCommand.channelName === channel.name);
-
-			if (commandMatch) {
-				return interaction.reply(
-					{ content: `Command already initiated. Only one active instance of the command **${command.data?.name}** can exist at a time.`,
-					ephemeral: true});
-			} else {
-				isInteractionInDirectMessage ? 
-				singleInstanceCommands.set(
-					interaction.id, { channelType: interaction.channel?.type, channelName: null, name: commandName, user: interaction.user.username}) :
-				singleInstanceCommands.set(
-					interaction.id, { channelType: interaction.channel?.type, channelName: channel.name, name: commandName, user: interaction.user.username});
-				
-			}
 		}
 
 		const now = Date.now();
