@@ -28,7 +28,7 @@ const assistantCommand: Command = {
             await interaction.reply({
                 content: generateAssistantIntroCopy(selectedProfile.name, user.username),
             });
-            const thread = await OpenAi.beta.threads.create();
+            const thread = await OpenAi.beta.threads.retrieve(selectedProfile.threadId);
             const collectorFilter = (colMsg: Message) => 
                 // collect message if the message is coming from the user who initiated
                 colMsg.author.id === user.id;
