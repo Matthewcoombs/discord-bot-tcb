@@ -46,20 +46,17 @@ export default {
         return status as runStatuses;
     },
 
-    processAssistantRunMessages(messages: ThreadMessagesPage) {
+    processAssistantRunMessages(messages: ThreadMessagesPage, runId: string) {
         let botResponse = '';
         const fileIds: string[][] = [];
+        const filteredThreadMsgs = messages.data.filter(msg => {
+            return msg.role === 'assistant' && msg.run_id === runId && msg.content[0].type === 'text';
+        });
 
-        // filtering out all non-recent assistant responses
-        const uniqueCompletionList = messages.data.filter((message, index, self) => 
-            index === self.findIndex((t) => (
-                t.role === 'assistant'
-            )));
-
-        for (const data of uniqueCompletionList) {
+        for (let i = 0; i < filteredThreadMsgs.length; i++) {
             
-            const { content, file_ids } = data;
-            if (data.role === 'assistant' && content[0].type === 'text') {
+            const { content, file_ids } = filteredThreadMsgs[i];
+            if (content[0].type === 'text') {
                 botResponse += `${content[0].text.value}\n`;
                 fileIds.push(file_ids);
             }
