@@ -18,7 +18,7 @@ Here are the following commands available for use:\n
 
         for (const command of filteredCommands) {
             const { name, description} = command[1].data;
-            botInfoMsg += `commandName: [${name}] - description: [${description}]\n`;
+            botInfoMsg += `[commandName]: ${name} - [description]: ${description}\n`;
         }
 
 		await interaction.reply({

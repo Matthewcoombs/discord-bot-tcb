@@ -109,6 +109,11 @@ const assistantCommand: Command = {
 
                         if (status !== 'completed') {
                             const delay = Math.min(baseDelay * Math.pow(2, retries), maxDelay);
+                            const delayToSeconds = delay/1000;
+                            await interaction.followUp({
+                                content: `Run in progress :timer: - I will update you in another ${delayToSeconds} seconds.`,
+                                ephemeral: true,
+                            });
                             await new Promise(resolve => setTimeout(resolve, delay));
                             retries++;
                         }
@@ -123,7 +128,7 @@ const assistantCommand: Command = {
                         const messages = await OpenAi.beta.threads.messages.list(
                             thread.id,
                         );
-                        const { botResponse, combinedFileIds } = assistantsService.processAssistantRunMessages(messages);
+                        const { botResponse, combinedFileIds } = assistantsService.processAssistantRunMessages(messages, run.id);
 
                         let botResponseFiles: string[] = [];
                         if (combinedFileIds.length > 0) {
@@ -138,6 +143,7 @@ const assistantCommand: Command = {
                             content: validateBotResponseLength(botResponse),
                             files: botResponseFiles,
                         });
+                        deleteTempFilesByTag(interactionTag);
                     }
                 }
             });
