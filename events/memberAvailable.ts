@@ -16,12 +16,20 @@ const memberAvailableEvent: Command = {
 
         if (isUserActive) {
             const { user, userId } = newPresence;
+            let userRecord = await usersDao.getUsers(userId);
+
+            // If no user record exists for the available user, we will insert them into the database here
+            if (userRecord.length === 0 && user) {
+                const { id: discordId, username } = user;
+                await usersDao.addUser({ discordId, username });
+                userRecord = await usersDao.getUsers(user.id);
+            }
+
             const userOptInData = await usersDao.getUserOptIn(userId);
-            const userRecord = await usersDao.getUsers(userId);
 
             // If a user record exists and they have NOT responded to the opt-in question,
             // we will ask the user if they want to opt into data tracking.
-            if (!userOptInData && userRecord) {
+            if (!userOptInData) {
                 const confirm = new ButtonBuilder()
                     .setCustomId(CONFIRM_ID)
                     .setLabel('confirm')
@@ -39,8 +47,6 @@ const memberAvailableEvent: Command = {
                     content: generateOptInCopy(user.username),
                     components: [row as any],
                 });
-                const userDmChannel = await user?.dmChannel?.fetch();
-                const optInMessage = userDmChannel?.lastMessage;
 
                 const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === userId;};
                 try {
@@ -52,13 +58,13 @@ const memberAvailableEvent: Command = {
                     }) as ButtonInteraction;
                     const isOptIn = optInResponse.customId === CONFIRM_ID;
                     await usersDao.insertUserOptIn(userId, isOptIn);
-                    await user?.send(`Thank you for responding :slight_smile:.`);
+                    await user?.send(`Thank you for responding to the user data tracking questionnaire :slight_smile:.`);
                     await user?.send(`You are now opted ${isOptIn ? 
                         'in :white_check_mark:' : 'out :x:'}.`);
-                    await optInMessage?.delete();
+                    await userResponse?.delete();
                 } catch (err) {
                     console.error(err);
-                    await optInMessage?.delete();
+                    await userResponse?.delete();
                 }
             }
         }
