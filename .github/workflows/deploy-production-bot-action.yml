@@ -68,6 +68,7 @@ jobs:
                     sudo systemctl enable clear-bot-commands.service
                     sudo systemctl daemon-reload
                     sudo systemctl restart clear-bot-commands.service
+                    echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -99,6 +100,7 @@ jobs:
                     sudo systemctl enable update-bot-commands.service
                     sudo systemctl daemon-reload
                     sudo systemctl restart update-bot-commands.service
+                    echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -139,6 +141,7 @@ jobs:
                     sudo systemctl enable start-bot.service
                     sudo systemctl daemon-reload
                     sudo systemctl restart start-bot.service
+                    echo $?
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}

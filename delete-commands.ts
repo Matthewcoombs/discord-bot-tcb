@@ -11,7 +11,7 @@ const TOKEN = process.env.DISCORD_TOKEN as string;
 const rest = new REST().setToken(TOKEN);
 (async () => {
     await rest.put(Routes.applicationCommands(CLIENT_ID), { body: [] })
-	.then(() => console.log('Successfully deleted all application commands.'))
+	.then(() => console.log(`Successfully deleted all application commands.`))
 	.catch(console.error);
 
     process.exit();
