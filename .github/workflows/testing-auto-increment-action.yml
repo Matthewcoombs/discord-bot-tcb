@@ -1,0 +1,21 @@
+name: ⚡ Package version bump
+run-name: ${{ github.actor }} is testing updating package version
+on:
+    push:
+        branches: [dummyMajorBranch]
+env:
+    REPO_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  bumping-package-version:
+    runs-on: ubuntu-latest
+    steps:
+    - name: ⬇️ Checkout repo
+      uses: actions/checkout@v4
+
+    - name: ⏫ Bumping version
+      uses: jpb06/bump-package@latest
+      with:
+        major-keywords: BREAKING CHANGE
+        minor-keywords: feat,minor
+        patch-keywords: fix,chore
