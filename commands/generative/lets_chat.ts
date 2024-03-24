@@ -1,60 +1,12 @@
-import { ChannelType, ChatInputCommandInteraction, CollectedInteraction, InteractionResponse, MessageCollector, SlashCommandBuilder, Message } from "discord.js";
+import { ChatInputCommandInteraction, CollectedInteraction, MessageCollector, SlashCommandBuilder, Message } from "discord.js";
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { CHAT_GPT_CHAT_TIMEOUT } from "../../shared/constants";
-import usersDao from "../../database/users/usersDao";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
 import { generateInteractionTag, validateBotResponseLength } from "../../shared/utils";
-
-async function sendInitResponse(interaction: ChatInputCommandInteraction) {
-    const { user, channel } = interaction;
-    const channelType = channel?.type;
-    const isDirectMessage = channelType === ChannelType.DM;
-    let initialResponse = isDirectMessage ? 
-    `Hi ${interaction?.user?.username}! This is just between me and you, so you can share all your dirty little secrets :smirk:.\n` :
-    `Hi there, ${user?.username} initiated a chat :wave:! Lets Chat!\n`;
-    initialResponse = initialResponse + `To end this conversation simply tell me "**goodbye**"`;
-    const initMessage = await interaction.reply({
-        content: initialResponse,
-        ephemeral: true,
-    });
-    return initMessage;
-}
-
-async function initUserProfile(interaction: ChatInputCommandInteraction, initMessage:InteractionResponse , userProfiles: UserProfile[], interactionTag: number) {
-    const { content: initialMessage } = await initMessage.fetch();
-    
-    const actionRowComponent = chatCompletionService.generateUserProfileDisplay(userProfiles);
-    const profileSelectResponse = await initMessage.edit({
-        content: `${initialMessage}\nPlease select who you would like to speak to :performing_arts::`,
-        components: [actionRowComponent as any],
-    });
-    const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === interaction.user.id;};
-    // If the user does not respond in 1 minutes (60000) the message is deleted.
-    const userProfileChoice = await profileSelectResponse?.awaitMessageComponent({
-        filter: collectorFilter,
-        time: 60000,
-    }).catch(() => {
-        initMessage.delete();
-        throw new InteractionTimeOutError({
-            error:  `Interaction timeout reached`,
-        });
-    });
-
-
-    const profileId = userProfileChoice?.customId as string;
-    const selectedProfile = await userProfilesDao.getUserProfileById(profileId);
-    await sendReponse(interaction, interactionTag, `${selectedProfile.name} selected`, true);
-
-    await initMessage.edit({
-        components: [],
-    });  
-
-    return selectedProfile;
-}
 
 async function sendReponse(interaction: ChatInputCommandInteraction, interactionTag: number, response: string, ephemeral: boolean) {
     // Cleaning potentially injected interaction tags by openai
@@ -72,21 +24,47 @@ const letsChatCommand: Command = {
         .setDescription('Talk to me!'),
     async execute(interaction: ChatInputCommandInteraction) {
         const interactionTag = generateInteractionTag();
+        const endChatKey = 'goodbye';
+        const { user } = interaction;
+        const initMsg = `Hi ${user.username}! You've initiated a chat between me and you. 
+        To end this chat simply tell me **${endChatKey}**`;
+        const initMsgResponse = await interaction.reply({
+            content: initMsg,
+            ephemeral: true,
+        });
+
+        const userProfiles = await userProfilesDao.getUserProfiles(user.id);
+        let selectedProfile: UserProfile;
+        if (userProfiles.length> 0) {
+            // selectedProfile = await initUserProfile(interaction, initMessage, userProfiles, interactionTag);
+            const { content: initContent } = await initMsgResponse.fetch();
+            const actionRowComponent = chatCompletionService.generateUserProfileDisplay(userProfiles);
+            const profileSelectResponse = await initMsgResponse.edit({
+                content: `${initContent}\nPlease select which profile you would like to speak to :performing_arts::`,
+                components: [actionRowComponent as any],
+            });
+            const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === interaction.user.id;};
+            // If the user does not respond in 1 minutes (60000) the message is deleted.
+            const userProfileChoice = await profileSelectResponse?.awaitMessageComponent({
+                filter: collectorFilter,
+                time: 60000,
+            }).catch(() => {
+                initMsgResponse.delete();
+                throw new InteractionTimeOutError({
+                    error:  `Interaction timeout reached`,
+                });
+            });
+
+            const profileId = userProfileChoice?.customId as string;
+            selectedProfile = await userProfilesDao.getUserProfileById(profileId);
+            await sendReponse(interaction, interactionTag, `${selectedProfile.name} selected`, true);
+
+            await initMsgResponse.edit({
+                components: [],
+            });  
+        }
+
         try {
-            let userProfiles: UserProfile[] = [];
-            const { user } = interaction;
-            const initMessage = await sendInitResponse(interaction);
-            const { optIn } = await usersDao.getUserOptIn(user.id);
-            if (optIn) {
-                userProfiles = await userProfilesDao.getUserProfiles(user.id);
-            }
-            const isUserOptedInWithProfiles = optIn && userProfiles.length > 0;
-
-            let selectedProfile: UserProfile;
-            if (isUserOptedInWithProfiles) {
-                selectedProfile = await initUserProfile(interaction, initMessage, userProfiles, interactionTag);
-            }
-
             const collectorFilter = (colMsg: Message) => 
                 // collect message if the message is coming from the user who initiated
                 colMsg.author.id === user.id || 
@@ -132,7 +110,7 @@ const letsChatCommand: Command = {
                     });
                 }
 
-                if (message.content.toLowerCase() === 'goodbye' && message.author.username === user.username) {
+                if (message.content.toLowerCase() === endChatKey && message.author.username === user.username) {
                     collector.stop();
                 }
             });
