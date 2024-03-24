@@ -37,7 +37,10 @@ const deleteGenerativeProfileCommand: Command = {
             const profileId = userProfileToDelete.customId;
             const selectedProfile = userProfiles.find(profile => profile.id === parseInt(profileId));
             
-            await OpenAi.beta.assistants.del(selectedProfile?.assistantId as string);
+            await Promise.all([
+                OpenAi.beta.assistants.del(selectedProfile?.assistantId as string),
+                OpenAi.beta.threads.del(selectedProfile?.threadId as string),
+            ]);
             await userProfilesDao.deleteUserProfile(profileId);
             await interaction.followUp({
                 content: `The profile has been deleted.`,

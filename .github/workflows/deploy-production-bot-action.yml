@@ -40,8 +40,9 @@ jobs:
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
-    # Creating systemctl service to update the bot commands
-    create-systemctl-command-service:
+
+    # Creating systemctl service to clear the current bot commands
+    create-systemctl-clear-command-service:
         needs: [deploy-via-sftp, build-step]
         runs-on: ubuntu-latest
         steps:
@@ -50,7 +51,7 @@ jobs:
               with:
                 command: |
                     echo "[Unit]
-                    Description=Production Discord Bot
+                    Description=Production Discord Bot Clear Commands
                     After=multi.user.target
                     [Service]
                     Type=oneshot
@@ -58,12 +59,43 @@ jobs:
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
                     WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
-                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node deploy-command.js
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node delete-commands.js
+                    User=root
+                    Group=root
+                    [Install]
+                    WantedBy=multi-user.target" > /etc/systemd/system/clear-bot-commands.service
+                    chmod +x /root/${{ env.REPO_NAME }}/dist/delete-commands.js
+                    sudo systemctl enable clear-bot-commands.service
+                    sudo systemctl daemon-reload
+                    sudo systemctl restart clear-bot-commands.service
+                host: ${{ secrets.SSH_HOST }}
+                user: root
+                key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    # Creating systemctl service to deploy the bot commands
+    create-systemctl-deploy-command-service:
+        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service]
+        runs-on: ubuntu-latest
+        steps:
+            - id: create-systemctl-command-service
+              uses: fifsky/ssh-action@master
+              with:
+                command: |
+                    echo "[Unit]
+                    Description=Production Discord Bot Deploy Commands
+                    After=multi.user.target
+                    [Service]
+                    Type=oneshot
+                    Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+                    Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+                    Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
+                    WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
+                    ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node deploy-commands.js
                     User=root
                     Group=root
                     [Install]
                     WantedBy=multi-user.target" > /etc/systemd/system/update-bot-commands.service
-                    chmod +x /root/${{ env.REPO_NAME }}/dist/deploy-command.js
+                    chmod +x /root/${{ env.REPO_NAME }}/dist/deploy-commands.js
                     sudo systemctl enable update-bot-commands.service
                     sudo systemctl daemon-reload
                     sudo systemctl restart update-bot-commands.service
@@ -75,7 +107,7 @@ jobs:
 
     # Creating systemctl service to start the bot
     create-systemctl-service:
-        needs: [deploy-via-sftp, build-step, create-systemctl-command-service]
+        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service, create-systemctl-deploy-command-service]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-service
@@ -110,4 +142,18 @@ jobs:
                 host: ${{ secrets.SSH_HOST }}
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    bumping-package-version:
+        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service, create-systemctl-deploy-command-service, create-systemctl-service]
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+    
+        - name: ⏫ Bumping version
+          uses: jpb06/bump-package@latest
+          with:
+            major-keywords: major
+            minor-keywords: feature,minor
+            patch-keywords: fix,chore,bug-fix
 

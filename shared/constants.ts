@@ -1,10 +1,10 @@
 export function generateWelcomeCopy(username: string) {
    return `Hello ${username}, welcome to the server!\n
-I'll be your helpful assistant while you're here.\n
-To access my features please utilize the **/** to see a list of my various commands.\n
-For instance if you need an answer to a quick question you can use my **/magic_conch** command.\n
-If you want an image generated you can use **/generate_image** command.\n
-If you want to just chat you can use my **/lets_chat** command.\n
+I'll be your helpful assistant while you're here
+To access my features please utilize the **/** to see a list of my various commands
+For instance if you need an answer to a quick question you can use my **/magic_conch** command
+If you want an image generated you can use **/generate_image** command
+If you want to just chat you can use my **/lets_chat** command, or just talk to me here!\n
 Have fun and enjoy your time here :blush:!`;
 }
 
@@ -39,3 +39,5 @@ export const PROFILES_LIMIT = 4;
 export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
 export const TEMP_FOLDER_PATH = `./temp`;
 export const DISCORD_MAX_REPLY_STRING_LENGTH = 2000;
+export const MAX_MESSAGE_COLLECTORS = 4;
+export const MAX_USER_SINGLE_INSTANCE_COMMANDS = 4;

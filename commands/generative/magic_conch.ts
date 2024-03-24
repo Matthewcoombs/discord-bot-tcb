@@ -3,7 +3,7 @@ import { OpenAi } from "../..";
 import { Command } from "../../shared/discord-js-types";
 import { config } from "../../config";
 
-const { completionModel } = config.openAi;
+const { defaultCompletionModel } = config.openAi;
 
 
 
@@ -22,7 +22,7 @@ const aiSingleResponseCommand: Command = {
 		const question = interaction.options.getString('question', true).toLowerCase();
 
             await  OpenAi.completions.create({
-                model: completionModel,
+                model: defaultCompletionModel,
                 prompt: question,
                 max_tokens: 4000
                 }).then(async completion => {

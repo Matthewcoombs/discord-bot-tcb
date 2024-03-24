@@ -1,15 +1,13 @@
 import { ChannelType, Events, GuildMember } from "discord.js";
 import { Command } from "../shared/discord-js-types";
 import usersDao from "../database/users/usersDao";
-import channelsDao from "../database/channels/channelsDao";
-import { GENERAL_CHANNEL, generateWelcomeCopy } from "../shared/constants";
+import { generateWelcomeCopy } from "../shared/constants";
 
 
 const newMemberEvent: Command = {
     name: Events.GuildMemberAdd,
     async execute(member: GuildMember) {
-        const { channelId } = await channelsDao.getChannelByName(GENERAL_CHANNEL);
-        const generalChannel =  await member.client.channels.fetch(channelId);
+        const generalChannel = member.client.channels.cache.find(channel => channel.type === 0 && channel.name === 'general');
         const { username, id: discordId } = member.user; 
         const newUser = { username, discordId };
 

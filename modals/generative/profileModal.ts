@@ -3,6 +3,7 @@ import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, PROFILE_PLACEHOLDER_TEXT } from "../
 import userProfilesDao, {UserProfile} from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { config } from "../../config";
+import { AssistantCreateParams } from "openai/resources/beta/assistants/assistants";
 
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
@@ -53,17 +54,23 @@ export default {
         // discords limit of 2000 characters
         profile += GENERATIVE_RESPONSE_LIMIT_CONTEXT;
 
-        // creating a new openAI assistant. We will default to using the
-        // code interpreter tool to start, but we will add the option for
-        // other tools as assistants feature expands
-        const {id: assistantId } = await OpenAi.beta.assistants.create({
+        // creating a new openAI assistant, and assistant thread.
+        const assistantPayload: AssistantCreateParams = {
             instructions: profile,
             name,
             tools: [{ type: "code_interpreter" }],
-            model: config.openAi.chatCompletionModel,
-        });
+            model: config.openAi.defaultChatCompletionModel,
+        };
 
-        await userProfilesDao.insertUserProfile({ name, profile, discordId: user.id, assistantId });
+        const [ assistant, thread ] = await Promise.all(
+            [OpenAi.beta.assistants.create(assistantPayload),
+            OpenAi.beta.threads.create(),]
+        );
+
+        const { id: assistantId } = assistant;
+        const { id: threadId } = thread;
+
+        await userProfilesDao.insertUserProfile({ name, profile, discordId: user.id, assistantId, threadId});
         return modalInteraction.reply({ content: `Your new profile **${name}** was added successfully!` });
     },
 

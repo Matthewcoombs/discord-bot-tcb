@@ -10,6 +10,8 @@ export interface UserProfile {
     updatedAt: string;
     assistantId: string;
     selected?: boolean;
+    textModel: string;
+    threadId: string;
 }
 
 export interface CreateProfile {
@@ -18,6 +20,7 @@ export interface CreateProfile {
     discordId: string;
     assistantId: string;
     selected?: boolean;
+    threadId: string;
 }
 
 export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
@@ -27,20 +30,26 @@ export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
     return userProfiles.length < PROFILES_LIMIT;
 }
 
+const getUserProfilesBaseQuery = sql`
+    SELECT
+        id,
+        discord_id AS "discordId",
+        name,
+        profile,
+        created_at AS "createdAt",
+        updated_at AS "updatedAt",
+        assistant_id AS "assistantId",
+        text_model AS "textModel",
+        thread_id AS "threadId",
+        selected
+    FROM
+        user_profiles
+`;
+
 export default {
     async getUserProfiles(discordId: string) {
         const userProfiles = await sql<UserProfile[]>`
-            SELECT
-                id,
-                discord_id AS "discordId",
-                name,
-                profile,
-                created_at AS "createdAt",
-                updated_at AS "updatedAt",
-                assistant_id AS "assistantId",
-                selected
-            FROM
-                user_profiles
+            ${getUserProfilesBaseQuery}
             WHERE
                 discord_id = ${discordId}
         `;
@@ -50,17 +59,7 @@ export default {
 
     async getUserProfileById(profileId: string) {
         const userProfiles = await sql<UserProfile[]>`
-            SELECT
-                id,
-                discord_id AS "discordId",
-                name,
-                profile,
-                created_at AS "createdAt",
-                updated_at AS "updatedAt",
-                assistant_id AS "assistantId",
-                selected
-            FROM
-                user_profiles
+            ${getUserProfilesBaseQuery}
             WHERE
                 id = ${profileId}
         `;
@@ -69,17 +68,7 @@ export default {
 
     async getSelectedProfile(userId: string) {
         const userProfiles = await sql<UserProfile[]>`
-            SELECT
-                id,
-                discord_id AS "discordId",
-                name,
-                profile,
-                created_at AS "createdAt",
-                updated_at AS "updatedAt",
-                assistant_id AS "assistantId",
-                selected
-            FROM
-                user_profiles
+            ${getUserProfilesBaseQuery}
             WHERE
                 selected = 'true'
             AND
@@ -89,13 +78,13 @@ export default {
     },
 
     async insertUserProfile(newProfile: CreateProfile) {
-        const { name, profile, discordId, assistantId} = newProfile;
+        const { name, profile, discordId, assistantId, threadId} = newProfile;
         await sql`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id)
+                (discord_id, name, profile, assistant_id, thread_id)
             VALUES
-                (${discordId}, ${name}, ${profile}, ${assistantId})
+                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId})
         `;
     },
 
@@ -109,14 +98,15 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected,} = selectedProfile;
+        const { name, profile, selected, textModel} = selectedProfile;
         await sql`
             UPDATE
                 user_profiles
             SET
                 name = ${name},
                 profile = ${profile},
-                selected = ${selected as boolean}
+                selected = ${selected as boolean},
+                text_model = ${textModel}
             WHERE
                 id = ${selectedProfile.id}
         `;

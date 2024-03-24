@@ -5,10 +5,18 @@ export enum imageModelEnums {
     DALLE3 = 'dall-e-3',
 }
 
+export enum textBasedModelEnums {
+    GPT_DAVINCI = 'text-davinci-003',
+    GPT3 = 'gpt-3.5-turbo-0125',
+    GPT4 = 'gpt-4-turbo-preview',
+}
+
 export const config = {
+    botId: '',
     openAi: {
-        completionModel: 'text-davinci-003',
-        chatCompletionModel: 'gpt-3.5-turbo',
+        defaultCompletionModel: textBasedModelEnums.GPT_DAVINCI,
+        defaultChatCompletionModel: textBasedModelEnums.GPT3,
+        defaultImageModel: imageModelEnums.DALLE2,
     },
     commands: {
         singleInstanceCommands: [
@@ -17,6 +25,7 @@ export const config = {
         ],
         optInCommands: [
             optInCommands.CREATE_PROFILE,
+            optInCommands.SELECT_PROFILE_MODEL,
         ]
     },
 };
