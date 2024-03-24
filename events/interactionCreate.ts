@@ -12,7 +12,6 @@ const createInteractionEvent: Command = {
 		const { user, commandName } = interaction as ChatInputCommandInteraction;
 		const command = interaction.client.commands.get(commandName) as Command;
 		const channel = interaction.channel as TextChannel | TextBasedChannel;
-
 		const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 		
 		if (!cooldowns.has(command?.data?.name)) {
