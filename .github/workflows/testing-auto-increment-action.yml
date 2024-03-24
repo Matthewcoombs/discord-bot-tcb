@@ -16,6 +16,6 @@ jobs:
     - name: ⏫ Bumping version
       uses: jpb06/bump-package@latest
       with:
-        major-keywords: BREAKING CHANGE
-        minor-keywords: feat,minor
+        major-keywords: major
+        minor-keywords: feature,minor
         patch-keywords: fix,chore
