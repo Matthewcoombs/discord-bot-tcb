@@ -143,3 +143,17 @@ jobs:
                 user: root
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+    bumping-package-version:
+        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service, create-systemctl-deploy-command-service, create-systemctl-service]
+        runs-on: ubuntu-latest
+        steps:
+        - name: Checkout repo
+          uses: actions/checkout@v4
+    
+        - name: ⏫ Bumping version
+          uses: jpb06/bump-package@latest
+          with:
+            major-keywords: major
+            minor-keywords: feature,minor
+            patch-keywords: fix,chore,bug-fix
+
