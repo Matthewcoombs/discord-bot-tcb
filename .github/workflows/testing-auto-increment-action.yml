@@ -18,4 +18,4 @@ jobs:
       with:
         major-keywords: major
         minor-keywords: feature,minor
-        patch-keywords: fix,chore
+        patch-keywords: fix,chore,bug-fix
