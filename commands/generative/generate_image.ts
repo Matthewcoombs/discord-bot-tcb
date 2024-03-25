@@ -6,7 +6,7 @@ import { TEMP_FOLDER_PATH } from "../../shared/constants";
 import * as fs from 'fs';
 import { imageModelEnums } from "../../config";
 import { ImageGenerateParams } from "openai/resources";
-import { generateInteractionTag } from "../../shared/utils";
+import { deleteTempFilesByTag, generateInteractionTag } from "../../shared/utils";
 
 const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -101,9 +101,11 @@ const aiImageGenerateCommand: Command = {
                 await interaction.editReply({ 
                     content: `Here is your picture ${username} :blush:!`,
                     files: imageFiles});
+                deleteTempFilesByTag(interactionTag);
             })
             .catch(async err => {
                 console.error(err);
+                deleteTempFilesByTag(interactionTag);
                 await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
                 `);
                 await interaction.followUp({
