@@ -6,8 +6,25 @@ on:
 env:
     REPO_NAME: ${{ github.event.repository.name }}
 jobs:
+    # Clearing the project from the root directory to copy fresh files
+    clear-project:
+      runs-on: ubuntu-latest
+      timeout-minutes: 2
+      steps:
+          - id: clear-project
+            uses: fifsky/ssh-action@master
+            with:
+              command: |
+                  cd /root
+                  rm -rf ${{ env.REPO_NAME }}
+                  echo $?
+              host: ${{ secrets.SSH_HOST }}
+              user: root
+              key: ${{ secrets.SSH_PRIVATE_KEY }}
+
     # Copying the copy project via sftp into the remote server
     deploy-via-sftp:
+        needs: [clear-project]
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v3
@@ -23,7 +40,7 @@ jobs:
 
     # Creating systemctl service to compile the project
     build-step:
-        needs: [ deploy-via-sftp]
+        needs: [deploy-via-sftp]
         runs-on: ubuntu-latest
         timeout-minutes: 2
         steps:
@@ -43,7 +60,7 @@ jobs:
 
     # Creating systemctl service to clear the current bot commands
     create-systemctl-clear-command-service:
-        needs: [deploy-via-sftp, build-step]
+        needs: [build-step]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-command-service
@@ -75,7 +92,7 @@ jobs:
 
     # Creating systemctl service to deploy the bot commands
     create-systemctl-deploy-command-service:
-        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service]
+        needs: [create-systemctl-clear-command-service]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-command-service
@@ -109,7 +126,7 @@ jobs:
 
     # Creating systemctl service to start the bot
     create-systemctl-service:
-        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service, create-systemctl-deploy-command-service]
+        needs: [create-systemctl-deploy-command-service]
         runs-on: ubuntu-latest
         steps:
             - id: create-systemctl-service
@@ -147,7 +164,7 @@ jobs:
                 key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     bumping-package-version:
-        needs: [deploy-via-sftp, build-step, create-systemctl-clear-command-service, create-systemctl-deploy-command-service, create-systemctl-service]
+        needs: [create-systemctl-service]
         runs-on: ubuntu-latest
         steps:
         - name: Checkout repo
