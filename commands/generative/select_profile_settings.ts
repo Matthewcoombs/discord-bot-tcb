@@ -3,11 +3,12 @@ import { Command, optInCommands } from "../../shared/discord-js-types";
 import { textBasedModelEnums } from "../../config";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
+// import profilesService from "../../openAIClient/profiles/profiles.service";
 
 
 const selectProfileModelCommand: Command = {
     data: new SlashCommandBuilder()
-        .setName(optInCommands.SELECT_PROFILE_MODEL)
+        .setName(optInCommands.SELECT_PROFILE_SETTINGS)
         .setDescription('Select the models used by your profile')
         .addStringOption((strOptions: SlashCommandStringOption) => 
             strOptions.setName('chat_model')
@@ -34,8 +35,13 @@ const selectProfileModelCommand: Command = {
             model: selectedProfile.textModel,
         });
         // NOTE - apply pg transaction in the future for potential errors
+
+        // const actionRow = profilesService.generateModelSelectionDisplay();
         await userProfilesDao.updateUserProfile(selectedProfile);
-        await interaction.reply(`The text based model for **${selectedProfile.name}** was updated successfully!`);
+        await interaction.reply({
+            content: `The text based model for **${selectedProfile.name}** was updated successfully!`,
+            components: [actionRow as any],
+        });
 
     },
 };

@@ -25,7 +25,7 @@ export const config = {
         ],
         optInCommands: [
             optInCommands.CREATE_PROFILE,
-            optInCommands.SELECT_PROFILE_MODEL,
+            optInCommands.SELECT_PROFILE_SETTINGS,
         ]
     },
 };
