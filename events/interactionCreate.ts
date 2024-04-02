@@ -118,7 +118,7 @@ const createInteractionEvent: Command = {
 			interaction.client.singleInstanceCommands.delete(interaction.id);
 			console.error(`Error executing ${commandName}`);
 			console.error(_err);
-			return interaction.reply(
+			return interaction.followUp(
 				{
 					content: `There was an internal error executing the command ${commandName}.`,
 					ephemeral: true,

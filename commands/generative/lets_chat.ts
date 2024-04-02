@@ -3,7 +3,7 @@ import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-typ
 import { OpenAi } from "../..";
 import { config } from "../../config";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
-import { CHAT_GPT_CHAT_TIMEOUT } from "../../shared/constants";
+import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
 import { generateInteractionTag, validateBotResponseLength } from "../../shared/utils";
@@ -34,7 +34,7 @@ const letsChatCommand: Command = {
         });
 
         const userProfiles = await userProfilesDao.getUserProfiles(user.id);
-        let selectedProfile: UserProfile;
+        let selectedProfile: UserProfile | null = null;
         if (userProfiles.length> 0) {
             // selectedProfile = await initUserProfile(interaction, initMessage, userProfiles, interactionTag);
             const { content: initContent } = await initMsgResponse.fetch();
@@ -75,6 +75,7 @@ const letsChatCommand: Command = {
                 filter: collectorFilter,
             }) as MessageCollector;
 
+            const timeout = selectedProfile && selectedProfile.timeout ? Number(selectedProfile.timeout) : DEFAULT_CHAT_TIMEOUT;
             const userResponseTimeout = setTimeout(async () => { 
                 collector.stop();
                 await sendReponse(
@@ -84,7 +85,7 @@ const letsChatCommand: Command = {
                     false
                     );
 
-            }, CHAT_GPT_CHAT_TIMEOUT);
+            }, timeout);
 
             collector?.on('collect', message => {
                 userResponseTimeout.refresh();

@@ -1,6 +1,6 @@
 import { ChannelType, Events, Message, MessageCollector } from "discord.js";
 import { Command } from "../shared/discord-js-types";
-import { CHAT_GPT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
+import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
 import chatCompletionService from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
@@ -71,11 +71,12 @@ const directMessageEvent: Command = {
                             channelId: message.channel.id,
                         }
                     );
-            
+                        
+                    const timeout = selectedProfile && selectedProfile.timeout ? Number(selectedProfile.timeout) : DEFAULT_CHAT_TIMEOUT;
                     const userResponseTimeout = setTimeout(async () => { 
                         collector.stop();
                         await sendResponse(isDirectMessage, message, `Looks like you're no longer there ${user.username}. Our chat has ended.`);
-                    }, CHAT_GPT_CHAT_TIMEOUT);
+                    }, timeout);
 
                     collector.on('collect', newMessage => {
                         userResponseTimeout.refresh();
@@ -104,7 +105,9 @@ const directMessageEvent: Command = {
                         }
                     });
                     collector.on('end', collected => {
-                        const terminationMsg = isDirectMessage ? 'The DM chat has been terminated' : 'The channel chat has been terminated';
+                        const terminationMsg = isDirectMessage ? 
+                            `The DM chat has been terminated with ${user.username}` : 
+                            `The channel chat has been terminated with ${user.username}`;
                         console.log(terminationMsg);
                         clearTimeout(userResponseTimeout);
                         collected.clear();

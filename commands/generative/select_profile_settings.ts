@@ -1,27 +1,24 @@
-import { SlashCommandBuilder, SlashCommandStringOption, ChatInputCommandInteraction } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, CollectedInteraction, SlashCommandStringOption, ButtonInteraction } from "discord.js";
 import { Command, optInCommands } from "../../shared/discord-js-types";
-import { textBasedModelEnums } from "../../config";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
-import { OpenAi } from "../..";
-// import profilesService from "../../openAIClient/profiles/profiles.service";
-
+import profilesService, { SELECT_CHAT_TIMEOUT_ID, SELECT_TEXT_MODEL_ID } from "../../openAIClient/profiles/profiles.service";
 
 const selectProfileModelCommand: Command = {
     data: new SlashCommandBuilder()
         .setName(optInCommands.SELECT_PROFILE_SETTINGS)
-        .setDescription('Select the models used by your profile')
-        .addStringOption((strOptions: SlashCommandStringOption) => 
-            strOptions.setName('chat_model')
-            .setDescription('The model your profile will use in chat services')
+        .setDescription(`Update you selected profile's settings`)
+        .addStringOption((strOption: SlashCommandStringOption) =>
+            strOption.setName('profile_setting')
+            .setDescription('The profile setting you would like to update')
             .setRequired(true)
             .addChoices(
-                {name: textBasedModelEnums.GPT3, value: textBasedModelEnums.GPT3},
-                {name: textBasedModelEnums.GPT4, value: textBasedModelEnums.GPT4},
+                { name: 'text model', value: SELECT_TEXT_MODEL_ID },
+                { name: 'chat timeout', value: SELECT_CHAT_TIMEOUT_ID}
             )
         ),
     async execute(interaction: ChatInputCommandInteraction) {
         const { user } = interaction;
-        const chatModel = interaction.options.getString('chat_model', true);
+        const profileSetting = await interaction.options.getString('profile_setting', true);
         const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
         if (!selectedProfile) {
             return interaction.reply({
@@ -30,17 +27,32 @@ const selectProfileModelCommand: Command = {
             });
         }
 
-        selectedProfile.textModel = chatModel;
-        await OpenAi.beta.assistants.update(selectedProfile.assistantId, {
-            model: selectedProfile.textModel,
+        const settingsReply = profilesService.processSettingsDisplay(profileSetting, selectedProfile);
+        const settingResponse = await interaction.reply({
+            content: settingsReply?.displayMsg,
+            components: [settingsReply?.row as any],
+            ephemeral: true,
         });
-        // NOTE - apply pg transaction in the future for potential errors
 
-        // const actionRow = profilesService.generateModelSelectionDisplay();
-        await userProfilesDao.updateUserProfile(selectedProfile);
-        await interaction.reply({
-            content: `The text based model for **${selectedProfile.name}** was updated successfully!`,
-            components: [actionRow as any],
+        const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === interaction.user.id;};
+        const userSettingChoice = await settingResponse.awaitMessageComponent({
+            filter: collectorFilter,
+            time: 120000,
+        }).catch(() => {
+            return settingResponse.edit({
+                content: `Response timeout reached. No profile updates were applied`,
+                components: [],
+            });
+        }) as ButtonInteraction;
+
+        const settingVal = userSettingChoice.customId;
+        if (!settingVal) {
+            return;
+        }
+        await profilesService.processUpdateUserProfile(profileSetting, selectedProfile, settingVal);
+        await settingResponse.edit({
+            content: `Profile settings for **${selectedProfile.name}** were updated successfully!`,
+            components: [],
         });
 
     },
