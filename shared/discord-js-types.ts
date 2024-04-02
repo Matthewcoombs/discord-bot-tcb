@@ -27,5 +27,5 @@ export enum optInCommands {
     DELETE_PROFILE = 'delete_profile',
     UPDATE_PROFILE = 'update_profile',
     SELECT_PROFILE = 'select_profile',
-    SELECT_PROFILE_MODEL = 'select_profile_model'
+    SELECT_PROFILE_SETTINGS = 'select_profile_settings'
 }

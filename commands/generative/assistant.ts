@@ -2,7 +2,7 @@ import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector, Mes
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
-import { CHAT_GPT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
+import { DEFAULT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
 import * as fs from 'fs';
 import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, validateBotResponseLength } from "../../shared/utils";
@@ -35,10 +35,11 @@ const assistantCommand: Command = {
             const collector = interaction?.channel?.createMessageCollector({
                 filter: collectorFilter,
             }) as MessageCollector;
+            const timeout = selectedProfile.timeout ? Number(selectedProfile.timeout) : DEFAULT_CHAT_TIMEOUT;
             const userResponseTimeout = setTimeout(async () => { 
                 collector.stop();
                 await interaction.followUp(`Looks like you're no longer there ${interaction.user.username}. Our assistant session has ended.`);
-            }, CHAT_GPT_CHAT_TIMEOUT);
+            }, timeout);
 
             collector.on('collect', async (message) => {
                 userResponseTimeout.refresh();

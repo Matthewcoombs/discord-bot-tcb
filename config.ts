@@ -11,6 +11,8 @@ export enum textBasedModelEnums {
     GPT4 = 'gpt-4-turbo-preview',
 }
 
+export const ASSISTANT_MODEL_OPTIONS = [ textBasedModelEnums.GPT3, textBasedModelEnums.GPT4 ];
+
 export const config = {
     botId: '',
     openAi: {
@@ -25,7 +27,7 @@ export const config = {
         ],
         optInCommands: [
             optInCommands.CREATE_PROFILE,
-            optInCommands.SELECT_PROFILE_MODEL,
+            optInCommands.SELECT_PROFILE_SETTINGS,
         ]
     },
 };

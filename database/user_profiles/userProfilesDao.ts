@@ -12,6 +12,7 @@ export interface UserProfile {
     selected?: boolean;
     textModel: string;
     threadId: string;
+    timeout: string | number;
 }
 
 export interface CreateProfile {
@@ -41,6 +42,7 @@ const getUserProfilesBaseQuery = sql`
         assistant_id AS "assistantId",
         text_model AS "textModel",
         thread_id AS "threadId",
+        timeout,
         selected
     FROM
         user_profiles
@@ -98,7 +100,7 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected, textModel} = selectedProfile;
+        const { name, profile, selected, textModel, timeout} = selectedProfile;
         await sql`
             UPDATE
                 user_profiles
@@ -106,7 +108,9 @@ export default {
                 name = ${name},
                 profile = ${profile},
                 selected = ${selected as boolean},
-                text_model = ${textModel}
+                text_model = ${textModel},
+                timeout = ${timeout},
+                updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
         `;
@@ -118,7 +122,8 @@ export default {
             UPDATE
                 user_profiles
             SET
-                selected = 'true'
+                selected = 'true',
+                updated_at = NOW()
             WHERE
                 id = ${id}
         `;
