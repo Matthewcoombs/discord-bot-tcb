@@ -19,16 +19,16 @@
   "author": "matthew c",
   "license": "ISC",
   "dependencies": {
-    "axios": "^1.6.0",
-    "discord.js": "^14.11.0",
-    "dotenv": "^16.3.1",
-    "openai": "^4.16.1",
-    "postgres": "^3.3.5"
+    "axios": "^1.6.8",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5",
+    "openai": "^4.32.1",
+    "postgres": "^3.4.4"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
-    "eslint": "^8.46.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
     "husky": "^8.0.3",
     "nodemon": "^3.1.0",
     "typescript": "^5.1.6"
