@@ -1,6 +1,6 @@
 import { Message } from "discord.js";
 import { OpenAi } from "../..";
-import { ThreadMessagesPage } from "openai/resources/beta/threads/messages/messages";
+import { MessagesPage } from "openai/resources/beta/threads/messages/messages";
 import * as fs from 'fs';
 import { TEMP_FOLDER_PATH } from "../../shared/constants";
 
@@ -46,7 +46,7 @@ export default {
         return status as runStatuses;
     },
 
-    processAssistantRunMessages(messages: ThreadMessagesPage, runId: string) {
+    processAssistantRunMessages(messages: MessagesPage, runId: string) {
         let botResponse = '';
         const fileIds: string[][] = [];
         const filteredThreadMsgs = messages.data.filter(msg => {
