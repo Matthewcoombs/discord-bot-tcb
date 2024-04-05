@@ -5,7 +5,7 @@ import chatCompletionService from "../../openAIClient/chatCompletion/chatComplet
 import { TEMP_FOLDER_PATH } from "../../shared/constants";
 import * as fs from 'fs';
 import { imageModelEnums } from "../../config";
-import { ImageGenerateParams } from "openai/resources";
+import { ImageGenerateParams, ImagesResponse } from "openai/resources";
 import { deleteTempFilesByTag, generateInteractionTag } from "../../shared/utils";
 
 const aiImageGenerateCommand: Command = {
@@ -89,31 +89,47 @@ const aiImageGenerateCommand: Command = {
             }
 
         await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
-        await OpenAi.images.generate(openAIBody)
-            .then(async completion => {
-                const imageUrls = completion.data.map(image => image.url) as string[];
-                await chatCompletionService.downloadAndConvertImagesToJpeg(imageUrls, username, interactionTag);
-                let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
-                imageFiles = imageFiles
-                    .filter(fileName => fileName.includes(username) && fileName.includes(interactionTag.toString()))
-                    .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
-
-                await interaction.editReply({ 
-                    content: `Here is your picture ${username} :blush:!`,
-                    files: imageFiles});
-                deleteTempFilesByTag(interactionTag);
-            })
-            .catch(async err => {
-                console.error(err);
-                deleteTempFilesByTag(interactionTag);
-                await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your image! Please check to ensure your question is not offensive and doesn't relate to any known people :sweat_smile:.
-                `);
-                await interaction.followUp({
-                    content: `What you told me to create: ${description}`,
-                    ephemeral: true,
+        try {
+            const isDalle3 = openAIBody.model === 'dall-e-3';
+            let imageUrls: string [];
+            if (isDalle3) {
+                const versionedOpenAiBodys: ImageGenerateParams[] = Array(imageCount).fill(openAIBody);
+                versionedOpenAiBodys.forEach(body => body.prompt = `${body.prompt} - version 1`);
+                const imageCreationPromises = versionedOpenAiBodys.map(body => {
+                    return OpenAi.images.generate(body);
                 });
-            });
+                const imageCompletions: ImagesResponse[] = await Promise.all(imageCreationPromises);
+                imageUrls = imageCompletions.reduce((acc, obj)=> {
+                    return acc.concat(obj.data[0].url as string);
+                },[] as string[]);
 
+            } else {
+                const imageCompletion = await OpenAi.images.generate(openAIBody);
+                imageUrls = imageCompletion.data.map(image => image.url as string);
+            }
+
+            await chatCompletionService.downloadAndConvertImagesToJpeg(imageUrls, username, interactionTag);
+            let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
+            imageFiles = imageFiles
+                .filter(fileName => fileName.includes(username) && fileName.includes(interactionTag.toString()))
+                .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
+
+            await interaction.editReply({ 
+                content: `Here is your picture ${username} :blush:!`,
+                files: imageFiles});
+            deleteTempFilesByTag(interactionTag);
+        } catch (err) {
+            console.error(err);
+            deleteTempFilesByTag(interactionTag);
+            await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your 
+                image! Please check to ensure your question is not offensive and doesn't relate to any known 
+                people :sweat_smile:.
+            `);
+            await interaction.followUp({
+                content: `What you told me to create: ${description}`,
+                ephemeral: true,
+            });
+        }
 	},
 };
 
