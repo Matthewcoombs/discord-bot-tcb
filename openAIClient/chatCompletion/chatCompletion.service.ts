@@ -25,8 +25,8 @@ function generateSystemContentMessage(profile: string): ChatCompletionMessage {
 }
 
 export default {
-    formatChatCompletionMessages (messages: Message[], profile?: string): ChatCompletionMessage[] {
-        const ChatCompletionMessages = messages.map(message => {
+    formatChatCompletionMessages (messages: Message[], selectedProfile?: UserProfile): ChatCompletionMessage[] {
+        let ChatCompletionMessages = messages.map(message => {
             if (message.author.bot) {
                 return { role: chatCompletionRoles.ASSISTANT, content: message.content };
             } else {
@@ -34,8 +34,15 @@ export default {
             }
         });
 
-        if (profile) {
-            ChatCompletionMessages.unshift(generateSystemContentMessage(profile));
+        if (selectedProfile?.retention && selectedProfile.retentionData) {
+            ChatCompletionMessages = [ ...selectedProfile.retentionData, ...ChatCompletionMessages];
+            ChatCompletionMessages = ChatCompletionMessages.length > 500 ? 
+                ChatCompletionMessages.splice(0, ChatCompletionMessages.length - 500) :
+                ChatCompletionMessages;
+        }
+
+        if (selectedProfile) {
+            ChatCompletionMessages.unshift(generateSystemContentMessage(selectedProfile.profile));
         } else  {
             ChatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_LIMIT_CONTEXT));
         }
