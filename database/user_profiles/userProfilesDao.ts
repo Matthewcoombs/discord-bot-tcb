@@ -1,4 +1,5 @@
 import { sql } from "../..";
+import { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { PROFILES_LIMIT } from "../../shared/constants";
 
 export interface UserProfile {
@@ -13,6 +14,8 @@ export interface UserProfile {
     textModel: string;
     threadId: string;
     timeout: string | number;
+    retention: boolean;
+    retentionData: ChatCompletionMessage[];
 }
 
 export interface CreateProfile {
@@ -43,7 +46,9 @@ const getUserProfilesBaseQuery = sql`
         text_model AS "textModel",
         thread_id AS "threadId",
         timeout,
-        selected
+        selected,
+        retention,
+        retention_data AS "retentionData"
     FROM
         user_profiles
 `;
@@ -76,7 +81,8 @@ export default {
             AND
                 discord_id = ${userId}
         `;
-        return userProfiles[0];
+        const userProfile = userProfiles[0];
+        return userProfile;
     },
 
     async insertUserProfile(newProfile: CreateProfile) {
@@ -100,7 +106,7 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected, textModel, timeout} = selectedProfile;
+        const { name, profile, selected, textModel, timeout, retention,retentionData} = selectedProfile;
         await sql`
             UPDATE
                 user_profiles
@@ -110,6 +116,8 @@ export default {
                 selected = ${selected as boolean},
                 text_model = ${textModel},
                 timeout = ${timeout},
+                retention = ${retention},
+                retention_data = ${retentionData as any},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}

@@ -6,6 +6,7 @@ import { OpenAi } from "../..";
 
 export const SELECT_TEXT_MODEL_ID = 'textModel';
 export const SELECT_CHAT_TIMEOUT_ID = 'timeout';
+export const SELECT_RETENTION_ID = 'retention';
 
 
 export default {
@@ -44,12 +45,33 @@ export default {
         return { displayMsg: `Profile Chat Timeout :timer:`, row };
     },
 
+    generateRetentionProfileSetting(retentionSetting?: boolean) {
+        const retention = retentionSetting ? retentionSetting : false;
+        const retentionButtons: ButtonBuilder[] = [];
+        const retentionOptions = [true, false];
+        for (let i = 0; i < retentionOptions.length; i++) {
+            const optVal = retentionOptions[i];
+            retentionButtons.push(
+                new ButtonBuilder()
+                    .setCustomId(optVal.toString())
+                    .setLabel(optVal.toString())
+                    .setStyle(optVal === retention ? ButtonStyle.Success : ButtonStyle.Primary)
+            );
+        }
+
+        const row  = new ActionRowBuilder()
+            .addComponents(retentionButtons);
+        return { displayMsg: `Profile Retention :brain:`, row };
+    },
+
     processSettingsDisplay(setting: string, selectedProfile: UserProfile) {
         switch (setting) {
             case SELECT_TEXT_MODEL_ID:
                 return this.generateTextModelSelectionDisplay(selectedProfile.textModel);
             case SELECT_CHAT_TIMEOUT_ID:
                 return this.generateTextModelChatTimeout(selectedProfile.timeout as string);
+            case SELECT_RETENTION_ID:
+                return this.generateRetentionProfileSetting(selectedProfile.retention);
             default:
                 break;
         }
@@ -68,6 +90,10 @@ export default {
                 break;
             case SELECT_CHAT_TIMEOUT_ID:
                 selectedProfile.timeout = Number(updateValue);
+                await userProfilesDao.updateUserProfile(selectedProfile);
+                break;
+            case SELECT_RETENTION_ID:
+                selectedProfile.retention = updateValue === 'true';
                 await userProfilesDao.updateUserProfile(selectedProfile);
                 break;
             default:

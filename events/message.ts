@@ -1,7 +1,7 @@
 import { ChannelType, Events, Message, MessageCollector } from "discord.js";
 import { Command } from "../shared/discord-js-types";
 import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
-import chatCompletionService from "../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage } from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
@@ -19,6 +19,16 @@ async function sendResponse(isDM: boolean, message: Message, response: string) {
     } else {
         message.channel.send(`${userTag} ${response}`);
     }
+}
+
+function cleanChatCompletionMsgs (chatCompMsgs: ChatCompletionMessage[]) {
+    const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
+        if (compMsg.role !== 'system') {
+            acc.push({ role: compMsg.role, content: compMsg.content.replace(/<@\d+>/g, '').trim()});
+        }
+        return acc;
+    }, [] as ChatCompletionMessage[]);
+    return cleanedMsgs;
 }
 
 const directMessageEvent: Command = {
@@ -86,25 +96,32 @@ const directMessageEvent: Command = {
                         if (!newMessage.author.bot) {
                             // Formatting the collected message to match the chatCompletion format the openAI API expects.
                             const userMessageInstance = singleInstanceMessageCollector.get(user.id);
-                            const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile?.profile);
+                            const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile);
                             OpenAi.chat.completions.create({
                                 model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                                 messages: chatCompletionMessages,
                             }).then(async chatCompletion => {
                                 const response = chatCompletion.choices[0].message;
                                 await sendResponse(isDirectMessage, message, response.content as string);
+                                if (newMessage.content.toLowerCase() === endChatKey) {
+                                    collector.stop();
+                                }
                             }).catch(async err => {
                                 console.error(err);
                                 collector.stop();
                                 await sendResponse(isDirectMessage, message, 'Sorry looks like something went wrong :disappointed_relieved:.');
                             });
                         }
-
-                        if (newMessage.content.toLowerCase() === endChatKey) {
-                            collector.stop();
-                        }
                     });
-                    collector.on('end', collected => {
+                    collector.on('end', async collected => {
+                        if (selectedProfile.retention) {
+                            const collectedMsgs = Array.from(collected.values());
+                            const retentionMsgs = chatCompletionService.formatChatCompletionMessages(collectedMsgs, selectedProfile);
+                            const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
+                            selectedProfile.retentionData = cleanRetentionMsgs;
+                            await userProfilesDao.updateUserProfile(selectedProfile);
+                        }
+
                         const terminationMsg = isDirectMessage ? 
                             `The DM chat has been terminated with ${user.username}` : 
                             `The channel chat has been terminated with ${user.username}`;

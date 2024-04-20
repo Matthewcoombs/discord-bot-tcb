@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, CollectedInteraction, MessageCollector, Sl
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
@@ -16,6 +16,16 @@ async function sendReponse(interaction: ChatInputCommandInteraction, interaction
         content: taggedResponse,
         ephemeral,
     });
+}
+
+function cleanChatCompletionMsgs (chatCompMsgs: ChatCompletionMessage[]) {
+    const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
+        if (compMsg.role !== 'system') {
+            acc.push({ role: compMsg.role, content: compMsg.content.replace(/\*\*lets_chat-\d+\*\*:/g, '').trim()});
+        }
+        return acc;
+    }, [] as ChatCompletionMessage[]);
+    return cleanedMsgs;
 }
 
 const letsChatCommand: Command = {
@@ -91,7 +101,7 @@ const letsChatCommand: Command = {
                 userResponseTimeout.refresh();
                 const collected = Array.from(collector.collected.values());
                 if (message.author.bot === false && message.author.username === user.username) {
-                    const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile?.profile);
+                    const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile as UserProfile);
 
                     OpenAi.chat.completions.create({
                         model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
@@ -99,6 +109,9 @@ const letsChatCommand: Command = {
                     }).then(async chatCompletion => {
                         const response = chatCompletion.choices[0].message;
                         await sendReponse(interaction, interactionTag, validateBotResponseLength(response.content as string), false);
+                        if (message.content.toLowerCase() === endChatKey && message.author.username === user.username) {
+                            collector.stop();
+                        }
                     }).catch(async err => {
                         console.error(err);
                         collector.stop();
@@ -110,13 +123,16 @@ const letsChatCommand: Command = {
                         );
                     });
                 }
-
-                if (message.content.toLowerCase() === endChatKey && message.author.username === user.username) {
-                    collector.stop();
-                }
             });
 
-            collector.on('end', collected => {
+            collector.on('end', async collected => {
+                if (selectedProfile?.retention) {
+                    const collectedMsgs = Array.from(collected.values());
+                    const retentionMsgs = chatCompletionService.formatChatCompletionMessages(collectedMsgs, selectedProfile);
+                    const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
+                    selectedProfile.retentionData = cleanRetentionMsgs;
+                    await userProfilesDao.updateUserProfile(selectedProfile);
+                }
                 console.log(`The chat has been terminated - [interactionTag]: ${interactionTag}`);
                 clearTimeout(userResponseTimeout);
                 collected.clear();
