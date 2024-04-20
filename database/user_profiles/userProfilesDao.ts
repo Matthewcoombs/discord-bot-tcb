@@ -90,9 +90,9 @@ export default {
         await sql`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id, thread_id)
+                (discord_id, name, profile, assistant_id, thread_id, retention)
             VALUES
-                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId})
+                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true)
         `;
     },
 
