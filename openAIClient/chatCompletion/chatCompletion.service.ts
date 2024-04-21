@@ -36,9 +36,6 @@ export default {
 
         if (selectedProfile?.retention && selectedProfile.retentionData) {
             ChatCompletionMessages = [ ...selectedProfile.retentionData, ...ChatCompletionMessages];
-            ChatCompletionMessages = ChatCompletionMessages.length > 500 ? 
-                ChatCompletionMessages.splice(0, ChatCompletionMessages.length - 500) :
-                ChatCompletionMessages;
         }
 
         if (selectedProfile) {

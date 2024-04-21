@@ -16,6 +16,7 @@ export interface UserProfile {
     timeout: string | number;
     retention: boolean;
     retentionData: ChatCompletionMessage[];
+    retentionSize: string | number;
 }
 
 export interface CreateProfile {
@@ -48,7 +49,8 @@ const getUserProfilesBaseQuery = sql`
         timeout,
         selected,
         retention,
-        retention_data AS "retentionData"
+        retention_data AS "retentionData",
+        retention_size AS "retentionSize"
     FROM
         user_profiles
 `;
@@ -106,7 +108,21 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected, textModel, timeout, retention,retentionData} = selectedProfile;
+        const { 
+            name, 
+            profile, 
+            selected, 
+            textModel, 
+            timeout, 
+            retention,
+            retentionData, 
+            retentionSize
+        } = selectedProfile;
+
+        if (retentionData.length > Number(retentionSize)) {
+            retentionData.splice(0, retentionData.length - Number(retentionSize));
+        }
+
         await sql`
             UPDATE
                 user_profiles
@@ -118,6 +134,7 @@ export default {
                 timeout = ${timeout},
                 retention = ${retention},
                 retention_data = ${retentionData as any},
+                retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
