@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, CollectedInteraction, SlashCommandStringOption, ButtonInteraction } from "discord.js";
 import { Command, optInCommands } from "../../shared/discord-js-types";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
-import profilesService, { SELECT_CHAT_TIMEOUT_ID, SELECT_RETENTION_ID, SELECT_TEXT_MODEL_ID } from "../../openAIClient/profiles/profiles.service";
+import profilesService, { SELECT_CHAT_TIMEOUT_ID, SELECT_RETENTION_ID, SELECT_RETENTION_SIZE_ID, SELECT_TEXT_MODEL_ID } from "../../openAIClient/profiles/profiles.service";
 
 const selectProfileModelCommand: Command = {
     data: new SlashCommandBuilder()
@@ -15,6 +15,7 @@ const selectProfileModelCommand: Command = {
                 { name: 'text model', value: SELECT_TEXT_MODEL_ID },
                 { name: 'chat timeout', value: SELECT_CHAT_TIMEOUT_ID},
                 { name: 'profile retention', value: SELECT_RETENTION_ID },
+                { name: 'profile retention size', value: SELECT_RETENTION_SIZE_ID },
             )
         ),
     async execute(interaction: ChatInputCommandInteraction) {
