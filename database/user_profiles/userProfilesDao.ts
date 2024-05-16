@@ -1,6 +1,6 @@
 import { sql } from "../..";
 import { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
-import { PROFILES_LIMIT } from "../../shared/constants";
+import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from "../../shared/constants";
 
 export interface UserProfile {
     id: string | number;
@@ -92,9 +92,9 @@ export default {
         await sql`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id, thread_id, retention)
+                (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
             VALUES
-                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true)
+                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true, ${DEFAULT_RETENTION_SIZE})
         `;
     },
 
@@ -119,7 +119,7 @@ export default {
             retentionSize
         } = selectedProfile;
 
-        if (retentionData.length > Number(retentionSize)) {
+        if (retentionData && retentionData.length > Number(retentionSize)) {
             retentionData.splice(0, retentionData.length - Number(retentionSize));
         }
 
