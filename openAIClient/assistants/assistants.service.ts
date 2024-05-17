@@ -1,22 +1,22 @@
-import { Message } from "discord.js";
-import { OpenAi } from "../..";
-import { MessageCreateParams, MessagesPage } from "openai/resources/beta/threads/messages";
+import { Message } from 'discord.js';
+import { OpenAi } from '../..';
+import { MessageCreateParams, MessagesPage } from 'openai/resources/beta/threads/messages';
 import * as fs from 'fs';
-import { TEMP_FOLDER_PATH } from "../../shared/constants";
+import { TEMP_FOLDER_PATH } from '../../shared/constants';
 
 enum AssistantsRoles {
     USER = 'user',
 }
 
 export enum runStatuses {
-    QUEUED = "queued" , 
-    IN_PROGRESS = "in_progress" , 
-    REQUIRED_ACTION = "requires_action" , 
-    CANCELLING = "cancelling" , 
-    CANCELLED = "cancelled" , 
-    FAILED = "failed" , 
-    COMPLETED = "completed" , 
-    EXPIRED = "expired"
+    QUEUED = 'queued' , 
+    IN_PROGRESS = 'in_progress' , 
+    REQUIRED_ACTION = 'requires_action' , 
+    CANCELLING = 'cancelling' , 
+    CANCELLED = 'cancelled' , 
+    FAILED = 'failed' , 
+    COMPLETED = 'completed' , 
+    EXPIRED = 'expired'
 }
 
 export default {
