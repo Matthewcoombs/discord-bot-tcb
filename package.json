@@ -22,7 +22,7 @@
     "axios": "^1.6.8",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
-    "openai": "^4.32.1",
+    "openai": "^4.47.1",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
