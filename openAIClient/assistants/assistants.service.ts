@@ -1,15 +1,8 @@
 import { Message } from "discord.js";
 import { OpenAi } from "../..";
-import { MessagesPage } from "openai/resources/beta/threads/messages/messages";
+import { MessageCreateParams, MessagesPage } from "openai/resources/beta/threads/messages";
 import * as fs from 'fs';
 import { TEMP_FOLDER_PATH } from "../../shared/constants";
-
-
-export interface AssistantsMessage {
-    role: AssistantsRoles;
-    content: string;
-    file_ids?: string[];
-}
 
 enum AssistantsRoles {
     USER = 'user',
@@ -27,11 +20,14 @@ export enum runStatuses {
 }
 
 export default {
-    generateAssistantMessage (message: Message, fileIds?: string[]): AssistantsMessage {
-        const assistantMessage: AssistantsMessage = {
+    generateAssistantMessage (message: Message, fileIds?: string[]): MessageCreateParams {
+        const attachments = fileIds?.map((fileId) => 
+            { return {file_id: fileId};
+    });
+        const assistantMessage: MessageCreateParams = {
             role: AssistantsRoles.USER,
             content: message.content,
-            file_ids: fileIds,
+            attachments,
         };
     
         return assistantMessage;
@@ -48,23 +44,24 @@ export default {
 
     processAssistantRunMessages(messages: MessagesPage, runId: string) {
         let botResponse = '';
-        const fileIds: string[][] = [];
+        const fileIds: string[] = [];
         const filteredThreadMsgs = messages.data.filter(msg => {
             return msg.role === 'assistant' && msg.run_id === runId && msg.content[0].type === 'text';
         });
 
         for (let i = 0; i < filteredThreadMsgs.length; i++) {
             
-            const { content, file_ids } = filteredThreadMsgs[i];
+            const { content, attachments } = filteredThreadMsgs[i];
             if (content[0].type === 'text') {
                 botResponse += `${content[0].text.value}\n`;
-                fileIds.push(file_ids);
+                if (attachments && attachments.length > 0) {
+                    const fileId = attachments[0].file_id;
+                    fileIds.push(fileId as string);
+                }
             }
         }
-
-        const combinedFileIds = fileIds.reduce((acc, curr) => acc.concat(curr), []);
         
-        return {botResponse, combinedFileIds} ;
+        return {botResponse, fileIds} ;
     },
 
     async processAssistantRunFiles(fileIds: string[], userName: string, interactionTag: number) {

@@ -1,5 +1,6 @@
 import { sql } from "../..";
-import { PROFILES_LIMIT } from "../../shared/constants";
+import { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
+import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from "../../shared/constants";
 
 export interface UserProfile {
     id: string | number;
@@ -13,6 +14,9 @@ export interface UserProfile {
     textModel: string;
     threadId: string;
     timeout: string | number;
+    retention: boolean;
+    retentionData: ChatCompletionMessage[];
+    retentionSize: string | number;
 }
 
 export interface CreateProfile {
@@ -43,7 +47,10 @@ const getUserProfilesBaseQuery = sql`
         text_model AS "textModel",
         thread_id AS "threadId",
         timeout,
-        selected
+        selected,
+        retention,
+        retention_data AS "retentionData",
+        retention_size AS "retentionSize"
     FROM
         user_profiles
 `;
@@ -76,7 +83,8 @@ export default {
             AND
                 discord_id = ${userId}
         `;
-        return userProfiles[0];
+        const userProfile = userProfiles[0];
+        return userProfile;
     },
 
     async insertUserProfile(newProfile: CreateProfile) {
@@ -84,9 +92,9 @@ export default {
         await sql`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id, thread_id)
+                (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
             VALUES
-                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId})
+                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true, ${DEFAULT_RETENTION_SIZE})
         `;
     },
 
@@ -100,7 +108,21 @@ export default {
     },
 
     async updateUserProfile(selectedProfile: UserProfile) {
-        const { name, profile, selected, textModel, timeout} = selectedProfile;
+        const { 
+            name, 
+            profile, 
+            selected, 
+            textModel, 
+            timeout, 
+            retention,
+            retentionData, 
+            retentionSize
+        } = selectedProfile;
+
+        if (retentionData && retentionData.length > Number(retentionSize)) {
+            retentionData.splice(0, retentionData.length - Number(retentionSize));
+        }
+
         await sql`
             UPDATE
                 user_profiles
@@ -110,6 +132,9 @@ export default {
                 selected = ${selected as boolean},
                 text_model = ${textModel},
                 timeout = ${timeout},
+                retention = ${retention},
+                retention_data = ${retentionData as any},
+                retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}

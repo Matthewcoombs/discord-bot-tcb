@@ -9,9 +9,14 @@ export enum textBasedModelEnums {
     GPT_DAVINCI = 'text-davinci-003',
     GPT3 = 'gpt-3.5-turbo-0125',
     GPT4 = 'gpt-4-turbo-preview',
+    GPT4O = 'gpt-4o',
 }
 
-export const ASSISTANT_MODEL_OPTIONS = [ textBasedModelEnums.GPT3, textBasedModelEnums.GPT4 ];
+export const ASSISTANT_MODEL_OPTIONS = [ 
+    textBasedModelEnums.GPT3, 
+    textBasedModelEnums.GPT4,
+    textBasedModelEnums.GPT4O,
+];
 
 export const config = {
     botId: '',

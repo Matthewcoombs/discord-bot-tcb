@@ -15,8 +15,8 @@ dependencies:
     specifier: ^16.4.5
     version: 16.4.5
   openai:
-    specifier: ^4.32.1
-    version: 4.32.1
+    specifier: ^4.47.1
+    version: 4.47.1
   postgres:
     specifier: ^3.4.4
     version: 3.4.4
@@ -1141,8 +1141,8 @@ packages:
       wrappy: 1.0.2
     dev: true
 
-  /openai@4.32.1:
-    resolution: {integrity: sha512-3e9QyCY47tgOkxBe2CSVKlXOE2lLkMa24Y0s3LYZR40yYjiBU9dtVze+C3mu1TwWDGiRX52STpQAEJZvRNuIrA==}
+  /openai@4.47.1:
+    resolution: {integrity: sha512-WWSxhC/69ZhYWxH/OBsLEirIjUcfpQ5+ihkXKp06hmeYXgBBIUCa9IptMzYx6NdkiOCsSGYCnTIsxaic3AjRCQ==}
     hasBin: true
     dependencies:
       '@types/node': 18.19.29
