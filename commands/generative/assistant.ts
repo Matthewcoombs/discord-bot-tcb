@@ -129,11 +129,11 @@ const assistantCommand: Command = {
                         const messages = await OpenAi.beta.threads.messages.list(
                             thread.id,
                         );
-                        const { botResponse, combinedFileIds } = assistantsService.processAssistantRunMessages(messages, run.id);
+                        const { botResponse, fileIds } = assistantsService.processAssistantRunMessages(messages, run.id);
 
                         let botResponseFiles: string[] = [];
-                        if (combinedFileIds.length > 0) {
-                            await assistantsService.processAssistantRunFiles(combinedFileIds, user.username, interactionTag);
+                        if (fileIds.length > 0) {
+                            await assistantsService.processAssistantRunFiles(fileIds, user.username, interactionTag);
                             botResponseFiles = fs.readdirSync(TEMP_FOLDER_PATH);
                             botResponseFiles = botResponseFiles
                                                 .filter(fileName => fileName.includes(user.username) && fileName.includes(interactionTag.toString()))

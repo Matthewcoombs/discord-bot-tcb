@@ -3,7 +3,7 @@ import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, PROFILE_PLACEHOLDER_TEXT } from "../
 import userProfilesDao, {UserProfile} from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import { AssistantCreateParams } from "openai/resources/beta/assistants/assistants";
+import { AssistantCreateParams } from "openai/resources/beta/assistants";
 
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
