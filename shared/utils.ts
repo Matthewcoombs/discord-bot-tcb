@@ -1,23 +1,18 @@
 import * as fs from 'fs'; 
 import { DISCORD_MAX_REPLY_STRING_LENGTH, TEMP_FOLDER_PATH } from './constants';
-import { BotResponseLengthError, InteractionError, InvalidFileError } from './errors';
+import { InteractionError, InvalidFileError } from './errors';
 import axios from 'axios';
 
 export function generateInteractionTag() {
     return Math.floor(10000 + Math.random() * 90000);
 }
 
-export function validateBotResponseLength(response: string) {
-    if (response.length > DISCORD_MAX_REPLY_STRING_LENGTH) {
-        throw new BotResponseLengthError({
-            error: `Bot response exceeds discords limit of 2000 characters`,
-            metaData: {
-                botResponse: response,
-                responseLength: response.length
-            }
-        });
+export function processBotResponseLength(response: string) {
+    const responses: string[] = [];
+    for (let i = 0; i < response.length; i += DISCORD_MAX_REPLY_STRING_LENGTH) {
+        responses.push(response.slice(i, i + DISCORD_MAX_REPLY_STRING_LENGTH));
     }
-    return response;
+    return responses;
 }
 
 export async function getRemoteFileBufferData(fileUrl: string) {

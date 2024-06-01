@@ -1,11 +1,11 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector, Message } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, MessageCollector, Message, InteractionReplyOptions } from "discord.js";
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import userProfilesDao from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
 import { DEFAULT_CHAT_TIMEOUT, TEMP_FOLDER_PATH, generateAssistantIntroCopy, generateAssistantRunKey } from "../../shared/constants";
 import assistantsService from "../../openAIClient/assistants/assistants.service";
 import * as fs from 'fs';
-import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, validateBotResponseLength } from "../../shared/utils";
+import { createTempFile, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, processBotResponseLength } from "../../shared/utils";
 import filesService from "../../openAIClient/files/files.service";
 
 const assistantCommand: Command = {
@@ -140,10 +140,16 @@ const assistantCommand: Command = {
                                                 .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
                         }
 
-                        await interaction.followUp({
-                            content: validateBotResponseLength(botResponse),
-                            files: botResponseFiles,
-                        });
+                        const responses = processBotResponseLength(botResponse);
+                        for (let i = 0; i < responses.length; i++) {
+                            const resPayload: InteractionReplyOptions = {
+                                content: responses[i],
+                            };
+                            if (i === responses.length - 1 && botResponseFiles) {
+                                resPayload.files = botResponseFiles;
+                            }
+                            await interaction.followUp(resPayload);
+                        }
                         deleteTempFilesByTag(interactionTag);
                     }
                 }
