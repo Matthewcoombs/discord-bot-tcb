@@ -6,16 +6,19 @@ import chatCompletionService, { ChatCompletionMessage } from "../../openAIClient
 import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
-import { generateInteractionTag, validateBotResponseLength } from "../../shared/utils";
+import { generateInteractionTag, processBotResponseLength } from "../../shared/utils";
 
 async function sendReponse(interaction: ChatInputCommandInteraction, interactionTag: number, response: string, ephemeral: boolean) {
     // Cleaning potentially injected interaction tags by openai
     response = response.replace(/\*\*lets_chat-\d+\*\*:/g, '').trim();
-    const taggedResponse = `**${singleInstanceCommandsEnum.LETS_CHAT}-${interactionTag}**: ${response}`;
-    await interaction.followUp({
-        content: taggedResponse,
-        ephemeral,
-    });
+    const responses = processBotResponseLength(response);
+    for (let i = 0; i < responses.length; i++) {
+        const taggedResponse = `**${singleInstanceCommandsEnum.LETS_CHAT}-${interactionTag}**: ${responses[i]}`;
+        await interaction.followUp({
+            content: taggedResponse,
+            ephemeral,
+        });
+    }
 }
 
 function cleanChatCompletionMsgs (chatCompMsgs: ChatCompletionMessage[]) {
@@ -108,7 +111,7 @@ const letsChatCommand: Command = {
                         messages: chatCompletionMessages,
                     }).then(async chatCompletion => {
                         const response = chatCompletion.choices[0].message;
-                        await sendReponse(interaction, interactionTag, validateBotResponseLength(response.content as string), false);
+                        await sendReponse(interaction, interactionTag, response.content as string, false);
                         if (message.content.toLowerCase() === endChatKey && message.author.username === user.username) {
                             collector.stop();
                         }

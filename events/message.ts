@@ -5,19 +5,23 @@ import chatCompletionService, { ChatCompletionMessage } from "../openAIClient/ch
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
+import { processBotResponseLength } from "../shared/utils";
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
     // Cleaning potentially injected user tags by openai
     const userTag = `<@${message.author.id}>`;
     response = response.replace(/<@\d+>/g, '').trim();
 
-    if (isDM) {
-        await message.author.send({
-            content: response,
-            target: message.author,
-        });
-    } else {
-        message.channel.send(`${userTag} ${response}`);
+    const responses = processBotResponseLength(response);
+    for (let i = 0; i < responses.length; i++) {
+        if (isDM) {
+            await message.author.send({
+                content: responses[i],
+                target: message.author,
+            });
+        } else {
+            message.channel.send(`${userTag} ${responses[i]}`);
+        }
     }
 }
 
