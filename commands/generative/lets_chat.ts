@@ -24,7 +24,12 @@ async function sendReponse(interaction: ChatInputCommandInteraction, interaction
 function cleanChatCompletionMsgs (chatCompMsgs: ChatCompletionMessage[]) {
     const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
         if (compMsg.role !== 'system') {
-            acc.push({ role: compMsg.role, content: compMsg.content.replace(/\*\*lets_chat-\d+\*\*:/g, '').trim()});
+            const type = compMsg.content[0].type;
+            const text = compMsg.content[0].text as string;
+            acc.push({ role: compMsg.role, content: [{
+                type,
+                text: text.replace(/\*\*lets_chat-\d+\*\*:/g, '').trim()
+            }]});
         }
         return acc;
     }, [] as ChatCompletionMessage[]);
@@ -108,7 +113,7 @@ const letsChatCommand: Command = {
 
                     OpenAi.chat.completions.create({
                         model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
-                        messages: chatCompletionMessages,
+                        messages: chatCompletionMessages as any,
                     }).then(async chatCompletion => {
                         const response = chatCompletion.choices[0].message;
                         await sendReponse(interaction, interactionTag, response.content as string, false);

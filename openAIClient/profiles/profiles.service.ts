@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { ASSISTANT_MODEL_OPTIONS } from "../../config";
+import { ASSISTANT_MODEL_OPTIONS, textBasedModelEnums } from "../../config";
 import { CHAT_TIMEOUT_OPTIONS, DEFAULT_CHAT_TIMEOUT, DEFAULT_RETENTION_SIZE, RETENTION_SIZE_OPTIONS } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
@@ -101,7 +101,7 @@ export default {
     async processUpdateUserProfile(setting: string, selectedProfile: UserProfile, updateValue: string) {
         switch (setting) {
             case SELECT_TEXT_MODEL_ID:
-                selectedProfile.textModel = updateValue;
+                selectedProfile.textModel = updateValue as textBasedModelEnums;
                 await Promise.all([
                     userProfilesDao.updateUserProfile(selectedProfile),
                     OpenAi.beta.assistants.update(selectedProfile.assistantId, {

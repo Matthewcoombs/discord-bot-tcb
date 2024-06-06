@@ -1,4 +1,5 @@
 import { sql } from "../..";
+import { textBasedModelEnums } from "../../config";
 import { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from "../../shared/constants";
 
@@ -11,7 +12,7 @@ export interface UserProfile {
     updatedAt: string;
     assistantId: string;
     selected?: boolean;
-    textModel: string;
+    textModel: textBasedModelEnums;
     threadId: string;
     timeout: string | number;
     retention: boolean;
