@@ -28,7 +28,12 @@ async function sendResponse(isDM: boolean, message: Message, response: string) {
 function cleanChatCompletionMsgs (chatCompMsgs: ChatCompletionMessage[]) {
     const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
         if (compMsg.role !== 'system') {
-            acc.push({ role: compMsg.role, content: compMsg.content.replace(/<@\d+>/g, '').trim()});
+            const type = compMsg.content[0].type;
+            const text = compMsg.content[0].text as string;
+            acc.push({ role: compMsg.role, content: [{
+                type,
+                text: text.replace(/<@\d+>/g, '').trim()
+            }]});
         }
         return acc;
     }, [] as ChatCompletionMessage[]);
@@ -103,7 +108,7 @@ const directMessageEvent: Command = {
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile);
                             OpenAi.chat.completions.create({
                                 model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
-                                messages: chatCompletionMessages,
+                                messages: chatCompletionMessages as any,
                             }).then(async chatCompletion => {
                                 const response = chatCompletion.choices[0].message;
                                 await sendResponse(isDirectMessage, message, response.content as string);

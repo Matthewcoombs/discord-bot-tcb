@@ -5,10 +5,29 @@ import axios from "axios";
 import * as fs from 'fs';
 
 import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, TEMP_FOLDER_PATH } from "../../shared/constants";
+import { textBasedModelEnums } from "../../config";
+
+export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
+    "image/png", 
+    "image/jpeg", 
+    "image/webp", 
+    "image/gif"
+];
 
 export interface ChatCompletionMessage {
     role: chatCompletionRoles;
-    content: string;
+    content: {
+        type: chatCompletionTypes,
+        text?: string,
+        image_url?: {
+            url: string,
+        },
+    }[];
+}
+
+enum chatCompletionTypes {
+    TEXT = 'text',
+    IMAGE_URL = 'image_url',
 }
 
 enum chatCompletionRoles {
@@ -20,30 +39,50 @@ enum chatCompletionRoles {
 function generateSystemContentMessage(profile: string): ChatCompletionMessage {
     return {
         role: chatCompletionRoles.SYSTEM,
-        content: profile,
+        content: [{
+            type: chatCompletionTypes.TEXT,
+            text: profile,
+        }],
     };
 }
 
 export default {
     formatChatCompletionMessages (messages: Message[], selectedProfile?: UserProfile): ChatCompletionMessage[] {
-        let ChatCompletionMessages = messages.map(message => {
-            if (message.author.bot) {
-                return { role: chatCompletionRoles.ASSISTANT, content: message.content };
-            } else {
-                return { role: chatCompletionRoles.USER, content: message.content };
+        let chatCompletionMessages: ChatCompletionMessage[] = messages.map(message => {
+            const chatCompletion: ChatCompletionMessage = {
+                role: message.author.bot ? chatCompletionRoles.ASSISTANT : chatCompletionRoles.USER,
+                content: [{
+                    type: chatCompletionTypes.TEXT,
+                    text: message.content,
+                }]
+            };
+
+            if (message.attachments && selectedProfile?.textModel === textBasedModelEnums.GPT4O) {
+                const imageContents = message.attachments.filter(attachment => 
+                    CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(attachment.contentType as string)).map(filteredAttachments => {
+                        return {
+                            type: chatCompletionTypes.IMAGE_URL,
+                            image_url: {
+                                url: filteredAttachments.url, 
+                            }
+                        };
+                    });
+
+                chatCompletion.content.push(...imageContents);
             }
+            return chatCompletion; 
         });
 
         if (selectedProfile?.retention && selectedProfile.retentionData) {
-            ChatCompletionMessages = [ ...selectedProfile.retentionData, ...ChatCompletionMessages];
+            chatCompletionMessages = [ ...selectedProfile.retentionData, ...chatCompletionMessages];
         }
 
         if (selectedProfile) {
-            ChatCompletionMessages.unshift(generateSystemContentMessage(selectedProfile.profile));
+            chatCompletionMessages.unshift(generateSystemContentMessage(selectedProfile.profile));
         } else  {
-            ChatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_LIMIT_CONTEXT));
+            chatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_LIMIT_CONTEXT));
         }
-        return ChatCompletionMessages;
+        return chatCompletionMessages;
     },
 
     generateUserProfileDisplay(userProfiles: UserProfile[]) {
