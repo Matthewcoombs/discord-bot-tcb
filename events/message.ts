@@ -1,7 +1,7 @@
 import { ChannelType, Events, Message, MessageCollector } from "discord.js";
 import { Command } from "../shared/discord-js-types";
 import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
-import chatCompletionService, { ChatCompletionMessage } from "../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage, JsonContent } from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
@@ -60,8 +60,6 @@ const directMessageEvent: Command = {
             }
 
             try {
-                const endChatKey = 'goodbye';
-
                 if (setUserMsgCol && setUserMsgCol.channelId !== message.channel.id) {
                     await sendResponse(isDirectMessage, message, `Sorry you've already initiated a chat in another channel.`);
                 }
@@ -70,7 +68,6 @@ const directMessageEvent: Command = {
                 // If the user has we will skip this process altogether.
                 if (!setUserMsgCol) {
                     const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
-                    await sendResponse(isDirectMessage, message, `You've initiated a chat session To end this session simply tell me "**${endChatKey}**."`);
 
                     const collectorFilter = (colMsg: Message) => 
                     // collect message if the message is coming from the user who initiated
@@ -108,11 +105,13 @@ const directMessageEvent: Command = {
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile);
                             OpenAi.chat.completions.create({
                                 model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
+                                response_format: { type: 'json_object' },
                                 messages: chatCompletionMessages as any,
                             }).then(async chatCompletion => {
-                                const response = chatCompletion.choices[0].message;
-                                await sendResponse(isDirectMessage, message, response.content as string);
-                                if (newMessage.content.toLowerCase() === endChatKey) {
+                                const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
+                                const response = jsonResponse.message;
+                                await sendResponse(isDirectMessage, message, response);
+                                if (jsonResponse.endChat) {
                                     collector.stop();
                                 }
                             }).catch(async err => {

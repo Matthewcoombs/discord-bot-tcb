@@ -31,7 +31,9 @@ export function generateAssistantRunKey(profileName: string) {
 
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
 extremely good at...`;
-export const GENERATIVE_RESPONSE_LIMIT_CONTEXT = `\nNOTE - ensure that your response does not exceed 2000 characters in length.`;
+export const GENERATIVE_RESPONSE_CONSTRAINTS = `\nNOTE - Response is valid JSON. Return a message property 
+that includes the text of your response. message does not exceed 2000 characters. Return an endChat property
+that determines if the user wants to end the chat. endChat is a boolean value.`;
 export const GENERAL_CHANNEL = 'general';
 export const DEFAULT_CHAT_TIMEOUT = 300000;
 export const CHAT_TIMEOUT_OPTIONS = [180000, DEFAULT_CHAT_TIMEOUT, 480000, 600000];

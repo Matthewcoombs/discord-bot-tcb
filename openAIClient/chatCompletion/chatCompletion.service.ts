@@ -4,7 +4,7 @@ import { ImagesResponse } from "openai/resources";
 import axios from "axios";
 import * as fs from 'fs';
 
-import { GENERATIVE_RESPONSE_LIMIT_CONTEXT, TEMP_FOLDER_PATH } from "../../shared/constants";
+import { GENERATIVE_RESPONSE_CONSTRAINTS, TEMP_FOLDER_PATH } from "../../shared/constants";
 import { textBasedModelEnums } from "../../config";
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
@@ -23,6 +23,11 @@ export interface ChatCompletionMessage {
             url: string,
         },
     }[];
+}
+
+export interface JsonContent {
+    message: string;
+    endChat: boolean;
 }
 
 enum chatCompletionTypes {
@@ -80,11 +85,11 @@ export default {
         if (selectedProfile) {
             chatCompletionMessages.unshift(generateSystemContentMessage(selectedProfile.profile));
         } else  {
-            chatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_LIMIT_CONTEXT));
+            chatCompletionMessages.unshift(generateSystemContentMessage(GENERATIVE_RESPONSE_CONSTRAINTS));
         }
         return chatCompletionMessages;
     },
-
+    
     generateUserProfileDisplay(userProfiles: UserProfile[]) {
         const buttons = userProfiles.map(profile => {
             return new ButtonBuilder()
