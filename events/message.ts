@@ -1,7 +1,7 @@
 import { ChannelType, Events, Message, MessageCollector } from "discord.js";
 import { Command } from "../shared/discord-js-types";
 import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
-import chatCompletionService, { ChatCompletionMessage } from "../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompletionMessage } from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
@@ -103,7 +103,19 @@ const directMessageEvent: Command = {
 
                         // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
                         if (!newMessage.author.bot) {
-                            // Formatting the collected message to match the chatCompletion format the openAI API expects.
+                            // filtering out all unsupported attachment file types from the user's most recent message.
+                            const lastCollectedMsg = collected[collected.length - 1];
+                            const { matched, unMatched, overMax } = lastCollectedMsg.attachments.reduce((acc, attachment) => {
+                                if (CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(attachment.contentType as string)) {
+                                    acc.matched.length < 4 ? acc.matched.push(attachment) : acc.overMax.push(attachment.name);
+                                } else {
+                                    acc.unMatched.push(attachment.name);
+                                }
+                                return acc;
+                            }, { matched: [] as any, unMatched: [] as string[], overMax: [] as string[]});
+                            lastCollectedMsg.attachments = matched;
+                            collected[collected.length - 1] = lastCollectedMsg;
+
                             const userMessageInstance = singleInstanceMessageCollector.get(user.id);
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile);
                             OpenAi.chat.completions.create({
@@ -111,6 +123,18 @@ const directMessageEvent: Command = {
                                 messages: chatCompletionMessages as any,
                             }).then(async chatCompletion => {
                                 const response = chatCompletion.choices[0].message;
+                                if (unMatched.length > 0) {
+                                    await sendResponse(isDirectMessage, message, 
+                                        `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
+                                    );
+                                }
+
+                                if (overMax.length > 0) {
+                                    await sendResponse(isDirectMessage, message,
+                                        `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message:\n${overMax}`
+                                    );
+                                }
+
                                 await sendResponse(isDirectMessage, message, response.content as string);
                                 if (newMessage.content.toLowerCase() === endChatKey) {
                                     collector.stop();

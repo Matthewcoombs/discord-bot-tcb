@@ -58,12 +58,11 @@ export default {
             };
 
             if (message.attachments && selectedProfile?.textModel === textBasedModelEnums.GPT4O) {
-                const imageContents = message.attachments.filter(attachment => 
-                    CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(attachment.contentType as string)).map(filteredAttachments => {
+                const imageContents = message.attachments.map(attachment => {
                         return {
                             type: chatCompletionTypes.IMAGE_URL,
                             image_url: {
-                                url: filteredAttachments.url, 
+                                url: attachment.url, 
                             }
                         };
                     });
