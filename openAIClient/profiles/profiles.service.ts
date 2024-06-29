@@ -8,6 +8,7 @@ export const SELECT_TEXT_MODEL_ID = 'textModel';
 export const SELECT_CHAT_TIMEOUT_ID = 'timeout';
 export const SELECT_RETENTION_ID = 'retention';
 export const SELECT_RETENTION_SIZE_ID = 'retentionSize';
+export const CLEAR_RETENTION_DATA = 'clearRetentionData';
 
 
 export default {
@@ -83,6 +84,22 @@ export default {
         return { displayMsg: `Profile Retention Size :ledger:`, row };
     },
 
+    generateClearRetentionDataSetting() {
+        const clearRetentionDataButton: ButtonBuilder = new ButtonBuilder()
+            .setCustomId('true')
+            .setLabel('Clear Data')
+            .setStyle(ButtonStyle.Primary);
+
+        const cancelButton: ButtonBuilder = new ButtonBuilder()
+        .setCustomId('false')
+        .setLabel('Cancel')
+        .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder()
+            .addComponents([clearRetentionDataButton, cancelButton]);
+        return { displayMsg: `Clear Retention Data :broom:`, row } ;
+    },
+
     processSettingsDisplay(setting: string, selectedProfile: UserProfile) {
         switch (setting) {
             case SELECT_TEXT_MODEL_ID:
@@ -93,6 +110,8 @@ export default {
                 return this.generateRetentionProfileSetting(selectedProfile.retention);
             case SELECT_RETENTION_SIZE_ID:
                 return this.generateRetentionSizeProfileSetting(selectedProfile.retentionSize as number);
+            case CLEAR_RETENTION_DATA:
+                return this.generateClearRetentionDataSetting();
             default:
                 break;
         }
@@ -120,6 +139,9 @@ export default {
             case SELECT_RETENTION_SIZE_ID:
                 selectedProfile.retentionSize = Number(updateValue);
                 await userProfilesDao.updateUserProfile(selectedProfile);
+                break;
+            case CLEAR_RETENTION_DATA:
+                updateValue === 'true' ? await userProfilesDao.clearProfileRetentionData(selectedProfile) : null;
                 break;
             default:
                 break;

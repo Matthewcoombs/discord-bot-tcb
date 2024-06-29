@@ -164,5 +164,18 @@ export default {
             AND
                 discord_id = ${discordId}
         `;
+    },
+
+    async clearProfileRetentionData(selectedProfile: UserProfile) {
+        const { id } = selectedProfile;
+        await sql`
+            UPDATE
+                user_profiles
+            SET
+                retention_data = '{}',
+                updated_at = NOW()
+            WHERE
+                id = ${id}
+        `;
     }
 };
