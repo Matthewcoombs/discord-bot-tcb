@@ -114,13 +114,17 @@ const createInteractionEvent: Command = {
 
 		try {
 			await command.execute(interaction);
-		} catch (_err) {
+		} catch (_err: any) {
 			interaction.client.singleInstanceCommands.delete(interaction.id);
 			console.error(`Error executing ${commandName}`);
+			const errorMsg = _err?.errorData ? 
+				_err.errorData.error :
+				`There was an internal error executing the command ${commandName}.`;
+
 			console.error(_err);
 			return interaction.followUp(
 				{
-					content: `There was an internal error executing the command ${commandName}.`,
+					content: errorMsg,
 					ephemeral: true,
 				}
 			);

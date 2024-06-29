@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { ChatInputCommandInteraction, CollectedInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
@@ -7,6 +7,8 @@ import * as fs from 'fs';
 import { imageModelEnums } from "../../config";
 import { ImageGenerateParams, ImagesResponse } from "openai/resources";
 import { deleteTempFilesByTag, generateInteractionTag } from "../../shared/utils";
+import imagesService from "../../openAIClient/images/images.service";
+import { InteractionTimeOutError } from "../../shared/errors";
 
 const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
@@ -54,9 +56,10 @@ const aiImageGenerateCommand: Command = {
         ),
 	async execute(interaction: ChatInputCommandInteraction) {
         const interactionTag = generateInteractionTag();
+        const userId = interaction.user.id;
         const username = interaction.user.username;
 		const description = await interaction.options.getString('description', true).toLowerCase();
-        const model =  await interaction.options.getString('model');
+        const model =  await interaction.options.getString('model', true);
         let quality = await interaction.options.getString('quality') as "standard" | "hd";
         quality = quality ? quality : 'standard';
         let  style = await interaction.options.getString('style') as "vivid" | "natural";
@@ -64,11 +67,32 @@ const aiImageGenerateCommand: Command = {
         let imageCount = await interaction.options.getInteger('image_count', false);
         imageCount = imageCount ? imageCount : 1;
 
+        // prompting the user for their desired image size(s) based on the image model selected
+        const actionRowComponent = imagesService.generateImageSizeSelection(model as imageModelEnums);
+        const sizeResponse = await interaction.reply({
+            content: `Select a size for your image(s)`,
+            components: [actionRowComponent as any],
+            ephemeral: true,
+        });
+
+        const collectorFilter = (message: CollectedInteraction) => { return message?.user?.id === userId;};
+        const imageSizeSelected = await sizeResponse.awaitMessageComponent({
+            filter: collectorFilter,
+            time: 60000,
+        }).catch(() => {
+            sizeResponse.delete();
+            throw new InteractionTimeOutError({
+                error:  `:warning: Image generation cancelled. Image size selection timeout reached.`,
+            });
+        });
+
+        const size = imageSizeSelected.customId;
 
         // checking the model value provided to determine the payload sent to the openAI API
         let openAIBody: ImageGenerateParams = {
             model,
             prompt: description,
+            size: size as any,
         };
 
         switch (model) {
@@ -88,7 +112,11 @@ const aiImageGenerateCommand: Command = {
                 break;
             }
 
-        await interaction.reply(`${username} asked for an image, so I'm working on it :art:...`);
+        await interaction.editReply({
+           content: `${username} asked for an image, so I'm working on it :art:...`,
+           components: [],
+        }
+        );
         try {
             const isDalle3 = openAIBody.model === 'dall-e-3';
             let imageUrls: string [];
@@ -114,17 +142,25 @@ const aiImageGenerateCommand: Command = {
                 .filter(fileName => fileName.includes(username) && fileName.includes(interactionTag.toString()))
                 .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
 
-            await interaction.editReply({ 
-                content: `Here is your picture ${username} :blush:!`,
+            const finalResponseMsg = imageFiles.length > 1 ? 
+                `Here are your requested images ${username} :blush:` :
+                `Here is your requested image ${username} :blush:`;
+
+            await interaction.followUp({ 
+                content: finalResponseMsg,
+                components: [],
                 files: imageFiles});
             deleteTempFilesByTag(interactionTag);
         } catch (err) {
             console.error(err);
             deleteTempFilesByTag(interactionTag);
-            await interaction.editReply(`Sorry ${username}, I ran into an error attempting to create your 
+            await interaction.editReply({
+                content: `Sorry ${username}, I ran into an error attempting to create your 
                 image! Please check to ensure your question is not offensive and doesn't relate to any known 
-                people :sweat_smile:.
-            `);
+                people :sweat_smile:.`,
+                components: [],
+            }
+            );
             await interaction.followUp({
                 content: `What you told me to create: ${description}`,
                 ephemeral: true,
