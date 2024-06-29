@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, CollectedInteraction, MessageCollector, Sl
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import chatCompletionService, { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage, JsonContent } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
@@ -114,10 +114,12 @@ const letsChatCommand: Command = {
                     OpenAi.chat.completions.create({
                         model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                         messages: chatCompletionMessages as any,
+                        response_format: { type: 'json_object' },
                     }).then(async chatCompletion => {
-                        const response = chatCompletion.choices[0].message;
-                        await sendReponse(interaction, interactionTag, response.content as string, false);
-                        if (message.content.toLowerCase() === endChatKey && message.author.username === user.username) {
+                        const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
+                        const response = jsonResponse.message;
+                        await sendReponse(interaction, interactionTag, response, false);
+                        if (jsonResponse.endChat && message.author.username === user.username) {
                             collector.stop();
                         }
                     }).catch(async err => {

@@ -16,7 +16,6 @@ For information on discordjs see: https://discordjs.guide/
 1. Generate a ***.env*** file and include the following variables:
     1. **DISCORD_TOKEN** - The token used by the discord bot to perform actions
     2. **CLIENT_ID** - The ID of the application your bot is tied to
-    3. **GUILD_ID** - The ID of the discord server the bot will run in
     3. **OPENAI_API_KEY** - Your OpenAI Developer API Key
     4. **POSTGRES_USERNAME**
     5. **POSTGRES_PASSWORD**
@@ -38,5 +37,6 @@ Starting the bot in production will be at the users discretion
 
 
 ## Deploying Commands
-When you are adding new commands to the bot you can run the following command:
-`pnpm update-commands`
+When you are adding new commands to the bot you can run the following commands:
+`pnpm delete-commands` - Clear all existing commands
+`pnpm update-commands` - Create/Update Commands

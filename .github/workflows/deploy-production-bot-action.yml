@@ -140,7 +140,6 @@ jobs:
                     Type=simple
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-                    Environment=GUILD_ID=${{ secrets.GUILD_ID }}
                     Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
                     Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
                     Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
