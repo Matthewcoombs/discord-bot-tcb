@@ -122,7 +122,6 @@ const directMessageEvent: Command = {
                             }).then(async chatCompletion => {
                                 const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
                                 const response = jsonResponse.message;
-                                await sendResponse(isDirectMessage, message, response);
                                 if (unMatched.length > 0) {
                                     await sendResponse(isDirectMessage, message, 
                                         `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
