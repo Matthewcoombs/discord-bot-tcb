@@ -22,8 +22,8 @@ export enum runStatuses {
 export default {
     generateAssistantMessage (message: Message, fileIds?: string[]): MessageCreateParams {
         const attachments = fileIds?.map((fileId) => 
-            { return {file_id: fileId};
-    });
+            { return {file_id: fileId, tools: [ { type: 'code_interpreter'} ]};}) as MessageCreateParams.Attachment[];
+
         const assistantMessage: MessageCreateParams = {
             role: AssistantsRoles.USER,
             content: message.content,
