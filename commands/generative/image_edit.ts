@@ -1,31 +1,39 @@
-import { ChatInputCommandInteraction, CollectedInteraction, SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, CollectedInteraction } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
-import { TEMP_FOLDER_PATH } from '../../shared/constants';
-import { OpenAi } from '../..';
+import { createTempFile, deleteTempFilesByName, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, validateImage } from "../../shared/utils";
+import { OpenAi } from "../..";
 import * as fs from 'fs'; 
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
-import { createTempFile, deleteTempFilesByName, deleteTempFilesByTag, generateInteractionTag, getRemoteFileBufferData, validateImage } from '../../shared/utils';
+import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
+import { TEMP_FOLDER_PATH } from "../../shared/constants";
 import imagesService from "../../openAIClient/images/images.service";
-import { imageModelEnums } from "../../config";
 import { InteractionTimeOutError } from "../../shared/errors";
+import { imageModelEnums } from "../../config";
 
-const aiImageVariotionCommand: Command = {
+
+const aiImageEditCommand: Command = {
     data: new SlashCommandBuilder()
-        .setName('image_variation')
-        .setDescription('Upload a .png image to touch up')
+        .setName('image_edit')
+        .setDescription('Upload a .png image file to edit')
         .addAttachmentOption(image =>
             image.setName('image_file')
             .setRequired(true)
-            .setDescription(`Provide a square .png image file no larger then 4MB to create variations`),
-            )
-        .addIntegerOption(intOtion => 
-            intOtion.setName('image_count')
-            .setDescription('The amount of image varitions to generate')
+            .setDescription('Provide a square .png image file no larger then 4MB to create edits')
+        )
+        .addStringOption((strOption) =>
+            strOption.setName('edit_description')
+            .setDescription('Describe the edit(s) you would like to make')
+            .setRequired(true)
+        )
+        .addIntegerOption(intOption =>
+            intOption.setName('image_count')
+            .setDescription('The amount of image edits to generate')
             .addChoices(
                 {name: '1', value: 1},
                 { name: '2', value: 2 },
                 { name: '3', value: 3},
-                { name: '4', value: 4})), 
+                { name: '4', value: 4}
+            )
+        ),
     async execute(interaction: ChatInputCommandInteraction) {
         const interactionTag = generateInteractionTag();
         const username = interaction.user.username;
@@ -34,6 +42,7 @@ const aiImageVariotionCommand: Command = {
         let imageCount = interaction.options.getInteger('image_count', false) as number;
         imageCount = imageCount ? imageCount : 1;
         const imageAttachment = interaction.options.getAttachment('image_file', true);
+        const prompt = interaction.options.getString('edit_description', true);
         const tempImageName = `${interaction.id}-${imageAttachment.name}`;
 
         // prompting the user for their desired image size(s) based on the image model selected
@@ -51,14 +60,14 @@ const aiImageVariotionCommand: Command = {
         }).catch(() => {
             sizeResponse.delete();
             throw new InteractionTimeOutError({
-                error:  `:warning: Image variation cancelled. Image size selection timeout reached.`,
+                error:  `:warning: Image generation cancelled. Image size selection timeout reached.`,
             });
         });
 
         const size = imageSizeSelected.customId;
 
         await interaction.editReply({
-            content: `Hi ${username}, I'm currently processing your image variation request :art:...`,
+            content: `Hi ${username}, I'm currently processing your image edit request :art:...`,
             components: [],
         });
 
@@ -66,8 +75,9 @@ const aiImageVariotionCommand: Command = {
             validateImage(imageAttachment);
             const imageBufferData = await getRemoteFileBufferData(imageAttachment.url);
             const tempImagePath = createTempFile(imageBufferData, tempImageName);
-    
-            await OpenAi.images.createVariation({
+
+            await OpenAi.images.edit({
+                prompt,
                 image: fs.createReadStream(tempImagePath) as any,
                 n: imageCount,
                 size: size as any,
@@ -80,7 +90,7 @@ const aiImageVariotionCommand: Command = {
                     .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
                 deleteTempFilesByName([tempImageName]);
                 await interaction.editReply({
-                    content: `Here are your image variations ${username} :blush:`,
+                    content: `Here are your image edits ${username} :blush:`,
                     files: imageFiles,
                 });
                 deleteTempFilesByTag(interactionTag);
@@ -96,4 +106,4 @@ const aiImageVariotionCommand: Command = {
     }
 };
 
-export = aiImageVariotionCommand;
+export = aiImageEditCommand;

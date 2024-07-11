@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, CollectedInteraction, SlashCommandBuilder, SlashCommandStringOption } from "discord.js";
+import { ChatInputCommandInteraction, CollectedInteraction, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import chatCompletionService from "../../openAIClient/chatCompletion/chatCompletion.service";
@@ -14,12 +14,12 @@ const aiImageGenerateCommand: Command = {
 	data: new SlashCommandBuilder()
 		.setName('generate_image')
 		.setDescription('Generate images')
-		.addStringOption((strOption: SlashCommandStringOption) =>
+		.addStringOption((strOption) =>
 			strOption.setName('description')
 				.setDescription('Describe the image you want generated')
 				.setRequired(true)
         )
-        .addStringOption((strOption: SlashCommandStringOption) =>
+        .addStringOption((strOption) =>
         strOption.setName('model')
             .setDescription('The AI model to generate the image')
             .setRequired(true)
@@ -28,7 +28,7 @@ const aiImageGenerateCommand: Command = {
                 {name: imageModelEnums.DALLE3, value: imageModelEnums.DALLE3},
             )
         )
-        .addStringOption((strOption: SlashCommandStringOption) =>
+        .addStringOption((strOption) =>
         strOption.setName('quality')
             .setDescription(`The quality of image to generate (hd is only supported with ${imageModelEnums.DALLE3})`)
             .addChoices(
@@ -36,7 +36,7 @@ const aiImageGenerateCommand: Command = {
                 {name: 'high definition', value: 'hd'},
             )
         )
-        .addStringOption((strOption: SlashCommandStringOption) =>
+        .addStringOption((strOption) =>
         strOption.setName('style')
             .setDescription(`The style of image to generate (style is only supported with ${imageModelEnums.DALLE3})`)
             .addChoices(
