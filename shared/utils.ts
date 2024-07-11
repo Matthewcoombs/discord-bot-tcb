@@ -1,7 +1,8 @@
 import * as fs from 'fs'; 
-import { DISCORD_MAX_REPLY_STRING_LENGTH, TEMP_FOLDER_PATH } from './constants';
-import { InteractionError, InvalidFileError } from './errors';
+import { DISCORD_MAX_REPLY_STRING_LENGTH, IMAGE_TOUCH_UP_SIZE_LIMIT, TEMP_FOLDER_PATH } from './constants';
+import { InteractionError, InvalidFileError, InvalidFileSizeError, InvalidFileTypeError } from './errors';
 import axios from 'axios';
+import { Attachment } from 'discord.js';
 
 export function generateInteractionTag() {
     return Math.floor(10000 + Math.random() * 90000);
@@ -71,6 +72,23 @@ export function deleteTempFilesByTag(interactionTag: number) {
         throw new InteractionError({
             error: `Error deleting temp files`,
             metaData: err,
+        });
+    }
+}
+
+export function validateImage(imageAttachment: Attachment) {
+    const imageType = 'image/png';
+    if (imageAttachment.contentType !== imageType) {
+        throw new InvalidFileTypeError({
+            error: `The image provided must be of type '${imageType}'`,
+            metaData: imageAttachment,
+        });
+    }
+
+    if (imageAttachment.size > IMAGE_TOUCH_UP_SIZE_LIMIT) {
+        throw new InvalidFileSizeError({
+            error: `The Image provided is too large. Images should be no more than 4MB`,
+            metaData: imageAttachment,
         });
     }
 }
