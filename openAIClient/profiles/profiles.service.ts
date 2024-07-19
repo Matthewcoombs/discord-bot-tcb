@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { ASSISTANT_MODEL_OPTIONS, textBasedModelEnums } from "../../config";
+import { textBasedModelEnums } from "../../config";
 import { CHAT_TIMEOUT_OPTIONS, DEFAULT_CHAT_TIMEOUT, DEFAULT_RETENTION_SIZE, RETENTION_SIZE_OPTIONS } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { OpenAi } from "../..";
@@ -14,8 +14,9 @@ export const CLEAR_RETENTION_DATA = 'clearRetentionData';
 export default {
     generateTextModelSelectionDisplay(selectedModel?: string) {
         const modelButtons: ButtonBuilder[] = [];
-        for (let i = 0; i < ASSISTANT_MODEL_OPTIONS.length; i++) {
-            const model = ASSISTANT_MODEL_OPTIONS[i];
+        const textBasedModelOptions = Object.values(textBasedModelEnums);
+        for (let i = 0; i <= textBasedModelOptions.length - 1; i++) {
+            const model = textBasedModelOptions[i];
             modelButtons.push(
                 new ButtonBuilder()
                     .setCustomId(model)
