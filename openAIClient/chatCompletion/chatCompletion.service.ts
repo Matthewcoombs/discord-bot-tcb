@@ -5,7 +5,7 @@ import axios from "axios";
 import * as fs from 'fs';
 
 import { GENERATIVE_RESPONSE_CONSTRAINTS, TEMP_FOLDER_PATH } from "../../shared/constants";
-import { textBasedModelEnums } from "../../config";
+import { IMAGE_PROCESSING_MODELS, textBasedModelEnums } from "../../config";
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
     "image/png", 
@@ -62,7 +62,7 @@ export default {
                 }]
             };
 
-            if (message.attachments && selectedProfile?.textModel === textBasedModelEnums.GPT4O) {
+            if (message.attachments && IMAGE_PROCESSING_MODELS.includes(selectedProfile?.textModel as textBasedModelEnums) ) {
                 const imageContents = message.attachments.map(attachment => {
                         return {
                             type: chatCompletionTypes.IMAGE_URL,
