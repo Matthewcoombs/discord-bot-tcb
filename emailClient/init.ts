@@ -11,6 +11,7 @@ function configureEmailTransporter() {
         },
     });
 
+    console.log(`Connected to email transporter!`);
     return transporter;
 }
 

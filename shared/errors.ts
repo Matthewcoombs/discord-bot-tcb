@@ -4,6 +4,7 @@ export const INVALID_FILE_CODE = `if-100`;
 export const INVALID_FILE_SIZE_CODE = `if-101`;
 export const INVALID_FILE_TYPE_CODE = `if-102`;
 export const INVALID_RESPONSE_LENGTH_CODE = `ir-100`;
+export const EMAIL_SEND_ERROR = `es-100`;
 
 type baseError = {
         error: string;
@@ -56,5 +57,13 @@ export class InvalidFileTypeError {
         constructor(errorData: baseError) {
                 this.errorData = errorData;
                 this.errorData.code = INVALID_FILE_TYPE_CODE;
+        }
+}
+
+export class EmailSendError {
+        errorData: baseError;
+        constructor(errorData: baseError) {
+                this.errorData = errorData;
+                this.errorData.code = EMAIL_SEND_ERROR;
         }
 }
