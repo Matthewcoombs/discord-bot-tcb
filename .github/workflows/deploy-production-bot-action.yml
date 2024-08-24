@@ -139,6 +139,7 @@ jobs:
                     [Service]
                     Type=simple
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+                    Environment=EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
                     Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
                     Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
@@ -146,7 +147,6 @@ jobs:
                     Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
                     Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
                     Environment=EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}
-                    Environment=EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
                     WorkingDirectory=/root
                     ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node ${{ env.REPO_NAME }}/dist/index.js
                     User=root
