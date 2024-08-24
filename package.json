@@ -22,10 +22,12 @@
     "axios": "^1.6.8",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
+    "nodemailer": "^6.9.14",
     "openai": "^4.47.1",
     "postgres": "^3.4.4"
   },
   "devDependencies": {
+    "@types/nodemailer": "^6.4.15",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.57.0",

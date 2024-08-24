@@ -6,6 +6,7 @@ import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
 import { processBotResponseLength } from "../shared/utils";
+import sendEmailService from "../emailClient/sendEmail/sendEmail.service";
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
     // Cleaning potentially injected user tags by openai
@@ -121,7 +122,15 @@ const directMessageEvent: Command = {
                                 messages: chatCompletionMessages as any,
                             }).then(async chatCompletion => {
                                 const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
-                                const response = jsonResponse.message;
+                                const { message: response, emailSubject, emailText, recipients, sendEmail, endChat } = jsonResponse;
+                                
+                                if (sendEmail) {
+                                    sendEmailService.sendEmail(user.username, recipients, emailText, emailSubject);
+                                    await sendResponse(isDirectMessage, message,
+                                        `:incoming_envelope: Your email has been sent!` 
+                                    );
+                                }
+                                
                                 if (unMatched.length > 0) {
                                     await sendResponse(isDirectMessage, message, 
                                         `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
@@ -135,7 +144,7 @@ const directMessageEvent: Command = {
                                 }
 
                                 await sendResponse(isDirectMessage, message, response);
-                                if (jsonResponse.endChat) {
+                                if (endChat) {
                                     collector.stop();
                                 }
 

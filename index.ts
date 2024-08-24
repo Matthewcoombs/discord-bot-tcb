@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { connectToPG } from "./database/init";
 import { UserProfile } from "./database/user_profiles/userProfilesDao";
+import { configureEmailTransporter } from "./emailClient/init";
 
 // init env variables
 require('dotenv').config();
@@ -13,6 +14,7 @@ export const sql = connectToPG();
 
 // Init openAI
 export const OpenAi = configureOpenAi();
+export const EmailTransporter = configureEmailTransporter();
 
 
 // Create a new client instance

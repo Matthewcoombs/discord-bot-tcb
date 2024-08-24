@@ -33,7 +33,14 @@ export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite co
 extremely good at...`;
 export const GENERATIVE_RESPONSE_CONSTRAINTS = `\nNOTE - Response is valid JSON. Return a message property 
 that includes the text of your response. message does not exceed 2000 characters. Return an endChat property 
-that determines if the user wants to end the chat. endChat is a boolean value.`;
+that determines if the user wants to end the chat. endChat is a boolean value type.
+Return a recipients property that holds a list of email recipients. recipients is a string array value type.
+Return a emailSubject property that holds the email subject. emailSubject is a string value type.
+Return a emailText property that holds the email body. emailText is a string value type.
+Return a emailPreview property that determines if all information is known for a preview to be shown to the user. emailPreview is a boolean value type.
+For emailPreview to be true, recipients, emailSubject, emailText must have a value.
+Return a sendEmail property that determines if all information is known for the emails to be sent. sendEmail is a boolean value type.
+sendEmail is only true once the user has seen and confirmed a preview of the email`;
 export const GENERAL_CHANNEL = 'general';
 export const DEFAULT_CHAT_TIMEOUT = 300000;
 export const CHAT_TIMEOUT_OPTIONS = [180000, DEFAULT_CHAT_TIMEOUT, 480000, 600000];
