@@ -1,5 +1,6 @@
 import Mail = require("nodemailer/lib/mailer")
 import { EmailTransporter } from "../..";
+import { EmailSendError } from "../../shared/errors";
 
 
 export default {
@@ -13,7 +14,10 @@ export default {
         
         EmailTransporter.sendMail(emailOptions, (error, info) => {
             if (error) {
-                console.error(`Error sending email:`, error);
+                throw new EmailSendError({
+                    error: `Error sending email`,
+                    metaData: error,
+                });
             } else {
                 console.log(`Email sent for user ${discordUser}:`, info.response);
             }
