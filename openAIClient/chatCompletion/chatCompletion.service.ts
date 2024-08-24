@@ -28,6 +28,11 @@ export interface ChatCompletionMessage {
 export interface JsonContent {
     message: string;
     endChat: boolean;
+    recipients: string[];
+    emailSubject: string;
+    emailText: string;
+    emailPreview: boolean;
+    sendEmail: boolean;
 }
 
 enum chatCompletionTypes {
