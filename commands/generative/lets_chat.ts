@@ -136,7 +136,7 @@ const letsChatCommand: Command = {
             });
 
             collector.on('end', async collected => {
-                if (selectedProfile?.retention) {
+                if (selectedProfile && selectedProfile?.retention) {
                     const collectedMsgs = Array.from(collected.values());
                     const retentionMsgs = chatCompletionService.formatChatCompletionMessages(collectedMsgs, selectedProfile);
                     const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
