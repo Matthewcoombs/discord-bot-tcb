@@ -1,11 +1,11 @@
-import { ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandOptionsOnlyBuilder } from "discord.js";
 
 export interface Command {
     name?: string;
     description?: string;
     once?: boolean;
     cooldown?: number;
-    data?: Omit<SlashCommandBuilder, 'addSubcommandGroup' | 'addSubcommand'> ;
+    data?: Omit<SlashCommandOptionsOnlyBuilder, 'addSubcommandGroup' | 'addSubcommand'> ;
     execute(args?: 
         ChatInputCommandInteraction| 
         CommandInteraction | 

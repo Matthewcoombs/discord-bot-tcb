@@ -177,7 +177,7 @@ const directMessageEvent: Command = {
                     // Programmatically triggering the message collector to fire on the initial message or mention to the bot.
                     message.content = selectedProfile ?  message.content.replace(/<@\d+>/g, selectedProfile.name) : message.content;
                     collector.collected.set(user.id, message);
-                    collector.emit('collect', {
+                    collector.once('collect', {
                         author: user , content: ''} as any
                     );
                 }
