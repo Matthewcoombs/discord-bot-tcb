@@ -139,7 +139,7 @@ jobs:
                     [Service]
                     Type=simple
                     Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-                    Environment=EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+                    Environment=EMAIL_PASSWORD=testing
                     Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
                     Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
                     Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
