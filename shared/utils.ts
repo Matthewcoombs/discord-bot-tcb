@@ -3,6 +3,7 @@ import { DISCORD_MAX_REPLY_STRING_LENGTH, IMAGE_TOUCH_UP_SIZE_LIMIT, TEMP_FOLDER
 import { InteractionError, InvalidFileError, InvalidFileSizeError, InvalidFileTypeError } from './errors';
 import axios from 'axios';
 import { Attachment } from 'discord.js';
+import { JsonContent } from '../openAIClient/chatCompletion/chatCompletion.service';
 
 export function generateInteractionTag() {
     return Math.floor(10000 + Math.random() * 90000);
@@ -91,4 +92,16 @@ export function validateImage(imageAttachment: Attachment) {
             metaData: imageAttachment,
         });
     }
+}
+
+export function validateJsonContent(data: JsonContent) {
+    return (typeof data === 'object' && data !== null) &&
+        typeof data.message === 'string' &&
+        typeof data.endChat === 'boolean' &&
+        Array.isArray(data.recipients) &&
+        data.recipients.every((recipient: string) => typeof recipient === 'string') &&
+        typeof data.emailSubject === 'string' &&
+        typeof data.emailText === 'string' &&
+        typeof data.emailPreview === 'boolean' &&
+        typeof data.sendEmail === 'boolean';
 }

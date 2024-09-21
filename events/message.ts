@@ -5,8 +5,9 @@ import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompl
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
-import { processBotResponseLength } from "../shared/utils";
+import { processBotResponseLength, validateJsonContent } from "../shared/utils";
 import sendEmailService from "../emailClient/sendEmail/sendEmail.service";
+import { ChatCompletion } from "openai/resources";
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
     // Cleaning potentially injected user tags by openai
@@ -95,7 +96,7 @@ const directMessageEvent: Command = {
                         await sendResponse(isDirectMessage, message, `Looks like you're no longer there ${user.username}. Our chat has ended.`);
                     }, timeout);
 
-                    collector.on('collect', newMessage => {
+                    collector.on('collect', async newMessage => {
                         userResponseTimeout.refresh();
                         const collected = Array.from(collector.collected.values());
 
@@ -116,44 +117,74 @@ const directMessageEvent: Command = {
 
                             const userMessageInstance = singleInstanceMessageCollector.get(user.id);
                             const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, userMessageInstance?.selectedProfile);
-                            OpenAi.chat.completions.create({
-                                model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
-                                response_format: { type: 'json_object' },
-                                messages: chatCompletionMessages as any,
-                            }).then(async chatCompletion => {
-                                const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
-                                const { message: response, emailSubject, emailText, recipients, sendEmail, endChat } = jsonResponse;
-                                
-                                if (sendEmail) {
-                                    sendEmailService.sendEmail(user.username, recipients, emailText, emailSubject);
-                                    await sendResponse(isDirectMessage, message,
-                                        `:incoming_envelope: Your email has been sent!` 
-                                    );
-                                }
-                                
-                                if (unMatched.length > 0) {
-                                    await sendResponse(isDirectMessage, message, 
-                                        `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
-                                    );
-                                }
 
-                                if (overMax.length > 0) {
-                                    await sendResponse(isDirectMessage, message,
-                                        `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message:\n${overMax}`
-                                    );
+                            // This logic is to check and ensure that generative response is valid JSON
+                            let chatCompletion: ChatCompletion;
+                            let jsonResponse: JsonContent = {
+                                message: '',
+                                endChat: false,
+                                recipients: [],
+                                emailSubject: '',
+                                emailText: '',
+                                emailPreview: false,
+                                sendEmail: false,
+                            };
+                            let isValidJSON = false;
+                            let retries = 0;
+                            const maxRetries = 5;
+                            const delay = 2000; // 2 seconds
+
+                            while (!isValidJSON && retries < maxRetries) {
+                                try {
+                                    chatCompletion = await OpenAi.chat.completions.create({
+                                        model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
+                                        response_format: { type: 'json_object' },
+                                        messages: chatCompletionMessages as any,
+                                    });
+                                    jsonResponse = JSON.parse(chatCompletion.choices[0].message.content as string);
+                                    isValidJSON = validateJsonContent(jsonResponse);
+                                    if (!isValidJSON) {
+                                        console.log(`invalid JSON content returned for [user]: ${user.username} - on [retries]: ${retries + 1}`);
+                                        await new Promise(resolve => setTimeout(resolve, delay));
+                                        retries++;
+                                    }
+                                } catch (err) {
+                                    console.error(`there was an error validating the returned for [user]: ${user.username} - on [retries]: ${retries + 1}`);
+                                    await new Promise(resolve => setTimeout(resolve, delay));
+                                        retries++;
                                 }
+                            }
 
-                                await sendResponse(isDirectMessage, message, response);
-                                if (endChat) {
-                                    collector.stop();
-                                }
-
-
-                            }).catch(async err => {
-                                console.error(err);
+                            if (retries === maxRetries) {
                                 collector.stop();
-                                await sendResponse(isDirectMessage, message, 'Sorry looks like something went wrong :disappointed_relieved:.');
-                            });
+                                await sendResponse(isDirectMessage, message, 'Sorry looks like something went wrong during the validation of my generative serices :disappointed_relieved:.');
+                            }
+
+
+                            const { message: response, emailSubject, emailText, recipients, sendEmail, endChat } = jsonResponse;
+                            if (sendEmail) {
+                                sendEmailService.sendEmail(user.username, recipients, emailText, emailSubject);
+                                await sendResponse(isDirectMessage, message,
+                                    `:incoming_envelope: Your email has been sent!` 
+                                );
+                            }
+                            
+                            if (unMatched.length > 0) {
+                                await sendResponse(isDirectMessage, message, 
+                                    `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
+                                );
+                            }
+
+                            if (overMax.length > 0) {
+                                await sendResponse(isDirectMessage, message,
+                                    `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message:\n${overMax}`
+                                );
+                            }
+
+                            await sendResponse(isDirectMessage, message, response);
+                            if (endChat) {
+                                collector.stop();
+                            }
                         }
                     });
                     collector.on('end', async collected => {
