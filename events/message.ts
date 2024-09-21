@@ -6,7 +6,6 @@ import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao from "../database/user_profiles/userProfilesDao";
 import { processBotResponseLength, validateJsonContent } from "../shared/utils";
-import sendEmailService from "../emailClient/sendEmail/sendEmail.service";
 import { ChatCompletion } from "openai/resources";
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
@@ -123,11 +122,6 @@ const directMessageEvent: Command = {
                             let jsonResponse: JsonContent = {
                                 message: '',
                                 endChat: false,
-                                recipients: [],
-                                emailSubject: '',
-                                emailText: '',
-                                emailPreview: false,
-                                sendEmail: false,
                             };
                             let isValidJSON = false;
                             let retries = 0;
@@ -161,14 +155,8 @@ const directMessageEvent: Command = {
                             }
 
 
-                            const { message: response, emailSubject, emailText, recipients, sendEmail, endChat } = jsonResponse;
-                            if (sendEmail) {
-                                sendEmailService.sendEmail(user.username, recipients, emailText, emailSubject);
-                                await sendResponse(isDirectMessage, message,
-                                    `:incoming_envelope: Your email has been sent!` 
-                                );
-                            }
-                            
+                            const { message: response, endChat } = jsonResponse;
+                            console.log(`testing JSON response:`, jsonResponse);
                             if (unMatched.length > 0) {
                                 await sendResponse(isDirectMessage, message, 
                                     `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
