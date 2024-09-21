@@ -97,11 +97,5 @@ export function validateImage(imageAttachment: Attachment) {
 export function validateJsonContent(data: JsonContent) {
     return (typeof data === 'object' && data !== null) &&
         typeof data.message === 'string' &&
-        typeof data.endChat === 'boolean' &&
-        Array.isArray(data.recipients) &&
-        data.recipients.every((recipient: string) => typeof recipient === 'string') &&
-        typeof data.emailSubject === 'string' &&
-        typeof data.emailText === 'string' &&
-        typeof data.emailPreview === 'boolean' &&
-        typeof data.sendEmail === 'boolean';
+        typeof data.endChat === 'boolean';
 }
