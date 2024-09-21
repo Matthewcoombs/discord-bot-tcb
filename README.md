@@ -1,4 +1,8 @@
-# Discord Bot
+<div align="center">
+    <img src="https://cdn.discordapp.com/banners/1128001179671085189/3c533b6822dd2e711d5e30f19a2b110f?size=512" alt="Boop Banner Image">
+</div>
+
+# Boop - Discord Bot
 This is a general discord bot project that is intended for use in small or private servers.
 You are not required to have all configured services for the bot to run.
 For information on bot configuration with discord see: https://discord.com/developers/docs/intro
