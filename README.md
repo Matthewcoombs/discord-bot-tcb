@@ -1,4 +1,6 @@
-![Boop Banner Image](https://cdn.discordapp.com/banners/1128001179671085189/3c533b6822dd2e711d5e30f19a2b110f?size=512)
+<div align="center">
+    ![Boop Banner Image](https://cdn.discordapp.com/banners/1128001179671085189/3c533b6822dd2e711d5e30f19a2b110f?size=512)
+</div>
 
 # Discord Bot
 This is a general discord bot project that is intended for use in small or private servers.
