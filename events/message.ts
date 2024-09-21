@@ -156,7 +156,6 @@ const directMessageEvent: Command = {
 
 
                             const { message: response, endChat } = jsonResponse;
-                            console.log(`testing JSON response:`, jsonResponse);
                             if (unMatched.length > 0) {
                                 await sendResponse(isDirectMessage, message, 
                                     `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`
