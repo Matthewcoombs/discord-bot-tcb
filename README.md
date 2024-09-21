@@ -18,14 +18,15 @@ For information on discordjs see: https://discordjs.guide/
 
 ## Running Locally or Development
 1. Generate a ***.env*** file and include the following variables:
-    1. **DISCORD_TOKEN** - The token used by the discord bot to perform actions
-    2. **CLIENT_ID** - The ID of the application your bot is tied to
-    3. **OPENAI_API_KEY** - Your OpenAI Developer API Key
-    4. **POSTGRES_USERNAME**
-    5. **POSTGRES_PASSWORD**
-    6. **POSTGRES_DATABASE**
+    * **DISCORD_TOKEN** - The token used by the discord bot to perform actions
+    * **CLIENT_ID** - The ID of the application your bot is tied to
+    * **OPENAI_API_KEY** - Your OpenAI Developer API Key
+    * **POSTGRES_USERNAME**
+    * **POSTGRES_PASSWORD**
+    * **POSTGRES_DATABASE**
+    * **POSTGRES_HOSTNAME**
 
-2. Once everything is set we can run the following commands to launch our bot:
+2. Once everything is set we can run the following commands to launch the bot in a development environment:
     1. `pnpm build`
     2. `pnpm dev`
 
