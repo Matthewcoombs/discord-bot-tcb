@@ -28,8 +28,7 @@ const aiImageVariotionCommand: Command = {
                 { name: '4', value: 4})), 
     async execute(interaction: ChatInputCommandInteraction) {
         const interactionTag = generateInteractionTag();
-        const username = interaction.user.username;
-        const userId = interaction.user.id;
+        const { username, id: userId } = interaction.user;
 
         let imageCount = interaction.options.getInteger('image_count', false) as number;
         imageCount = imageCount ? imageCount : 1;
