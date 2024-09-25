@@ -29,10 +29,10 @@ declare module "discord.js" {
 			name: string, 
 			user:string, 
 			userId: string}>
-		singleInstanceMessageCollector: Collection<string, { 
+		chatInstanceCollector: Collection<string, { 
 			userId: string, 
 			selectedProfile: UserProfile, 
-			channelId: string }>
+			channelIds: string[] }>
     }
 }
 
@@ -48,7 +48,7 @@ const client = new Client({ intents: [
 client.commands = new Collection();
 client.cooldowns = new Collection();
 client.singleInstanceCommands = new Collection();
-client.singleInstanceMessageCollector = new Collection();
+client.chatInstanceCollector = new Collection();
 const TOKEN = process.env.DISCORD_TOKEN;
 
 const foldersPath = path.join(__dirname, 'commands');
