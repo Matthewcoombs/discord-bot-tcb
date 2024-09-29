@@ -1,4 +1,4 @@
-import { ChannelType, ChatInputCommandInteraction, Collection, Events, ModalSubmitInteraction, TextBasedChannel, TextChannel } from "discord.js";
+import { ChannelType, ChatInputCommandInteraction, Collection, Events, ModalSubmitInteraction } from "discord.js";
 import { Command, optInCommands, singleInstanceCommandsEnum } from "../shared/discord-js-types";
 import { config } from "../config";
 import usersDao from "../database/users/usersDao";
@@ -7,11 +7,11 @@ import { MAX_USER_SINGLE_INSTANCE_COMMANDS } from "../shared/constants";
 
 const createInteractionEvent: Command = {
 	name: Events.InteractionCreate,
-	async execute(interaction: ChatInputCommandInteraction | ModalSubmitInteraction ) {
-		const { cooldowns, singleInstanceCommands, singleInstanceMessageCollector } = interaction.client;
-		const { user, commandName } = interaction as ChatInputCommandInteraction;
+	async execute(interaction: ChatInputCommandInteraction ) {
+		const { cooldowns, singleInstanceCommands, chatInstanceCollector } = interaction.client;
+		const { user, commandName, channel, channelId } = interaction;
 		const command = interaction.client.commands.get(commandName) as Command;
-		const channel = interaction.channel as TextChannel | TextBasedChannel;
+		// const channel = interaction.channel as TextChannel | TextBasedChannel;
 
 		const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 		
@@ -35,21 +35,20 @@ const createInteractionEvent: Command = {
 		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
 		// This logic is set to be applied to directMessage and non direct message channels.
 		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
+			// If a user initiated a chat with the bot the interaction will be cancelled
+			const userChatInstance = chatInstanceCollector.get(interaction.user.id);
+			if (userChatInstance && userChatInstance.channelId === channel?.id) {
+				const channelName = interaction.client.channels.cache.get(channelId);
+				return interaction.reply({
+					content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
+					ephemeral: true,
+				});
+			}
 			
 			// Checking to see if the maximum amount of single instance commands per user has been reached.
 			if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
 				return interaction.reply({
 					content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
-					ephemeral: true,
-				});
-			}
-
-			// If a user initiated a chat with the bot the interaction will be cancelled
-			const userMessageCollector = singleInstanceMessageCollector.get(interaction.user.id);
-			if (userMessageCollector) {
-				const channelName = interaction.client.channels.cache.get(userMessageCollector.channelId);
-				return interaction.reply({
-					content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
 					ephemeral: true,
 				});
 			}
@@ -73,7 +72,7 @@ const createInteractionEvent: Command = {
 					interaction.id, { 
 						channelType: interaction.channel?.type, 
 						channelId: interaction.channel?.id, 
-						channelName: isInteractionInDirectMessage ? null : channel.name, 
+						channelName: isInteractionInDirectMessage ? null : channel?.name as string, 
 						name: commandName, 
 						user: interaction.user.username, 
 						userId: interaction.user.id,
