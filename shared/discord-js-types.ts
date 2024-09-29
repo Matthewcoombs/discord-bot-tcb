@@ -1,4 +1,5 @@
-import { ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandOptionsOnlyBuilder } from "discord.js";
+import { ChannelType, ChatInputCommandInteraction, Client, CommandInteraction, GuildMember, Message, ModalSubmitInteraction, Presence, SlashCommandOptionsOnlyBuilder } from "discord.js";
+import { UserProfile } from "../database/user_profiles/userProfilesDao";
 
 export interface Command {
     name?: string;
@@ -15,6 +16,23 @@ export interface Command {
         Presence | 
         ModalSubmitInteraction, 
         argsTwo?: Presence): any
+}
+
+export interface SingleInstanceCommand {
+    channelType: ChannelType | undefined;
+    channelId: string | undefined;
+    channelName: string | null;
+    name: string;
+    user:string;
+    userId: string;
+}
+
+export interface ChatInstance {
+    userId: string;
+    selectedProfile: UserProfile;
+    isProcessing: boolean;
+    channelName: string | undefined; 
+    channelId: string;
 }
 
 export enum singleInstanceCommandsEnum {

@@ -37,7 +37,7 @@ const createInteractionEvent: Command = {
 		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
 			// If a user initiated a chat with the bot the interaction will be cancelled
 			const userChatInstance = chatInstanceCollector.get(interaction.user.id);
-			if (userChatInstance && userChatInstance.channelIds.includes(channel?.id as string)) {
+			if (userChatInstance && userChatInstance.channelId === channel?.id) {
 				const channelName = interaction.client.channels.cache.get(channelId);
 				return interaction.reply({
 					content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,

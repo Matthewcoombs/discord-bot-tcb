@@ -1,10 +1,10 @@
-import { ChannelType, Client, Collection, GatewayIntentBits, Partials } from "discord.js";
+import { Client, Collection, GatewayIntentBits, Partials } from "discord.js";
 import { configureOpenAi } from './openAIClient/init';
 import * as fs from 'fs'; 
 import * as path from 'path';
 import { connectToPG } from "./database/init";
-import { UserProfile } from "./database/user_profiles/userProfilesDao";
 import { configureEmailTransporter } from "./emailClient/init";
+import { ChatInstance, SingleInstanceCommand } from "./shared/discord-js-types";
 
 // init env variables
 require('dotenv').config();
@@ -22,17 +22,8 @@ declare module "discord.js" {
     export interface Client {
         commands: Collection<unknown, any>
 		cooldowns: Collection<unknown, any>
-		singleInstanceCommands: Collection<string, { 
-			channelType: ChannelType | undefined, 
-			channelId: string | undefined, 
-			channelName: string | null,
-			name: string, 
-			user:string, 
-			userId: string}>
-		chatInstanceCollector: Collection<string, { 
-			userId: string, 
-			selectedProfile: UserProfile, 
-			channelIds: string[] }>
+		singleInstanceCommands: Collection<string, SingleInstanceCommand>
+		chatInstanceCollector: Collection<string, ChatInstance>
     }
 }
 
