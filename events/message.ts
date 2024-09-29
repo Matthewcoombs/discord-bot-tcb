@@ -180,8 +180,6 @@ const directMessageEvent: Command = {
                             `Hold on I'm still processing your previous message :thought_balloon:...`);
                         return;
                     }
-
-                    console.log('processing collected message');
                     
                     // filtering out all unsupported attachment file types from the user's most recent message.
                     let lastCollectedMsg = collected[collected.length - 1];
