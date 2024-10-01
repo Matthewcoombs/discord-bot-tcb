@@ -3,9 +3,9 @@ import { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { ImagesResponse } from "openai/resources";
 import axios from "axios";
 import * as fs from 'fs';
-
 import { GENERATIVE_RESPONSE_CONSTRAINTS, TEMP_FOLDER_PATH } from "../../shared/constants";
 import { IMAGE_PROCESSING_MODELS, textBasedModelEnums } from "../../config";
+import * as z from "zod";
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
     "image/png", 
@@ -29,6 +29,11 @@ export interface JsonContent {
     message: string;
     endChat: boolean;
 }
+
+export const chatCompletionStructuredResponse = z.object({
+    message: z.string(),
+    endChat: z.boolean(),
+});
 
 enum chatCompletionTypes {
     TEXT = 'text',

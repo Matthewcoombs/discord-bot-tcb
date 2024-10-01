@@ -2,12 +2,13 @@
 import { ChannelType, Events, Message, MessageCollector, TextChannel, User } from "discord.js";
 import { ChatInstance, Command } from "../shared/discord-js-types";
 import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
-import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompletionMessage, JsonContent } from "../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompletionMessage, chatCompletionStructuredResponse, JsonContent } from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao, { UserProfile } from "../database/user_profiles/userProfilesDao";
 import { processBotResponseLength, validateJsonContent } from "../shared/utils";
-import { ChatCompletion } from "openai/resources";
+import { zodResponseFormat } from "openai/helpers/zod";
+import { ParsedChatCompletion } from "openai/resources/beta/chat/completions";
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
     // Cleaning potentially injected user tags by openai
@@ -47,7 +48,7 @@ async function validateGenerativeResponse(
     userMessageInstance: ChatInstance, 
     chatCompletionMessages: ChatCompletionMessage[] ) {
     // This logic is to check and ensure that the generative response is valid JSON
-    let chatCompletion: ChatCompletion;
+    let chatCompletion: ParsedChatCompletion<JsonContent>;
     let jsonResponse: JsonContent = {
         message: '',
         endChat: false,
@@ -60,12 +61,13 @@ async function validateGenerativeResponse(
 
     while (!isValidJSON && retries < maxRetries) {
         try {
-            chatCompletion = await OpenAi.chat.completions.create({
+            chatCompletion = await OpenAi.beta.chat.completions.parse({
                 model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
-                response_format: { type: 'json_object' },
+                response_format: zodResponseFormat(chatCompletionStructuredResponse, "structured_response"),
                 messages: chatCompletionMessages as any,
             });
-            jsonResponse = JSON.parse(chatCompletion.choices[0].message.content as string);
+
+            jsonResponse = chatCompletion.choices[0].message.parsed as JsonContent;
             isValidJSON = validateJsonContent(jsonResponse);
             if (!isValidJSON) {
                 console.log(`invalid JSON content returned for [user]: ${user.username} - on [retries]: ${retries + 1}`);
@@ -73,6 +75,7 @@ async function validateGenerativeResponse(
                 retries++;
             }
         } catch (err) {
+            console.error(err);
             console.error(`there was an error validating the returned for [user]: ${user.username} - on [retries]: ${retries + 1}`);
             await new Promise(resolve => setTimeout(resolve, delay));
                 retries++;

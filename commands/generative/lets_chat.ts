@@ -2,11 +2,12 @@ import { ChatInputCommandInteraction, CollectedInteraction, MessageCollector, Sl
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import chatCompletionService, { ChatCompletionMessage, JsonContent } from "../../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage, chatCompletionStructuredResponse } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
 import { generateInteractionTag, processBotResponseLength } from "../../shared/utils";
+import { zodResponseFormat } from "openai/helpers/zod";
 
 async function sendReponse(interaction: ChatInputCommandInteraction, interactionTag: number, response: string, ephemeral: boolean) {
     // Cleaning potentially injected interaction tags by openai
@@ -111,12 +112,12 @@ const letsChatCommand: Command = {
                 if (message.author.bot === false && message.author.username === user.username) {
                     const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(collected, selectedProfile as UserProfile);
 
-                    OpenAi.chat.completions.create({
+                    OpenAi.beta.chat.completions.parse({
                         model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                         messages: chatCompletionMessages as any,
-                        response_format: { type: 'json_object' },
+                        response_format: zodResponseFormat(chatCompletionStructuredResponse, "structured_response"),
                     }).then(async chatCompletion => {
-                        const jsonResponse: JsonContent = JSON.parse(chatCompletion.choices[0].message.content as string);
+                        const jsonResponse = chatCompletion.choices[0].message.parsed;
                         const response = jsonResponse.message;
                         await sendReponse(interaction, interactionTag, response, false);
                         if (jsonResponse.endChat && message.author.username === user.username) {
