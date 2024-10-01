@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, CollectedInteraction, MessageCollector, Sl
 import { Command, singleInstanceCommandsEnum } from "../../shared/discord-js-types";
 import { OpenAi } from "../..";
 import { config } from "../../config";
-import chatCompletionService, { ChatCompletionMessage, structuredResponse } from "../../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { ChatCompletionMessage, chatCompletionStructuredResponse } from "../../openAIClient/chatCompletion/chatCompletion.service";
 import { DEFAULT_CHAT_TIMEOUT } from "../../shared/constants";
 import userProfilesDao, { UserProfile } from "../../database/user_profiles/userProfilesDao";
 import { InteractionTimeOutError, USER_TIMEOUT_CODE } from "../../shared/errors";
@@ -115,7 +115,7 @@ const letsChatCommand: Command = {
                     OpenAi.beta.chat.completions.parse({
                         model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
                         messages: chatCompletionMessages as any,
-                        response_format: zodResponseFormat(structuredResponse, "structured_response"),
+                        response_format: zodResponseFormat(chatCompletionStructuredResponse, "structured_response"),
                     }).then(async chatCompletion => {
                         const jsonResponse = chatCompletion.choices[0].message.parsed;
                         const response = jsonResponse.message;

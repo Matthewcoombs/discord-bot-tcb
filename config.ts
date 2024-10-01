@@ -6,8 +6,6 @@ export enum imageModelEnums {
 }
 
 export enum textBasedModelEnums {
-    GPT3 = 'gpt-3.5-turbo-0125',
-    GPT4 = 'gpt-4-turbo-preview',
     GPT4O = 'gpt-4o',
     GPT40_MINI = 'gpt-4o-mini',
 }

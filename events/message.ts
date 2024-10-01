@@ -2,7 +2,7 @@
 import { ChannelType, Events, Message, MessageCollector, TextChannel, User } from "discord.js";
 import { ChatInstance, Command } from "../shared/discord-js-types";
 import { DEFAULT_CHAT_TIMEOUT, MAX_MESSAGE_COLLECTORS } from "../shared/constants";
-import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompletionMessage, JsonContent, structuredResponse } from "../openAIClient/chatCompletion/chatCompletion.service";
+import chatCompletionService, { CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES, ChatCompletionMessage, chatCompletionStructuredResponse, JsonContent } from "../openAIClient/chatCompletion/chatCompletion.service";
 import { OpenAi } from "..";
 import { config } from "../config";
 import userProfilesDao, { UserProfile } from "../database/user_profiles/userProfilesDao";
@@ -63,7 +63,7 @@ async function validateGenerativeResponse(
         try {
             chatCompletion = await OpenAi.beta.chat.completions.parse({
                 model: userMessageInstance?.selectedProfile ? userMessageInstance.selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
-                response_format: zodResponseFormat(structuredResponse, "structured_response"),
+                response_format: zodResponseFormat(chatCompletionStructuredResponse, "structured_response"),
                 messages: chatCompletionMessages as any,
             });
 
