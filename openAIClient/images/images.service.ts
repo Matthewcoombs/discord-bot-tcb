@@ -37,7 +37,7 @@ export default {
     return row;
   },
 
-  async generateImages(user: User, imageOptions: GenerateImageOptions) {
+  async generateImages(user: User, interactionTag: number, imageOptions: GenerateImageOptions) {
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
       .fill(imageOptions)
@@ -79,17 +79,20 @@ export default {
     await chatCompletionService.downloadAndConvertImagesToJpeg(
       imageUrls,
       user.username,
-      Number(user.id),
+      interactionTag,
     );
 
     let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
+    console.log('testing image file detection 1', imageFiles);
     imageFiles = imageFiles
       .filter(
         (fileName) =>
           fileName.includes(user.username) &&
-          fileName.includes(user.id.toString()),
+          fileName.includes(interactionTag.toString()),
       )
       .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
+
+    console.log('testing image file detectio 2', imageFiles);
 
     const finalResponseMsg =
       imageFiles.length > 1

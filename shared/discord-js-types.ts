@@ -48,6 +48,7 @@ export interface ChatInstance {
   isProcessing: boolean;
   channelName: string | undefined;
   channelId: string;
+  interactionTag: number;
 }
 
 export enum singleInstanceCommandsEnum {

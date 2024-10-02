@@ -22,7 +22,7 @@ import { chatToolsEnum, config, imageModelEnums } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
-import { processBotResponseLength, validateJsonContent } from '../shared/utils';
+import { deleteTempFilesByTag, generateInteractionTag, processBotResponseLength, validateJsonContent } from '../shared/utils';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ParsedChatCompletion } from 'openai/resources/beta/chat/completions';
 import imagesService, {
@@ -48,7 +48,7 @@ async function sendResponse(
         files: files ? files : [],
       });
     } else {
-      message.channel.send({
+      await message.channel.send({
         content: `${userTag} ${responses[i]}`,
         files: files ? files : [],
       });
@@ -193,7 +193,7 @@ const directMessageEvent: Command = {
       return sendResponse(
         isDirectMessage,
         message,
-        `The max amount of my chat instances has been reached.`,
+        `The max amount of my chat instances has been reached.`
       );
     }
 
@@ -217,6 +217,7 @@ const directMessageEvent: Command = {
         channelId: channelId,
         channelName: channelName,
         isProcessing: false,
+        interactionTag: generateInteractionTag(),
       });
     }
 
@@ -289,6 +290,8 @@ const directMessageEvent: Command = {
               userMessageInstance,
               chatCompletionMessages,
             );
+          userMessageInstance.isProcessing = false;
+          chatInstanceCollector.set(userId, userMessageInstance);
 
           if (!isValidJSON) {
             return await sendResponse(
@@ -311,14 +314,17 @@ const directMessageEvent: Command = {
                 const { imageFiles, finalResponseMsg } =
                   await imagesService.generateImages(
                     user,
+                    userMessageInstance.interactionTag,
                     imageGenerateOptions,
                   );
-                return await sendResponse(
+                await sendResponse(
                   isDirectMessage,
                   message,
                   finalResponseMsg,
                   imageFiles,
                 );
+                deleteTempFilesByTag(userMessageInstance.interactionTag);
+                return;
               }
               default:
                 break;
@@ -341,9 +347,6 @@ const directMessageEvent: Command = {
               `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message:\n${overMax}`,
             );
           }
-
-          userMessageInstance.isProcessing = false;
-          chatInstanceCollector.set(userId, userMessageInstance);
 
           await sendResponse(isDirectMessage, message, response);
           if (endChat) {
