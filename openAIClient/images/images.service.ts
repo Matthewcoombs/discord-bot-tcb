@@ -37,7 +37,11 @@ export default {
     return row;
   },
 
-  async generateImages(user: User, interactionTag: number, imageOptions: GenerateImageOptions) {
+  async generateImages(
+    user: User,
+    interactionTag: number,
+    imageOptions: GenerateImageOptions,
+  ) {
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
       .fill(imageOptions)

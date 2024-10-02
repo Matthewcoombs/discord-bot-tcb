@@ -22,7 +22,12 @@ import { chatToolsEnum, config, imageModelEnums } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
-import { deleteTempFilesByTag, generateInteractionTag, processBotResponseLength, validateJsonContent } from '../shared/utils';
+import {
+  deleteTempFilesByTag,
+  generateInteractionTag,
+  processBotResponseLength,
+  validateJsonContent,
+} from '../shared/utils';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ParsedChatCompletion } from 'openai/resources/beta/chat/completions';
 import imagesService, {
@@ -193,7 +198,7 @@ const directMessageEvent: Command = {
       return sendResponse(
         isDirectMessage,
         message,
-        `The max amount of my chat instances has been reached.`
+        `The max amount of my chat instances has been reached.`,
       );
     }
 
