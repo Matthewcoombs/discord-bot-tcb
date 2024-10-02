@@ -18,13 +18,16 @@ import chatCompletionService, {
   JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
-import { config } from '../config';
+import { chatToolsEnum, config } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
 import { processBotResponseLength, validateJsonContent } from '../shared/utils';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ParsedChatCompletion } from 'openai/resources/beta/chat/completions';
+import emailService, {
+  SendEmailArguments,
+} from '../emailClient/email/email.service';
 
 async function sendResponse(isDM: boolean, message: Message, response: string) {
   // Cleaning potentially injected user tags by openai
@@ -75,7 +78,8 @@ async function validateGenerativeResponse(
     message: '',
     endChat: false,
   };
-
+  let toolCalls;
+  let isToolCall = false;
   let isValidJSON = false;
   let retries = 0;
   const maxRetries = 5;
@@ -92,9 +96,17 @@ async function validateGenerativeResponse(
           'structured_response',
         ),
         messages: chatCompletionMessages as any,
+        tools: config.functionTools as any,
       });
 
       jsonResponse = chatCompletion.choices[0].message.parsed as JsonContent;
+      toolCalls = chatCompletion.choices[0].message.tool_calls;
+      isToolCall = toolCalls.length > 0;
+      // escaping the while loop if a tool is called.
+      if (isToolCall) {
+        isValidJSON = isToolCall;
+        break;
+      }
       isValidJSON = validateJsonContent(jsonResponse);
       if (!isValidJSON) {
         console.log(
@@ -112,7 +124,7 @@ async function validateGenerativeResponse(
       retries++;
     }
   }
-  return { isValidJSON, jsonResponse };
+  return { isValidJSON, jsonResponse, toolCalls };
 }
 
 function filterAttachedFiles(message: Message<boolean>) {
@@ -262,7 +274,7 @@ const directMessageEvent: Command = {
 
           userMessageInstance.isProcessing = true;
           chatInstanceCollector.set(userId, userMessageInstance);
-          const { isValidJSON, jsonResponse } =
+          const { isValidJSON, jsonResponse, toolCalls } =
             await validateGenerativeResponse(
               user,
               userMessageInstance,
@@ -270,11 +282,30 @@ const directMessageEvent: Command = {
             );
 
           if (!isValidJSON) {
-            await sendResponse(
+            return await sendResponse(
               isDirectMessage,
               message,
               `Sorry it looks like I'm having an issue formatting a proper response for you :disappointed_relieved:`,
             );
+          }
+
+          if (toolCalls && toolCalls.length > 0) {
+            const { name: functionName, parsed_arguments } =
+              toolCalls[0].function;
+            switch (functionName) {
+              case chatToolsEnum.SEND_EMAIL:
+                emailService.sendEmail(
+                  user.username,
+                  parsed_arguments as SendEmailArguments,
+                );
+                return await sendResponse(
+                  isDirectMessage,
+                  message,
+                  `:incoming_envelope: email sent!`,
+                );
+              default:
+                break;
+            }
           }
 
           const { message: response, endChat } = jsonResponse;

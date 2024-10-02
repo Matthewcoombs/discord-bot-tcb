@@ -13,6 +13,10 @@ export enum textBasedModelEnums {
   GPT40_MINI = 'gpt-4o-mini',
 }
 
+export enum chatToolsEnum {
+  SEND_EMAIL = 'send_email',
+}
+
 export const IMAGE_PROCESSING_MODELS = [
   textBasedModelEnums.GPT40_MINI,
   textBasedModelEnums.GPT4O,
@@ -34,4 +38,38 @@ export const config = {
       optInCommands.SELECT_PROFILE_SETTINGS,
     ],
   },
+  functionTools: [
+    {
+      type: 'function',
+      function: {
+        name: chatToolsEnum.SEND_EMAIL,
+        strict: true,
+        description:
+          'Sends an email for the user. Call this whenever the user asks to send an email',
+        parameters: {
+          type: 'object',
+          properties: {
+            subject: {
+              type: 'string',
+              description: 'the subject of the email',
+            },
+            body: {
+              type: 'string',
+              description: 'the body of the email',
+            },
+            recipients: {
+              type: 'array',
+              items: {
+                type: 'string',
+              },
+              description:
+                'an array containing the email of all desired ricipients',
+            },
+          },
+          required: ['subject', 'body', 'recipients'],
+          additionalProperties: false,
+        },
+      },
+    },
+  ],
 };
