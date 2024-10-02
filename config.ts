@@ -14,7 +14,7 @@ export enum textBasedModelEnums {
 }
 
 export enum chatToolsEnum {
-  SEND_EMAIL = 'send_email',
+  CREATE_IMAGE = 'create_image',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -42,31 +42,39 @@ export const config = {
     {
       type: 'function',
       function: {
-        name: chatToolsEnum.SEND_EMAIL,
+        name: chatToolsEnum.CREATE_IMAGE,
         strict: true,
         description:
-          'Sends an email for the user. Call this whenever the user asks to send an email',
+          'Creates an image for the user. Call this whenever the user asks to create an image',
         parameters: {
           type: 'object',
           properties: {
-            subject: {
+            description: {
               type: 'string',
-              description: 'the subject of the email',
+              description: 'the description of the image to create',
             },
-            body: {
+            quality: {
               type: 'string',
-              description: 'the body of the email',
+              description: 'the quality of the image to create',
+              enum: ['standard', 'hd'],
             },
-            recipients: {
-              type: 'array',
-              items: {
-                type: 'string',
-              },
-              description:
-                'an array containing the email of all desired ricipients',
+            style: {
+              type: 'string',
+              description: 'the style of the image to create',
+              enum: ['vivid', 'natural'],
+            },
+            count: {
+              type: 'string',
+              description: 'the number of images to create',
+              enum: ['1', '2', '3', '4'],
+            },
+            size: {
+              type: 'string',
+              description: 'the size of image to create',
+              enum: ['1024x1024', '1792x1024', '1024x1792'],
             },
           },
-          required: ['subject', 'body', 'recipients'],
+          required: ['description', 'quality', 'style', 'count', 'size'],
           additionalProperties: false,
         },
       },

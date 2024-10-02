@@ -18,18 +18,23 @@ import chatCompletionService, {
   JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
-import { chatToolsEnum, config } from '../config';
+import { chatToolsEnum, config, imageModelEnums } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
 import { processBotResponseLength, validateJsonContent } from '../shared/utils';
 import { zodResponseFormat } from 'openai/helpers/zod';
 import { ParsedChatCompletion } from 'openai/resources/beta/chat/completions';
-import emailService, {
-  SendEmailArguments,
-} from '../emailClient/email/email.service';
+import imagesService, {
+  GenerateImageOptions,
+} from '../openAIClient/images/images.service';
 
-async function sendResponse(isDM: boolean, message: Message, response: string) {
+async function sendResponse(
+  isDM: boolean,
+  message: Message,
+  response: string,
+  files?: string[],
+) {
   // Cleaning potentially injected user tags by openai
   const userTag = `<@${message.author.id}>`;
   response = response.replace(/<@\d+>/g, '').trim();
@@ -40,9 +45,13 @@ async function sendResponse(isDM: boolean, message: Message, response: string) {
       await message.author.send({
         content: responses[i],
         target: message.author,
+        files: files ? files : [],
       });
     } else {
-      message.channel.send(`${userTag} ${responses[i]}`);
+      message.channel.send({
+        content: `${userTag} ${responses[i]}`,
+        files: files ? files : [],
+      });
     }
   }
 }
@@ -83,7 +92,7 @@ async function validateGenerativeResponse(
   let isValidJSON = false;
   let retries = 0;
   const maxRetries = 5;
-  const delay = 2000; // 2 seconds
+  const delay = 1500; // 2 seconds
 
   while (!isValidJSON && retries < maxRetries) {
     try {
@@ -293,16 +302,24 @@ const directMessageEvent: Command = {
             const { name: functionName, parsed_arguments } =
               toolCalls[0].function;
             switch (functionName) {
-              case chatToolsEnum.SEND_EMAIL:
-                emailService.sendEmail(
-                  user.username,
-                  parsed_arguments as SendEmailArguments,
-                );
+              case chatToolsEnum.CREATE_IMAGE: {
+                const imageGenerateOptions = {
+                  ...(parsed_arguments as GenerateImageOptions),
+                  model: imageModelEnums.DALLE3,
+                };
+                imageGenerateOptions.count = Number(imageGenerateOptions.count);
+                const { imageFiles, finalResponseMsg } =
+                  await imagesService.generateImages(
+                    user,
+                    imageGenerateOptions,
+                  );
                 return await sendResponse(
                   isDirectMessage,
                   message,
-                  `:incoming_envelope: email sent!`,
+                  finalResponseMsg,
+                  imageFiles,
                 );
+              }
               default:
                 break;
             }
