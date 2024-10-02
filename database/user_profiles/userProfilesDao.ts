@@ -1,39 +1,39 @@
-import { sql } from "../..";
-import { textBasedModelEnums } from "../../config";
-import { ChatCompletionMessage } from "../../openAIClient/chatCompletion/chatCompletion.service";
-import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from "../../shared/constants";
+import { sql } from '../..';
+import { textBasedModelEnums } from '../../config';
+import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
+import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
 
 export interface UserProfile {
-    id: string | number;
-    discordId: string;
-    name: string;
-    profile: string;
-    createdAt: string;
-    updatedAt: string;
-    assistantId: string;
-    selected?: boolean;
-    textModel: textBasedModelEnums;
-    threadId: string;
-    timeout: string | number;
-    retention: boolean;
-    retentionData: ChatCompletionMessage[];
-    retentionSize: string | number;
+  id: string | number;
+  discordId: string;
+  name: string;
+  profile: string;
+  createdAt: string;
+  updatedAt: string;
+  assistantId: string;
+  selected?: boolean;
+  textModel: textBasedModelEnums;
+  threadId: string;
+  timeout: string | number;
+  retention: boolean;
+  retentionData: ChatCompletionMessage[];
+  retentionSize: string | number;
 }
 
 export interface CreateProfile {
-    name: string;
-    profile: string;
-    discordId: string;
-    assistantId: string;
-    selected?: boolean;
-    threadId: string;
+  name: string;
+  profile: string;
+  discordId: string;
+  assistantId: string;
+  selected?: boolean;
+  threadId: string;
 }
 
 export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
-    // If the amount of profiles the user has is less than the PROFILES_LIMIT, the
-    // profile count is valid. Otherwise it is invalid and the user cannot create
-    // more profiles at this time.
-    return userProfiles.length < PROFILES_LIMIT;
+  // If the amount of profiles the user has is less than the PROFILES_LIMIT, the
+  // profile count is valid. Otherwise it is invalid and the user cannot create
+  // more profiles at this time.
+  return userProfiles.length < PROFILES_LIMIT;
 }
 
 const getUserProfilesBaseQuery = sql`
@@ -57,74 +57,74 @@ const getUserProfilesBaseQuery = sql`
 `;
 
 export default {
-    async getUserProfiles(discordId: string) {
-        const userProfiles = await sql<UserProfile[]>`
+  async getUserProfiles(discordId: string) {
+    const userProfiles = await sql<UserProfile[]>`
             ${getUserProfilesBaseQuery}
             WHERE
                 discord_id = ${discordId}
         `;
 
-        return userProfiles;
-    },
+    return userProfiles;
+  },
 
-    async getUserProfileById(profileId: string) {
-        const userProfiles = await sql<UserProfile[]>`
+  async getUserProfileById(profileId: string) {
+    const userProfiles = await sql<UserProfile[]>`
             ${getUserProfilesBaseQuery}
             WHERE
                 id = ${profileId}
         `;
-        return userProfiles[0];
-    },
+    return userProfiles[0];
+  },
 
-    async getSelectedProfile(userId: string) {
-        const userProfiles = await sql<UserProfile[]>`
+  async getSelectedProfile(userId: string) {
+    const userProfiles = await sql<UserProfile[]>`
             ${getUserProfilesBaseQuery}
             WHERE
                 selected = 'true'
             AND
                 discord_id = ${userId}
         `;
-        const userProfile = userProfiles[0];
-        return userProfile;
-    },
+    const userProfile = userProfiles[0];
+    return userProfile;
+  },
 
-    async insertUserProfile(newProfile: CreateProfile) {
-        const { name, profile, discordId, assistantId, threadId} = newProfile;
-        await sql`
+  async insertUserProfile(newProfile: CreateProfile) {
+    const { name, profile, discordId, assistantId, threadId } = newProfile;
+    await sql`
             INSERT INTO
                 user_profiles
                 (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
             VALUES
                 (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true, ${DEFAULT_RETENTION_SIZE})
         `;
-    },
+  },
 
-    async deleteUserProfile(profileId: string) {
-        await sql`
+  async deleteUserProfile(profileId: string) {
+    await sql`
             DELETE FROM
                 user_profiles
             WHERE
                 id = ${profileId}
         `;
-    },
+  },
 
-    async updateUserProfile(selectedProfile: UserProfile) {
-        const { 
-            name, 
-            profile, 
-            selected, 
-            textModel, 
-            timeout, 
-            retention,
-            retentionData, 
-            retentionSize
-        } = selectedProfile;
+  async updateUserProfile(selectedProfile: UserProfile) {
+    const {
+      name,
+      profile,
+      selected,
+      textModel,
+      timeout,
+      retention,
+      retentionData,
+      retentionSize,
+    } = selectedProfile;
 
-        if (retentionData && retentionData.length > Number(retentionSize)) {
-            retentionData.splice(0, retentionData.length - Number(retentionSize));
-        }
+    if (retentionData && retentionData.length > Number(retentionSize)) {
+      retentionData.splice(0, retentionData.length - Number(retentionSize));
+    }
 
-        await sql`
+    await sql`
             UPDATE
                 user_profiles
             SET
@@ -140,11 +140,11 @@ export default {
             WHERE
                 id = ${selectedProfile.id}
         `;
-    },
+  },
 
-    async updateProfileSelection(selectedProfile: UserProfile) {
-        const {id, discordId } = selectedProfile;
-        await sql`
+  async updateProfileSelection(selectedProfile: UserProfile) {
+    const { id, discordId } = selectedProfile;
+    await sql`
             UPDATE
                 user_profiles
             SET
@@ -154,7 +154,7 @@ export default {
                 id = ${id}
         `;
 
-        await sql`
+    await sql`
             UPDATE
                 user_profiles
             SET
@@ -164,11 +164,11 @@ export default {
             AND
                 discord_id = ${discordId}
         `;
-    },
+  },
 
-    async clearProfileRetentionData(selectedProfile: UserProfile) {
-        const { id } = selectedProfile;
-        await sql`
+  async clearProfileRetentionData(selectedProfile: UserProfile) {
+    const { id } = selectedProfile;
+    await sql`
             UPDATE
                 user_profiles
             SET
@@ -177,5 +177,5 @@ export default {
             WHERE
                 id = ${id}
         `;
-    }
+  },
 };

@@ -1,31 +1,30 @@
-import { sql } from "../..";
-
+import { sql } from '../..';
 
 export interface DiscordUser {
-    id: string;
-    discordId: string;
-    username: string;
-    bot: boolean;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  discordId: string;
+  username: string;
+  bot: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UserOptInData {
-    id: string;
-    discordId: string;
-    optIn: boolean;
-    createdAt: string;
-    updatedAt: string;
+  id: string;
+  discordId: string;
+  optIn: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface NewUser {
-    discordId: string;
-    username: string;
+  discordId: string;
+  username: string;
 }
 
 export default {
-    async getUsers(discordId: string) {
-        const user = await sql<DiscordUser[]>`
+  async getUsers(discordId: string) {
+    const user = await sql<DiscordUser[]>`
             SELECT
                 id,
                 discord_id AS discordId,
@@ -37,31 +36,31 @@ export default {
                 users
             ${discordId ? sql`WHERE discord_id = ${discordId}` : sql``}
             `;
-        return user;
-    },
-    
-    async addUser(newUser: NewUser) {
-        const { discordId, username } = newUser;
-        await sql`
+    return user;
+  },
+
+  async addUser(newUser: NewUser) {
+    const { discordId, username } = newUser;
+    await sql`
             INSERT INTO
                 users
                 (discord_id, username)
             VALUES
                 (${discordId}, ${username})
         `;
-    },
-    
-    async deleteUser(discordId: string) {
-        await sql`
+  },
+
+  async deleteUser(discordId: string) {
+    await sql`
             DELETE FROM
                 users
             WHERE
                 discord_id = ${discordId}
         `;
-    },
+  },
 
-    async insertUserOptIn(discordId: string, optIn: boolean) {
-        await sql`
+  async insertUserOptIn(discordId: string, optIn: boolean) {
+    await sql`
             INSERT INTO
                 user_opt_in
                 (discord_id, opt_in)
@@ -71,10 +70,10 @@ export default {
                 (discord_id) 
             DO NOTHING
         `;
-    },
+  },
 
-    async getUserOptIn(discordId: string) {
-        const userOptInData = await sql<UserOptInData[]>`
+  async getUserOptIn(discordId: string) {
+    const userOptInData = await sql<UserOptInData[]>`
             SELECT
                 id,
                 discord_id AS "discordId",
@@ -87,6 +86,6 @@ export default {
                 discord_id = ${discordId}
         `;
 
-        return userOptInData[0];
-    }
+    return userOptInData[0];
+  },
 };
