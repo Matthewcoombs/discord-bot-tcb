@@ -1,134 +1,157 @@
-import { ChannelType, ChatInputCommandInteraction, Collection, Events, ModalSubmitInteraction } from "discord.js";
-import { Command, optInCommands, singleInstanceCommandsEnum } from "../shared/discord-js-types";
-import { config } from "../config";
-import usersDao from "../database/users/usersDao";
-import modalsService from "../modals/modals.service";
-import { MAX_USER_SINGLE_INSTANCE_COMMANDS } from "../shared/constants";
+import {
+  ChannelType,
+  ChatInputCommandInteraction,
+  Collection,
+  Events,
+  ModalSubmitInteraction,
+} from 'discord.js';
+import {
+  Command,
+  optInCommands,
+  singleInstanceCommandsEnum,
+} from '../shared/discord-js-types';
+import { config } from '../config';
+import usersDao from '../database/users/usersDao';
+import modalsService from '../modals/modals.service';
+import { MAX_USER_SINGLE_INSTANCE_COMMANDS } from '../shared/constants';
 
 const createInteractionEvent: Command = {
-	name: Events.InteractionCreate,
-	async execute(interaction: ChatInputCommandInteraction ) {
-		const { cooldowns, singleInstanceCommands, chatInstanceCollector } = interaction.client;
-		const { user, commandName, channel, channelId } = interaction;
-		const command = interaction.client.commands.get(commandName) as Command;
-		// const channel = interaction.channel as TextChannel | TextBasedChannel;
+  name: Events.InteractionCreate,
+  async execute(interaction: ChatInputCommandInteraction) {
+    const { cooldowns, singleInstanceCommands, chatInstanceCollector } =
+      interaction.client;
+    const { user, commandName, channel, channelId } = interaction;
+    const command = interaction.client.commands.get(commandName) as Command;
+    // const channel = interaction.channel as TextChannel | TextBasedChannel;
 
-		const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
-		
-		if (!cooldowns.has(command?.data?.name)) {
-			cooldowns.set(command?.data?.name, new Collection());
-		}
+    const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 
-		// Checking to see if the command is an opt in command AND the user has opted in
-		// to utilize the command
-		if (config.commands.optInCommands.includes(commandName as optInCommands)) {
-			const userOptInRecord = await usersDao.getUserOptIn(user.id);
-			const { optIn } = userOptInRecord;
-			if (!optIn) {
-				return interaction.reply({
-					content: `You do not have access to this command. Only users opted into sharing data can use this command.`,
-					ephemeral: true,
-				});
-			}
-		}
+    if (!cooldowns.has(command?.data?.name)) {
+      cooldowns.set(command?.data?.name, new Collection());
+    }
 
-		// This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
-		// This logic is set to be applied to directMessage and non direct message channels.
-		if (config.commands.singleInstanceCommands.includes(commandName as singleInstanceCommandsEnum)) {
-			// If a user initiated a chat with the bot the interaction will be cancelled
-			const userChatInstance = chatInstanceCollector.get(interaction.user.id);
-			if (userChatInstance && userChatInstance.channelId === channel?.id) {
-				const channelName = interaction.client.channels.cache.get(channelId);
-				return interaction.reply({
-					content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
-					ephemeral: true,
-				});
-			}
-			
-			// Checking to see if the maximum amount of single instance commands per user has been reached.
-			if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
-				return interaction.reply({
-					content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
-					ephemeral: true,
-				});
-			}
+    // Checking to see if the command is an opt in command AND the user has opted in
+    // to utilize the command
+    if (config.commands.optInCommands.includes(commandName as optInCommands)) {
+      const userOptInRecord = await usersDao.getUserOptIn(user.id);
+      const { optIn } = userOptInRecord;
+      if (!optIn) {
+        return interaction.reply({
+          content: `You do not have access to this command. Only users opted into sharing data can use this command.`,
+          ephemeral: true,
+        });
+      }
+    }
 
-			// Findind all initiated user single instance commands
-			const userSingleInstanceCommands = singleInstanceCommands.filter((colCommand) => {
-				return colCommand.userId === interaction.user.id;
-			});
+    // This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
+    // This logic is set to be applied to directMessage and non direct message channels.
+    if (
+      config.commands.singleInstanceCommands.includes(
+        commandName as singleInstanceCommandsEnum,
+      )
+    ) {
+      // If a user initiated a chat with the bot the interaction will be cancelled
+      const userChatInstance = chatInstanceCollector.get(interaction.user.id);
+      if (userChatInstance && userChatInstance.channelId === channel?.id) {
+        const channelName = interaction.client.channels.cache.get(channelId);
+        return interaction.reply({
+          content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
+          ephemeral: true,
+        });
+      }
 
-			// Finding if the user has already initiated a single instance command in the current channel.
-			const activeCommand = userSingleInstanceCommands.find(usrCommand => usrCommand.channelId === interaction.channelId);
+      // Checking to see if the maximum amount of single instance commands per user has been reached.
+      if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
+        return interaction.reply({
+          content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
+          ephemeral: true,
+        });
+      }
 
-			if (activeCommand) {
-				return interaction.reply(
-					{ 
-						content: `You have a single instance command active in this channel. Please terminate the active command to execute: **${commandName}**.`,
-						ephemeral: true
-					});
-			} else {
-				singleInstanceCommands.set(
-					interaction.id, { 
-						channelType: interaction.channel?.type, 
-						channelId: interaction.channel?.id, 
-						channelName: isInteractionInDirectMessage ? null : channel?.name as string, 
-						name: commandName, 
-						user: interaction.user.username, 
-						userId: interaction.user.id,
-					});
-				
-			}
-		}
+      // Findind all initiated user single instance commands
+      const userSingleInstanceCommands = singleInstanceCommands.filter(
+        (colCommand) => {
+          return colCommand.userId === interaction.user.id;
+        },
+      );
 
-		// handling modal interactions
-		if (interaction.isModalSubmit() === true) {
-			const response = await modalsService.handleModalSubmit(interaction as ModalSubmitInteraction);
-			return response;
-		}
+      // Finding if the user has already initiated a single instance command in the current channel.
+      const activeCommand = userSingleInstanceCommands.find(
+        (usrCommand) => usrCommand.channelId === interaction.channelId,
+      );
 
-		const now = Date.now();
-		const timestamps = cooldowns.get(command?.data?.name);
-		const defaultCooldownDuration = 3;
-		const cooldownAmount = (command?.cooldown ?? defaultCooldownDuration) * 1000;
+      if (activeCommand) {
+        return interaction.reply({
+          content: `You have a single instance command active in this channel. Please terminate the active command to execute: **${commandName}**.`,
+          ephemeral: true,
+        });
+      } else {
+        singleInstanceCommands.set(interaction.id, {
+          channelType: interaction.channel?.type,
+          channelId: interaction.channel?.id,
+          channelName: isInteractionInDirectMessage
+            ? null
+            : (channel?.name as string),
+          name: commandName,
+          user: interaction.user.username,
+          userId: interaction.user.id,
+        });
+      }
+    }
 
-		if (timestamps.has(interaction.user.id)) {
-			const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
+    // handling modal interactions
+    if (interaction.isModalSubmit() === true) {
+      const response = await modalsService.handleModalSubmit(
+        interaction as ModalSubmitInteraction,
+      );
+      return response;
+    }
 
-			if (now < expirationTime) {
-				const expiredTimestamp = Math.round(expirationTime / 1000);
-				return interaction.reply({ content: `Please wait, you are on a cooldown for \`${command?.data?.name}\`. You can use it again <t:${expiredTimestamp}:R>.`, ephemeral: true });
-			}
+    const now = Date.now();
+    const timestamps = cooldowns.get(command?.data?.name);
+    const defaultCooldownDuration = 3;
+    const cooldownAmount =
+      (command?.cooldown ?? defaultCooldownDuration) * 1000;
 
-			timestamps.set(interaction.user.id, now);
-			setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
-		}
+    if (timestamps.has(interaction.user.id)) {
+      const expirationTime =
+        timestamps.get(interaction.user.id) + cooldownAmount;
 
-		if (!interaction.isChatInputCommand()) return;
+      if (now < expirationTime) {
+        const expiredTimestamp = Math.round(expirationTime / 1000);
+        return interaction.reply({
+          content: `Please wait, you are on a cooldown for \`${command?.data?.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
+          ephemeral: true,
+        });
+      }
 
-		if (!command) {
-			console.error(`No command matching ${commandName} was found.`);
-			return;
-		}
+      timestamps.set(interaction.user.id, now);
+      setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
+    }
 
-		try {
-			await command.execute(interaction);
-		} catch (_err: any) {
-			interaction.client.singleInstanceCommands.delete(interaction.id);
-			console.error(`Error executing ${commandName}`);
-			const errorMsg = _err?.errorData ? 
-				_err.errorData.error :
-				`There was an internal error executing the command ${commandName}.`;
+    if (!interaction.isChatInputCommand()) return;
 
-			console.error(_err);
-			return interaction.followUp(
-				{
-					content: errorMsg,
-					ephemeral: true,
-				}
-			);
-		}
-	},
+    if (!command) {
+      console.error(`No command matching ${commandName} was found.`);
+      return;
+    }
+
+    try {
+      await command.execute(interaction);
+    } catch (_err: any) {
+      interaction.client.singleInstanceCommands.delete(interaction.id);
+      console.error(`Error executing ${commandName}`);
+      const errorMsg = _err?.errorData
+        ? _err.errorData.error
+        : `There was an internal error executing the command ${commandName}.`;
+
+      console.error(_err);
+      return interaction.followUp({
+        content: errorMsg,
+        ephemeral: true,
+      });
+    }
+  },
 };
 
 export = createInteractionEvent;
