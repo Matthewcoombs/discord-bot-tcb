@@ -45,7 +45,7 @@ export const config = {
         name: chatToolsEnum.CREATE_IMAGE,
         strict: true,
         description:
-          'Creates an image for the user. Call this whenever the user asks to create an image',
+          'Creates an image for the user. Call this when the user explicitly asks to create an image',
         parameters: {
           type: 'object',
           properties: {

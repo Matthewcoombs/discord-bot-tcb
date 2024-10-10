@@ -90,7 +90,8 @@ export default {
           message.attachments &&
           IMAGE_PROCESSING_MODELS.includes(
             selectedProfile?.textModel as textBasedModelEnums,
-          )
+          ) &&
+          !message.author.bot
         ) {
           const imageContents = message.attachments.map((attachment) => {
             return {
@@ -157,6 +158,7 @@ export default {
     username: string,
     interactionTag: number,
   ) {
+    const imageFiles: string[] = [];
     for (let i = 0; i < imageUrls.length; i++) {
       const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i + 1}.jpeg`;
       await axios
@@ -165,11 +167,13 @@ export default {
         })
         .then((response) => {
           fs.writeFileSync(imageFilePath, response.data);
+          imageFiles.push(imageFilePath);
           console.log(`Image downloaded [image]: ${imageFilePath}`);
         })
         .catch((err) => {
           console.error(`Error downloading image:`, err);
         });
     }
+    return imageFiles;
   },
 };

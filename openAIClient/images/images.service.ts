@@ -2,9 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, User } from 'discord.js';
 import { imageModelEnums } from '../../config';
 import { ImageGenerateParams } from 'openai/resources';
 import { OpenAi } from '../..';
-import * as fs from 'fs';
 import chatCompletionService from '../chatCompletion/chatCompletion.service';
-import { TEMP_FOLDER_PATH } from '../../shared/constants';
 
 export interface GenerateImageOptions {
   model?: imageModelEnums;
@@ -37,7 +35,11 @@ export default {
     return row;
   },
 
-  async generateImages(user: User, imageOptions: GenerateImageOptions) {
+  async generateImages(
+    user: User,
+    imageOptions: GenerateImageOptions,
+    interactionTag: number,
+  ) {
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
       .fill(imageOptions)
@@ -67,7 +69,6 @@ export default {
             | null
             | undefined;
         }
-        console.log(imageGenerateParams);
         return OpenAi.images.generate(imageGenerateParams);
       });
 
@@ -76,26 +77,22 @@ export default {
       return acc.concat(obj.data[0].url as string);
     }, [] as string[]);
 
-    await chatCompletionService.downloadAndConvertImagesToJpeg(
-      imageUrls,
-      user.username,
-      Number(user.id),
-    );
+    const imageFiles =
+      await chatCompletionService.downloadAndConvertImagesToJpeg(
+        imageUrls,
+        user.username,
+        interactionTag,
+      );
 
-    let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
-    imageFiles = imageFiles
-      .filter(
-        (fileName) =>
-          fileName.includes(user.username) &&
-          fileName.includes(user.id.toString()),
-      )
-      .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
+    // let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
+    // imageFiles = imageFiles
+    //   .filter(
+    //     (fileName) =>
+    //       fileName.includes(user.username) &&
+    //       fileName.includes(user.id.toString()),
+    //   )
+    //   .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
 
-    const finalResponseMsg =
-      imageFiles.length > 1
-        ? `Here are your requested images ${user.username} :blush:`
-        : `Here is your requested image ${user.username} :blush:`;
-
-    return { imageFiles, finalResponseMsg };
+    return imageFiles;
   },
 };
