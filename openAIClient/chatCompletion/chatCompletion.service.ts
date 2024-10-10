@@ -13,7 +13,7 @@ import {
   GENERATIVE_RESPONSE_CONSTRAINTS,
   TEMP_FOLDER_PATH,
 } from '../../shared/constants';
-import { IMAGE_PROCESSING_MODELS, textBasedModelEnums } from '../../config';
+import { chatToolsEnum, IMAGE_PROCESSING_MODELS, textBasedModelEnums } from '../../config';
 import * as z from 'zod';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
@@ -32,6 +32,7 @@ export interface ChatCompletionMessage {
       url: string;
     };
   }[];
+  tool_call_id?: string;
 }
 
 export interface JsonContent {
@@ -53,6 +54,7 @@ enum chatCompletionRoles {
   SYSTEM = 'system',
   USER = 'user',
   ASSISTANT = 'assistant',
+  TOOL = 'tool',
 }
 
 function generateSystemContentMessage(profile: string): ChatCompletionMessage {
@@ -74,10 +76,15 @@ export default {
   ): ChatCompletionMessage[] {
     let chatCompletionMessages: ChatCompletionMessage[] = messages.map(
       (message) => {
+        let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
+        if (!message.author.bot) {
+          role = chatCompletionRoles.USER;
+        }
+        if (message.author.bot && message.embeds.length > 0 && message.embeds[0].title === chatToolsEnum.CREATE_IMAGE) {
+          role = chatCompletionRoles.TOOL;
+        }
         const chatCompletion: ChatCompletionMessage = {
-          role: message.author.bot
-            ? chatCompletionRoles.ASSISTANT
-            : chatCompletionRoles.USER,
+          role,
           content: [
             {
               type: chatCompletionTypes.TEXT,
@@ -85,6 +92,10 @@ export default {
             },
           ],
         };
+
+        if (role === chatCompletionRoles.TOOL) {
+          chatCompletion.tool_call_id = message.embeds[0].fields[0].value;
+        }
 
         if (
           message.attachments &&

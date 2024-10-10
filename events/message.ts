@@ -58,6 +58,10 @@ async function sendResponse(
     if (messageCreateOptions.files && i !== responses.length - 1) {
       messageCreateOptions.files = [];
     }
+    if (messageCreateOptions.embeds && i !== responses.length - 1) {
+      messageCreateOptions.embeds = [];
+    }
+
     if (isDM) {
       messageCreateOptions.content = responses[i];
       await message.author.send(messageCreateOptions);
@@ -117,11 +121,16 @@ async function processToolCalls(
   interactionTag: number,
 ): Promise<MessageCreateOptions> {
   let toolResponse: MessageCreateOptions = {};
-  const { name: functionName, parsed_arguments } = toolCalls[0].function;
-  console.log(
-    `User [name]:${user.username} triggered function call [function]:${functionName}`,
-  );
-  switch (functionName) {
+  const toolCall = toolCalls[0];
+  const { id, type } = toolCall;
+  const { name: toolName, parsed_arguments } = toolCall.function;
+
+  const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
+    { name: 'id', value: id, inline: true },
+    { name: 'type', value: type, inline: true },
+  ]);
+
+  switch (toolName) {
     case chatToolsEnum.CREATE_IMAGE: {
       const imageGenerateOptions = {
         ...(parsed_arguments as GenerateImageOptions),
@@ -139,6 +148,7 @@ async function processToolCalls(
             ? `Here are your requested images ${user.username} :blush:`
             : `Here is your requested image ${user.username} :blush:`,
         files: imageFiles,
+        embeds: [toolEmbed],
       };
       break;
     }
