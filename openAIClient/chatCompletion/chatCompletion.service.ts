@@ -13,7 +13,11 @@ import {
   GENERATIVE_RESPONSE_CONSTRAINTS,
   TEMP_FOLDER_PATH,
 } from '../../shared/constants';
-import { chatToolsEnum, IMAGE_PROCESSING_MODELS, textBasedModelEnums } from '../../config';
+import {
+  chatToolsEnum,
+  IMAGE_PROCESSING_MODELS,
+  textBasedModelEnums,
+} from '../../config';
 import * as z from 'zod';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
@@ -80,7 +84,11 @@ export default {
         if (!message.author.bot) {
           role = chatCompletionRoles.USER;
         }
-        if (message.author.bot && message.embeds.length > 0 && message.embeds[0].title === chatToolsEnum.CREATE_IMAGE) {
+        if (
+          message.author.bot &&
+          message.embeds.length > 0 &&
+          message.embeds[0].title === chatToolsEnum.CREATE_IMAGE
+        ) {
           role = chatCompletionRoles.TOOL;
         }
         const chatCompletion: ChatCompletionMessage = {
