@@ -14,7 +14,7 @@ export enum textBasedModelEnums {
 }
 
 export enum chatToolsEnum {
-  CREATE_IMAGE = 'create_image',
+  GENERATE_IMAGE = 'generate_image',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -42,7 +42,7 @@ export const config = {
     {
       type: 'function',
       function: {
-        name: chatToolsEnum.CREATE_IMAGE,
+        name: chatToolsEnum.GENERATE_IMAGE,
         strict: true,
         description:
           'Creates an image for the user. Call this when the user explicitly asks to create an image',

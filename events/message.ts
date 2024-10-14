@@ -16,6 +16,7 @@ import {
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
   ChatCompletionMessage,
+  chatCompletionRoles,
   chatCompletionStructuredResponse,
   JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
@@ -48,11 +49,11 @@ async function sendResponse(
     messageCreateOptions?.content as string,
   );
 
-  messageCreateOptions.embeds = [
-    new EmbedBuilder()
-      .setTitle('test embed')
-      .setFields([{ name: 'jobId', value: 'testing value' }]),
-  ];
+  // messageCreateOptions.embeds = [
+  //   new EmbedBuilder()
+  //     .setTitle('test embed')
+  //     .setFields([{ name: 'jobId', value: 'testing value' }]),
+  // ];
 
   for (let i = 0; i < responses.length; i++) {
     if (messageCreateOptions.files && i !== responses.length - 1) {
@@ -74,7 +75,11 @@ async function sendResponse(
 
 function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
   const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
-    if (compMsg.role !== 'system') {
+    if (
+      compMsg.role !== chatCompletionRoles.SYSTEM &&
+      compMsg.role !== chatCompletionRoles.TOOL &&
+      compMsg.content
+    ) {
       const type = compMsg.content[0].type;
       const text = compMsg.content[0].text as string;
       acc.push({
@@ -86,6 +91,8 @@ function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
           },
         ],
       });
+    } else {
+      acc.push(compMsg);
     }
     return acc;
   }, [] as ChatCompletionMessage[]);
@@ -128,10 +135,11 @@ async function processToolCalls(
   const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
     { name: 'id', value: id, inline: true },
     { name: 'type', value: type, inline: true },
+    { name: 'arguments', value: toolCall.function.arguments, inline: true },
   ]);
 
   switch (toolName) {
-    case chatToolsEnum.CREATE_IMAGE: {
+    case chatToolsEnum.GENERATE_IMAGE: {
       const imageGenerateOptions = {
         ...(parsed_arguments as GenerateImageOptions),
         model: imageModelEnums.DALLE3,
@@ -207,10 +215,6 @@ const directMessageEvent: Command = {
 
     // If the message event is coming from the bot we return
     if (isBot) {
-      // console.log('testing bot embed message', message.embeds);
-      // if (message.embeds.length > 0) {
-      //   console.log(message.embeds[0].fields);
-      // }
       return;
     }
 

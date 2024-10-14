@@ -28,8 +28,8 @@ export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
 ];
 
 export interface ChatCompletionMessage {
-  role: chatCompletionRoles;
-  content: {
+  role?: chatCompletionRoles;
+  content?: {
     type: chatCompletionTypes;
     text?: string;
     image_url?: {
@@ -37,6 +37,14 @@ export interface ChatCompletionMessage {
     };
   }[];
   tool_call_id?: string;
+  tool_calls?: {
+    id: string;
+    type: 'function';
+    function: {
+      arguments: string;
+      name: string;
+    };
+  }[];
 }
 
 export interface JsonContent {
@@ -54,7 +62,7 @@ enum chatCompletionTypes {
   IMAGE_URL = 'image_url',
 }
 
-enum chatCompletionRoles {
+export enum chatCompletionRoles {
   SYSTEM = 'system',
   USER = 'user',
   ASSISTANT = 'assistant',
@@ -78,8 +86,8 @@ export default {
     messages: Message[],
     selectedProfile?: UserProfile,
   ): ChatCompletionMessage[] {
-    let chatCompletionMessages: ChatCompletionMessage[] = messages.map(
-      (message) => {
+    let chatCompletionMessages = messages.reduce(
+      (acc: ChatCompletionMessage[], message) => {
         let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
         if (!message.author.bot) {
           role = chatCompletionRoles.USER;
@@ -87,10 +95,13 @@ export default {
         if (
           message.author.bot &&
           message.embeds.length > 0 &&
-          message.embeds[0].title === chatToolsEnum.CREATE_IMAGE
+          Object.values(chatToolsEnum).includes(
+            message.embeds[0].title as chatToolsEnum,
+          )
         ) {
           role = chatCompletionRoles.TOOL;
         }
+
         const chatCompletion: ChatCompletionMessage = {
           role,
           content: [
@@ -102,7 +113,24 @@ export default {
         };
 
         if (role === chatCompletionRoles.TOOL) {
-          chatCompletion.tool_call_id = message.embeds[0].fields[0].value;
+          const functionName = message.embeds[0].title as string;
+          const toolCallId = message.embeds[0].fields[0].value;
+          const args = message.embeds[0].fields[2].value;
+          chatCompletion.tool_call_id = toolCallId;
+
+          // simulating the tool call response before the tool result
+          const toolCallResponse: ChatCompletionMessage = {
+            role: chatCompletionRoles.ASSISTANT,
+            tool_calls: [
+              {
+                id: toolCallId,
+                type: 'function',
+                function: { arguments: args, name: functionName },
+              },
+            ],
+          };
+
+          acc.push(toolCallResponse);
         }
 
         if (
@@ -121,10 +149,13 @@ export default {
             };
           });
 
-          chatCompletion.content.push(...imageContents);
+          chatCompletion?.content?.push(...imageContents);
         }
-        return chatCompletion;
+
+        acc.push(chatCompletion);
+        return acc;
       },
+      [],
     );
 
     if (selectedProfile?.retention && selectedProfile.retentionData) {
