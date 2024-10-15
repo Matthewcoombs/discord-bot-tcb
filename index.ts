@@ -3,7 +3,6 @@ import { configureOpenAi } from './openAIClient/init';
 import * as fs from 'fs';
 import * as path from 'path';
 import { connectToPG } from './database/init';
-import { configureEmailTransporter } from './emailClient/init';
 import { ChatInstance, SingleInstanceCommand } from './shared/discord-js-types';
 
 // init env variables
@@ -14,7 +13,6 @@ export const sql = connectToPG();
 
 // Init openAI
 export const OpenAi = configureOpenAi();
-export const EmailTransporter = configureEmailTransporter();
 
 // Create a new client instance
 declare module 'discord.js' {
