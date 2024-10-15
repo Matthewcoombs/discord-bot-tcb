@@ -49,12 +49,6 @@ async function sendResponse(
     messageCreateOptions?.content as string,
   );
 
-  // messageCreateOptions.embeds = [
-  //   new EmbedBuilder()
-  //     .setTitle('test embed')
-  //     .setFields([{ name: 'jobId', value: 'testing value' }]),
-  // ];
-
   for (let i = 0; i < responses.length; i++) {
     if (messageCreateOptions.files && i !== responses.length - 1) {
       messageCreateOptions.files = [];

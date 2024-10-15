@@ -84,15 +84,6 @@ export default {
         interactionTag,
       );
 
-    // let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
-    // imageFiles = imageFiles
-    //   .filter(
-    //     (fileName) =>
-    //       fileName.includes(user.username) &&
-    //       fileName.includes(user.id.toString()),
-    //   )
-    //   .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
-
     return imageFiles;
   },
 };
