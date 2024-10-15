@@ -4,17 +4,14 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
-import { OpenAi } from '../..';
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
-import { TEMP_FOLDER_PATH } from '../../shared/constants';
-import * as fs from 'fs';
 import { imageModelEnums } from '../../config';
-import { ImageGenerateParams, ImagesResponse } from 'openai/resources';
 import {
   deleteTempFilesByTag,
   generateInteractionTag,
 } from '../../shared/utils';
-import imagesService from '../../openAIClient/images/images.service';
+import imagesService, {
+  GenerateImageOptions,
+} from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
 
 const aiImageGenerateCommand: Command = {
@@ -92,8 +89,9 @@ const aiImageGenerateCommand: Command = {
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     const interactionTag = generateInteractionTag();
-    const userId = interaction.user.id;
-    const username = interaction.user.username;
+    const user = interaction.user;
+    const { id: userId, username } = user;
+
     const description = await interaction.options
       .getString('description', true)
       .toLowerCase();
@@ -137,27 +135,19 @@ const aiImageGenerateCommand: Command = {
     const size = imageSizeSelected.customId;
 
     // checking the model value provided to determine the payload sent to the openAI API
-    let openAIBody: ImageGenerateParams = {
-      model,
-      prompt: description,
+    let imageGenerateOptions: GenerateImageOptions = {
+      model: model as imageModelEnums,
+      description: description,
       size: size as any,
+      count: imageCount,
     };
 
-    switch (model) {
-      case imageModelEnums.DALLE2:
-        openAIBody = {
-          ...openAIBody,
-          n: imageCount,
-        };
-        break;
-      case imageModelEnums.DALLE3:
-        openAIBody = {
-          ...openAIBody,
-          n: 1,
-          quality,
-          style,
-        };
-        break;
+    if (model === imageModelEnums.DALLE3) {
+      imageGenerateOptions = {
+        ...imageGenerateOptions,
+        quality,
+        style,
+      };
     }
 
     await interaction.editReply({
@@ -165,42 +155,11 @@ const aiImageGenerateCommand: Command = {
       components: [],
     });
     try {
-      const isDalle3 = openAIBody.model === 'dall-e-3';
-      let imageUrls: string[];
-      if (isDalle3) {
-        const versionedOpenAiBodys: ImageGenerateParams[] =
-          Array(imageCount).fill(openAIBody);
-        versionedOpenAiBodys.forEach(
-          (body) => (body.prompt = `${body.prompt} - version 1`),
-        );
-        const imageCreationPromises = versionedOpenAiBodys.map((body) => {
-          return OpenAi.images.generate(body);
-        });
-        const imageCompletions: ImagesResponse[] = await Promise.all(
-          imageCreationPromises,
-        );
-        imageUrls = imageCompletions.reduce((acc, obj) => {
-          return acc.concat(obj.data[0].url as string);
-        }, [] as string[]);
-      } else {
-        const imageCompletion = await OpenAi.images.generate(openAIBody);
-        imageUrls = imageCompletion.data.map((image) => image.url as string);
-      }
-
-      await chatCompletionService.downloadAndConvertImagesToJpeg(
-        imageUrls,
-        username,
+      const imageFiles = await imagesService.generateImages(
+        user,
+        imageGenerateOptions,
         interactionTag,
       );
-      let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
-      imageFiles = imageFiles
-        .filter(
-          (fileName) =>
-            fileName.includes(username) &&
-            fileName.includes(interactionTag.toString()),
-        )
-        .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
-
       const finalResponseMsg =
         imageFiles.length > 1
           ? `Here are your requested images ${username} :blush:`

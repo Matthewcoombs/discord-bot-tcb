@@ -7,8 +7,8 @@ import chatCompletionService from '../chatCompletion/chatCompletion.service';
 export interface GenerateImageOptions {
   model?: imageModelEnums;
   description: string;
-  quality: string;
-  style: string;
+  quality?: string;
+  style?: string;
   count: number;
   size: string;
 }
