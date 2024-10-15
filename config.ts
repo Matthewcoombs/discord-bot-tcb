@@ -29,10 +29,7 @@ export const config = {
     defaultImageModel: imageModelEnums.DALLE2,
   },
   commands: {
-    singleInstanceCommands: [
-      singleInstanceCommandsEnum.LETS_CHAT,
-      singleInstanceCommandsEnum.ASSISTANT,
-    ],
+    singleInstanceCommands: [singleInstanceCommandsEnum.ASSISTANT],
     optInCommands: [
       optInCommands.CREATE_PROFILE,
       optInCommands.SELECT_PROFILE_SETTINGS,
