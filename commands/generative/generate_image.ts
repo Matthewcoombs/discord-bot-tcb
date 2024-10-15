@@ -9,7 +9,9 @@ import {
   deleteTempFilesByTag,
   generateInteractionTag,
 } from '../../shared/utils';
-import imagesService, { GenerateImageOptions } from '../../openAIClient/images/images.service';
+import imagesService, {
+  GenerateImageOptions,
+} from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
 
 const aiImageGenerateCommand: Command = {
@@ -153,7 +155,11 @@ const aiImageGenerateCommand: Command = {
       components: [],
     });
     try {
-      const imageFiles = await imagesService.generateImages(user, imageGenerateOptions, interactionTag);
+      const imageFiles = await imagesService.generateImages(
+        user,
+        imageGenerateOptions,
+        interactionTag,
+      );
       const finalResponseMsg =
         imageFiles.length > 1
           ? `Here are your requested images ${username} :blush:`
