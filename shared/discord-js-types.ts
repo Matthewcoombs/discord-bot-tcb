@@ -52,7 +52,6 @@ export interface ChatInstance {
 }
 
 export enum singleInstanceCommandsEnum {
-  LETS_CHAT = 'lets_chat',
   ASSISTANT = 'assistant',
 }
 
