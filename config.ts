@@ -13,6 +13,10 @@ export enum textBasedModelEnums {
   GPT40_MINI = 'gpt-4o-mini',
 }
 
+export enum chatToolsEnum {
+  GENERATE_IMAGE = 'generate_image',
+}
+
 export const IMAGE_PROCESSING_MODELS = [
   textBasedModelEnums.GPT40_MINI,
   textBasedModelEnums.GPT4O,
@@ -34,4 +38,46 @@ export const config = {
       optInCommands.SELECT_PROFILE_SETTINGS,
     ],
   },
+  functionTools: [
+    {
+      type: 'function',
+      function: {
+        name: chatToolsEnum.GENERATE_IMAGE,
+        strict: true,
+        description:
+          'Creates an image for the user. Call this when the user explicitly asks to create an image',
+        parameters: {
+          type: 'object',
+          properties: {
+            description: {
+              type: 'string',
+              description: 'the description of the image to create',
+            },
+            quality: {
+              type: 'string',
+              description: 'the quality of the image to create',
+              enum: ['standard', 'hd'],
+            },
+            style: {
+              type: 'string',
+              description: 'the style of the image to create',
+              enum: ['vivid', 'natural'],
+            },
+            count: {
+              type: 'string',
+              description: 'the number of images to create',
+              enum: ['1', '2', '3', '4'],
+            },
+            size: {
+              type: 'string',
+              description: 'the size of image to create',
+              enum: ['1024x1024', '1792x1024', '1024x1792'],
+            },
+          },
+          required: ['description', 'quality', 'style', 'count', 'size'],
+          additionalProperties: false,
+        },
+      },
+    },
+  ],
 };

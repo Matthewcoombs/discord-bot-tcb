@@ -1,8 +1,10 @@
 import {
   ChannelType,
+  EmbedBuilder,
   Events,
   Message,
   MessageCollector,
+  MessageCreateOptions,
   TextChannel,
   User,
 } from 'discord.js';
@@ -14,39 +16,64 @@ import {
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
   ChatCompletionMessage,
+  chatCompletionRoles,
   chatCompletionStructuredResponse,
   JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
-import { config } from '../config';
+import { chatToolsEnum, config, imageModelEnums } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
-import { processBotResponseLength, validateJsonContent } from '../shared/utils';
+import {
+  deleteTempFilesByTag,
+  generateInteractionTag,
+  processBotResponseLength,
+} from '../shared/utils';
 import { zodResponseFormat } from 'openai/helpers/zod';
-import { ParsedChatCompletion } from 'openai/resources/beta/chat/completions';
+import imagesService, {
+  GenerateImageOptions,
+} from '../openAIClient/images/images.service';
+import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
 
-async function sendResponse(isDM: boolean, message: Message, response: string) {
+async function sendResponse(
+  isDM: boolean,
+  message: Message,
+  messageCreateOptions: MessageCreateOptions,
+) {
   // Cleaning potentially injected user tags by openai
   const userTag = `<@${message.author.id}>`;
-  response = response.replace(/<@\d+>/g, '').trim();
+  messageCreateOptions?.content?.replace(/<@\d+>/g, '').trim();
 
-  const responses = processBotResponseLength(response);
+  const responses = processBotResponseLength(
+    messageCreateOptions?.content as string,
+  );
+
   for (let i = 0; i < responses.length; i++) {
+    if (messageCreateOptions.files && i !== responses.length - 1) {
+      messageCreateOptions.files = [];
+    }
+    if (messageCreateOptions.embeds && i !== responses.length - 1) {
+      messageCreateOptions.embeds = [];
+    }
+
     if (isDM) {
-      await message.author.send({
-        content: responses[i],
-        target: message.author,
-      });
+      messageCreateOptions.content = responses[i];
+      await message.author.send(messageCreateOptions);
     } else {
-      message.channel.send(`${userTag} ${responses[i]}`);
+      messageCreateOptions.content = `${userTag} ${responses[i]}`;
+      message.channel.send(messageCreateOptions);
     }
   }
 }
 
 function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
   const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
-    if (compMsg.role !== 'system') {
+    if (
+      compMsg.role !== chatCompletionRoles.SYSTEM &&
+      compMsg.role !== chatCompletionRoles.TOOL &&
+      compMsg.content
+    ) {
       const type = compMsg.content[0].type;
       const text = compMsg.content[0].text as string;
       acc.push({
@@ -58,65 +85,83 @@ function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
           },
         ],
       });
+    } else {
+      acc.push(compMsg);
     }
     return acc;
   }, [] as ChatCompletionMessage[]);
   return cleanedMsgs;
 }
 
-async function validateGenerativeResponse(
-  user: User,
+async function processGenerativeResponse(
   userMessageInstance: ChatInstance,
   chatCompletionMessages: ChatCompletionMessage[],
 ) {
-  // This logic is to check and ensure that the generative response is valid JSON
-  let chatCompletion: ParsedChatCompletion<JsonContent>;
-  let jsonResponse: JsonContent = {
-    message: '',
-    endChat: false,
-  };
+  const chatCompletion = await OpenAi.beta.chat.completions.parse({
+    model: userMessageInstance?.selectedProfile
+      ? userMessageInstance.selectedProfile.textModel
+      : config.openAi.defaultChatCompletionModel,
+    response_format: zodResponseFormat(
+      chatCompletionStructuredResponse,
+      'structured_response',
+    ),
+    messages: chatCompletionMessages as any,
+    tools: config.functionTools as any,
+  });
 
-  let isValidJSON = false;
-  let retries = 0;
-  const maxRetries = 5;
-  const delay = 2000; // 2 seconds
+  const structuredResponse = chatCompletion.choices[0].message
+    .parsed as JsonContent;
+  const toolCalls = chatCompletion.choices[0].message.tool_calls;
 
-  while (!isValidJSON && retries < maxRetries) {
-    try {
-      chatCompletion = await OpenAi.beta.chat.completions.parse({
-        model: userMessageInstance?.selectedProfile
-          ? userMessageInstance.selectedProfile.textModel
-          : config.openAi.defaultChatCompletionModel,
-        response_format: zodResponseFormat(
-          chatCompletionStructuredResponse,
-          'structured_response',
-        ),
-        messages: chatCompletionMessages as any,
-      });
+  return { structuredResponse, toolCalls };
+}
 
-      jsonResponse = chatCompletion.choices[0].message.parsed as JsonContent;
-      isValidJSON = validateJsonContent(jsonResponse);
-      if (!isValidJSON) {
-        console.log(
-          `invalid JSON content returned for [user]: ${user.username} - on [retries]: ${retries + 1}`,
-        );
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        retries++;
-      }
-    } catch (err) {
-      console.error(err);
-      console.error(
-        `there was an error validating the returned for [user]: ${user.username} - on [retries]: ${retries + 1}`,
+async function processToolCalls(
+  user: User,
+  toolCalls: ParsedFunctionToolCall[],
+  interactionTag: number,
+): Promise<MessageCreateOptions> {
+  let toolResponse: MessageCreateOptions = {};
+  const toolCall = toolCalls[0];
+  const { id, type } = toolCall;
+  const { name: toolName, parsed_arguments } = toolCall.function;
+
+  const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
+    { name: 'id', value: id, inline: true },
+    { name: 'type', value: type, inline: true },
+    { name: 'arguments', value: toolCall.function.arguments, inline: true },
+  ]);
+
+  switch (toolName) {
+    case chatToolsEnum.GENERATE_IMAGE: {
+      const imageGenerateOptions = {
+        ...(parsed_arguments as GenerateImageOptions),
+        model: imageModelEnums.DALLE3,
+      };
+      imageGenerateOptions.count = Number(imageGenerateOptions.count);
+      const imageFiles = await imagesService.generateImages(
+        user,
+        imageGenerateOptions,
+        interactionTag,
       );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      retries++;
+      toolResponse = {
+        content:
+          imageFiles.length > 1
+            ? `Here are your requested images ${user.username} :blush:`
+            : `Here is your requested image ${user.username} :blush:`,
+        files: imageFiles,
+        embeds: [toolEmbed],
+      };
+      break;
     }
+    default:
+      break;
   }
-  return { isValidJSON, jsonResponse };
+  return toolResponse;
 }
 
 function filterAttachedFiles(message: Message<boolean>) {
-  const { matched, unMatched, overMax } = message.attachments.reduce(
+  const { matched, unSupportedFileTypes, overMax } = message.attachments.reduce(
     (acc, attachment) => {
       if (
         CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(
@@ -127,20 +172,20 @@ function filterAttachedFiles(message: Message<boolean>) {
           ? acc.matched.push(attachment)
           : acc.overMax.push(attachment.name);
       } else {
-        acc.unMatched.push(attachment.name);
+        acc.unSupportedFileTypes.push(attachment.name);
       }
       return acc;
     },
     {
       matched: [] as any,
-      unMatched: [] as string[],
+      unSupportedFileTypes: [] as string[],
       overMax: [] as string[],
     },
   );
   message.attachments = matched;
   return {
     message,
-    unMatched,
+    unSupportedFileTypes,
     overMax,
   };
 }
@@ -169,11 +214,9 @@ const directMessageEvent: Command = {
 
     // if the maximum amount of chat instances has been reached for the server we return
     if (chatInstanceCollector.size === MAX_MESSAGE_COLLECTORS) {
-      return sendResponse(
-        isDirectMessage,
-        message,
-        `The max amount of my chat instances has been reached.`,
-      );
+      return sendResponse(isDirectMessage, message, {
+        content: `The max amount of my chat instances has been reached.`,
+      });
     }
 
     // if a single instance command has been initiated in the current channel we return
@@ -196,9 +239,9 @@ const directMessageEvent: Command = {
         channelId: channelId,
         channelName: channelName,
         isProcessing: false,
+        interactionTag: generateInteractionTag(),
       });
     }
-
     try {
       const collectorFilter = (colMsg: Message) =>
         // collect message if the message is coming from the user who initiated
@@ -219,92 +262,103 @@ const directMessageEvent: Command = {
           : DEFAULT_CHAT_TIMEOUT;
       const userResponseTimeout = setTimeout(async () => {
         collector.stop();
-        await sendResponse(
-          isDirectMessage,
-          message,
-          `Looks like you're no longer there ${user.username}. Our chat has ended.`,
-        );
+        await sendResponse(isDirectMessage, message, {
+          content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
+        });
       }, timeout);
 
-      collector.on('collect', async (newMessage) => {
+      collector.on('collect', async (lastMsg) => {
         userResponseTimeout.refresh();
         const collected = Array.from(collector.collected.values());
+        // If the message is coming from the bot we return
+        if (lastMsg.author.bot) {
+          return;
+        }
 
         // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
-        if (!newMessage.author.bot) {
-          const userMessageInstance = chatInstanceCollector.get(
-            userId,
-          ) as ChatInstance;
+        const userMessageInstance = chatInstanceCollector.get(userId);
 
-          // if the previous collected message is still processing we will return
-          if (userMessageInstance?.isProcessing) {
-            await sendResponse(
-              isDirectMessage,
-              message,
-              `Hold on I'm still processing your previous message :thought_balloon:...`,
-            );
-            return;
-          }
+        // If there is no se user message instance return
+        if (!userMessageInstance) {
+          return;
+        }
 
-          // filtering out all unsupported attachment file types from the user's most recent message.
-          const lastCollectedMsg = collected[collected.length - 1];
-          const {
-            message: filteredlastCollectedMsg,
-            unMatched,
-            overMax,
-          } = filterAttachedFiles(lastCollectedMsg);
-          collected[collected.length - 1] = filteredlastCollectedMsg;
-          const chatCompletionMessages =
-            chatCompletionService.formatChatCompletionMessages(
-              collected,
-              userMessageInstance?.selectedProfile,
-            );
+        // if the previous collected message is still processing we return
+        if (userMessageInstance?.isProcessing) {
+          await sendResponse(isDirectMessage, message, {
+            content: `Hold on I'm still processing your previous message :thought_balloon:...`,
+          });
+          return;
+        }
 
-          userMessageInstance.isProcessing = true;
-          chatInstanceCollector.set(userId, userMessageInstance);
-          const { isValidJSON, jsonResponse } =
-            await validateGenerativeResponse(
-              user,
-              userMessageInstance,
-              chatCompletionMessages,
-            );
+        // filtering out all unsupported attachment file types from the user's most recent message.
+        const {
+          message: updatedLastMsg,
+          unSupportedFileTypes,
+          overMax,
+        } = filterAttachedFiles(lastMsg);
 
-          if (!isValidJSON) {
-            await sendResponse(
-              isDirectMessage,
-              message,
-              `Sorry it looks like I'm having an issue formatting a proper response for you :disappointed_relieved:`,
-            );
-          }
+        // If the user has provided an image file type the bot does not support we return
+        if (unSupportedFileTypes.length > 0) {
+          const unSupportedWarning = `:warning: Sorry, I currently do not support the file types for the following file(s): ${unSupportedFileTypes}\n
+            Supported file types: ${CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES}`;
+          return await sendResponse(isDirectMessage, message, {
+            content: unSupportedWarning,
+          });
+        }
 
-          const { message: response, endChat } = jsonResponse;
-          if (unMatched.length > 0) {
-            await sendResponse(
-              isDirectMessage,
-              message,
-              `:warning: Sorry, I currently do not support the file types for the following file(s):\n${unMatched}`,
-            );
-          }
+        // If the user has provided image files over the maximum amount of supported image uploads we return
+        if (overMax.length > 0) {
+          const overMaxWarning = `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message: ${overMax}`;
+          return await sendResponse(isDirectMessage, message, {
+            content: overMaxWarning,
+          });
+        }
 
-          if (overMax.length > 0) {
-            await sendResponse(
-              isDirectMessage,
-              message,
-              `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message:\n${overMax}`,
-            );
-          }
+        collected[collected.length - 1] = updatedLastMsg;
+        const chatCompletionMessages =
+          chatCompletionService.formatChatCompletionMessages(
+            collected,
+            userMessageInstance?.selectedProfile,
+          );
 
-          userMessageInstance.isProcessing = false;
-          chatInstanceCollector.set(userId, userMessageInstance);
+        let finalResponse: MessageCreateOptions = {};
+        let endChat: boolean = false;
+        userMessageInstance.isProcessing = true;
+        chatInstanceCollector.set(userId, userMessageInstance);
+        const { structuredResponse, toolCalls } =
+          await processGenerativeResponse(
+            userMessageInstance,
+            chatCompletionMessages,
+          );
 
-          await sendResponse(isDirectMessage, message, response);
-          if (endChat) {
-            collector.stop();
-          }
+        // This logic handles instances of tool calls during the message instance
+        if (toolCalls && toolCalls.length > 0) {
+          finalResponse = await processToolCalls(
+            user,
+            toolCalls,
+            userMessageInstance.interactionTag,
+          );
+        } else {
+          finalResponse.content = structuredResponse.message;
+          endChat = structuredResponse.endChat;
+        }
+
+        userMessageInstance.isProcessing = false;
+        chatInstanceCollector.set(userId, userMessageInstance);
+
+        await sendResponse(isDirectMessage, message, finalResponse);
+        if (endChat) {
+          collector.stop();
         }
       });
       collector.on('end', async (collected) => {
+        const userMessageInstance = chatInstanceCollector.get(userId);
+        if (userMessageInstance) {
+          deleteTempFilesByTag(userMessageInstance?.interactionTag);
+        }
         if (selectedProfile && selectedProfile.retention) {
+          userChatInstance;
           const collectedMsgs = Array.from(collected.values());
           const retentionMsgs =
             chatCompletionService.formatChatCompletionMessages(
@@ -331,12 +385,14 @@ const directMessageEvent: Command = {
         : message.content;
       collector.handleCollect(message);
     } catch (err) {
+      const userMessageInstance = chatInstanceCollector.get(userId);
+      if (userMessageInstance) {
+        deleteTempFilesByTag(userMessageInstance?.interactionTag);
+      }
       message.client.chatInstanceCollector.delete(user.id);
-      await sendResponse(
-        isDirectMessage,
-        message,
-        'Sorry looks like there was an issue. Our chat has ended.',
-      );
+      await sendResponse(isDirectMessage, message, {
+        content: 'Sorry looks like there was an issue. Our chat has ended.',
+      });
       console.error(err);
     }
   },

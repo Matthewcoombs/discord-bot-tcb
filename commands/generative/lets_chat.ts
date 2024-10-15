@@ -49,7 +49,7 @@ async function sendReponse(
 
 function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
   const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
-    if (compMsg.role !== 'system') {
+    if (compMsg.role !== 'system' && compMsg.content) {
       const type = compMsg.content[0].type;
       const text = compMsg.content[0].text as string;
       acc.push({

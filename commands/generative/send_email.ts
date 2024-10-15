@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
 import { generateInteractionTag } from '../../shared/utils';
-import sendEmailService from '../../emailClient/sendEmail/sendEmail.service';
+import emailService from '../../emailClient/email/email.service';
 
 const sendEmailCommand: Command = {
   data: new SlashCommandBuilder()
@@ -51,7 +51,11 @@ const sendEmailCommand: Command = {
     const body = interaction.options.getString('body', true);
 
     try {
-      sendEmailService.sendEmail(username, recipientsArray, body, subject);
+      emailService.sendEmail(username, {
+        recipients: recipientsArray,
+        subject,
+        body,
+      });
       return interaction.reply({
         content: `:incoming_envelope: your email has been sent`,
         ephemeral: true,

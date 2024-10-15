@@ -13,7 +13,11 @@ import {
   GENERATIVE_RESPONSE_CONSTRAINTS,
   TEMP_FOLDER_PATH,
 } from '../../shared/constants';
-import { IMAGE_PROCESSING_MODELS, textBasedModelEnums } from '../../config';
+import {
+  chatToolsEnum,
+  IMAGE_PROCESSING_MODELS,
+  textBasedModelEnums,
+} from '../../config';
 import * as z from 'zod';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
@@ -24,12 +28,21 @@ export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
 ];
 
 export interface ChatCompletionMessage {
-  role: chatCompletionRoles;
-  content: {
+  role?: chatCompletionRoles;
+  content?: {
     type: chatCompletionTypes;
     text?: string;
     image_url?: {
       url: string;
+    };
+  }[];
+  tool_call_id?: string;
+  tool_calls?: {
+    id: string;
+    type: 'function';
+    function: {
+      arguments: string;
+      name: string;
     };
   }[];
 }
@@ -49,10 +62,11 @@ enum chatCompletionTypes {
   IMAGE_URL = 'image_url',
 }
 
-enum chatCompletionRoles {
+export enum chatCompletionRoles {
   SYSTEM = 'system',
   USER = 'user',
   ASSISTANT = 'assistant',
+  TOOL = 'tool',
 }
 
 function generateSystemContentMessage(profile: string): ChatCompletionMessage {
@@ -72,12 +86,24 @@ export default {
     messages: Message[],
     selectedProfile?: UserProfile,
   ): ChatCompletionMessage[] {
-    let chatCompletionMessages: ChatCompletionMessage[] = messages.map(
-      (message) => {
+    let chatCompletionMessages = messages.reduce(
+      (acc: ChatCompletionMessage[], message) => {
+        let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
+        if (!message.author.bot) {
+          role = chatCompletionRoles.USER;
+        }
+        if (
+          message.author.bot &&
+          message.embeds.length > 0 &&
+          Object.values(chatToolsEnum).includes(
+            message.embeds[0].title as chatToolsEnum,
+          )
+        ) {
+          role = chatCompletionRoles.TOOL;
+        }
+
         const chatCompletion: ChatCompletionMessage = {
-          role: message.author.bot
-            ? chatCompletionRoles.ASSISTANT
-            : chatCompletionRoles.USER,
+          role,
           content: [
             {
               type: chatCompletionTypes.TEXT,
@@ -86,11 +112,33 @@ export default {
           ],
         };
 
+        if (role === chatCompletionRoles.TOOL) {
+          const functionName = message.embeds[0].title as string;
+          const toolCallId = message.embeds[0].fields[0].value;
+          const args = message.embeds[0].fields[2].value;
+          chatCompletion.tool_call_id = toolCallId;
+
+          // simulating the tool call response before the tool result
+          const toolCallResponse: ChatCompletionMessage = {
+            role: chatCompletionRoles.ASSISTANT,
+            tool_calls: [
+              {
+                id: toolCallId,
+                type: 'function',
+                function: { arguments: args, name: functionName },
+              },
+            ],
+          };
+
+          acc.push(toolCallResponse);
+        }
+
         if (
           message.attachments &&
           IMAGE_PROCESSING_MODELS.includes(
             selectedProfile?.textModel as textBasedModelEnums,
-          )
+          ) &&
+          !message.author.bot
         ) {
           const imageContents = message.attachments.map((attachment) => {
             return {
@@ -101,10 +149,13 @@ export default {
             };
           });
 
-          chatCompletion.content.push(...imageContents);
+          chatCompletion?.content?.push(...imageContents);
         }
-        return chatCompletion;
+
+        acc.push(chatCompletion);
+        return acc;
       },
+      [],
     );
 
     if (selectedProfile?.retention && selectedProfile.retentionData) {
@@ -157,6 +208,7 @@ export default {
     username: string,
     interactionTag: number,
   ) {
+    const imageFiles: string[] = [];
     for (let i = 0; i < imageUrls.length; i++) {
       const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i + 1}.jpeg`;
       await axios
@@ -165,11 +217,13 @@ export default {
         })
         .then((response) => {
           fs.writeFileSync(imageFilePath, response.data);
+          imageFiles.push(imageFilePath);
           console.log(`Image downloaded [image]: ${imageFilePath}`);
         })
         .catch((err) => {
           console.error(`Error downloading image:`, err);
         });
     }
+    return imageFiles;
   },
 };
