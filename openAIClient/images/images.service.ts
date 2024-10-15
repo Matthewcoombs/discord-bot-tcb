@@ -1,8 +1,16 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, User } from 'discord.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  User,
+} from 'discord.js';
 import { imageModelEnums } from '../../config';
-import { ImageGenerateParams } from 'openai/resources';
+import { ImageGenerateParams, ImagesResponse } from 'openai/resources';
 import { OpenAi } from '../..';
-import chatCompletionService from '../chatCompletion/chatCompletion.service';
+import { TEMP_FOLDER_PATH } from '../../shared/constants';
+import axios from 'axios';
+import * as fs from 'fs';
 
 export interface GenerateImageOptions {
   model?: imageModelEnums;
@@ -77,13 +85,49 @@ export default {
       return acc.concat(obj.data[0].url as string);
     }, [] as string[]);
 
-    const imageFiles =
-      await chatCompletionService.downloadAndConvertImagesToJpeg(
-        imageUrls,
-        user.username,
-        interactionTag,
-      );
+    const imageFiles = await this.downloadAndConvertImagesToJpeg(
+      imageUrls,
+      user.username,
+      interactionTag,
+    );
 
+    return imageFiles;
+  },
+
+  generateImageEmbeds(generatedImages: ImagesResponse, username: string) {
+    const embeds = generatedImages.data.map((image) => {
+      const imageUrl = image?.url as string;
+      return new EmbedBuilder().setURL(imageUrl).setImage(imageUrl);
+    });
+
+    const title = `${username}'s image(s)`;
+
+    embeds[0].setTitle(title);
+
+    return embeds;
+  },
+
+  async downloadAndConvertImagesToJpeg(
+    imageUrls: string[],
+    username: string,
+    interactionTag: number,
+  ) {
+    const imageFiles: string[] = [];
+    for (let i = 0; i < imageUrls.length; i++) {
+      const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i + 1}.jpeg`;
+      await axios
+        .get(imageUrls[i], {
+          responseType: 'arraybuffer',
+        })
+        .then((response) => {
+          fs.writeFileSync(imageFilePath, response.data);
+          imageFiles.push(imageFilePath);
+          console.log(`Image downloaded [image]: ${imageFilePath}`);
+        })
+        .catch((err) => {
+          console.error(`Error downloading image:`, err);
+        });
+    }
     return imageFiles;
   },
 };

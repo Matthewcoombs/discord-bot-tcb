@@ -14,7 +14,6 @@ import {
 } from '../../shared/utils';
 import { OpenAi } from '../..';
 import * as fs from 'fs';
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
 import imagesService from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
@@ -116,7 +115,7 @@ const aiImageEditCommand: Command = {
           const imageUrls = completion.data.map(
             (image) => image.url,
           ) as string[];
-          await chatCompletionService.downloadAndConvertImagesToJpeg(
+          await imagesService.downloadAndConvertImagesToJpeg(
             imageUrls,
             username,
             interactionTag,

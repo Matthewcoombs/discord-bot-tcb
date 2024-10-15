@@ -7,7 +7,6 @@ import { Command } from '../../shared/discord-js-types';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
 import { OpenAi } from '../..';
 import * as fs from 'fs';
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
 import {
   createTempFile,
   deleteTempFilesByName,
@@ -107,7 +106,7 @@ const aiImageVariotionCommand: Command = {
           const imageUrls = completion.data.map(
             (image) => image.url,
           ) as string[];
-          await chatCompletionService.downloadAndConvertImagesToJpeg(
+          await imagesService.downloadAndConvertImagesToJpeg(
             imageUrls,
             username,
             interactionTag,
