@@ -22,8 +22,14 @@ const createInteractionEvent: Command = {
       interaction.client;
     const { user, commandName, channel, channelId } = interaction;
     const command = interaction.client.commands.get(commandName) as Command;
-    // const channel = interaction.channel as TextChannel | TextBasedChannel;
 
+    const isOptInCommand = config.commands.optInCommands.includes(
+      commandName as optInCommands,
+    );
+    const isSingleInstanceCommand =
+      config.commands.singleInstanceCommands.includes(
+        commandName as singleInstanceCommandsEnum,
+      );
     const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 
     if (!cooldowns.has(command?.data?.name)) {
@@ -32,7 +38,7 @@ const createInteractionEvent: Command = {
 
     // Checking to see if the command is an opt in command AND the user has opted in
     // to utilize the command
-    if (config.commands.optInCommands.includes(commandName as optInCommands)) {
+    if (isOptInCommand) {
       const userOptInRecord = await usersDao.getUserOptIn(user.id);
       const { optIn } = userOptInRecord;
       if (!optIn) {
@@ -45,11 +51,15 @@ const createInteractionEvent: Command = {
 
     // This is the logic for handling single instance commands in discord. Single Instance commands can only have ONE active instance per channel.
     // This logic is set to be applied to directMessage and non direct message channels.
-    if (
-      config.commands.singleInstanceCommands.includes(
-        commandName as singleInstanceCommandsEnum,
-      )
-    ) {
+    if (isSingleInstanceCommand) {
+      // Checking to see if the maximum amount of single instance commands per user has been reached.
+      if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
+        return interaction.reply({
+          content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
+          ephemeral: true,
+        });
+      }
+
       // If a user initiated a chat with the bot the interaction will be cancelled
       const userChatInstance = chatInstanceCollector.get(interaction.user.id);
       if (userChatInstance && userChatInstance.channelId === channel?.id) {
@@ -60,27 +70,17 @@ const createInteractionEvent: Command = {
         });
       }
 
-      // Checking to see if the maximum amount of single instance commands per user has been reached.
-      if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
-        return interaction.reply({
-          content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
-          ephemeral: true,
-        });
-      }
-
-      // Findind all initiated user single instance commands
-      const userSingleInstanceCommands = singleInstanceCommands.filter(
+      // Searching for an active command instance in the current channel
+      const channelSingleInstanceCommand = singleInstanceCommands.find(
         (colCommand) => {
-          return colCommand.userId === interaction.user.id;
+          return (
+            colCommand.userId === interaction.user.id &&
+            colCommand.channelId === interaction.channelId
+          );
         },
       );
 
-      // Finding if the user has already initiated a single instance command in the current channel.
-      const activeCommand = userSingleInstanceCommands.find(
-        (usrCommand) => usrCommand.channelId === interaction.channelId,
-      );
-
-      if (activeCommand) {
+      if (channelSingleInstanceCommand) {
         return interaction.reply({
           content: `You have a single instance command active in this channel. Please terminate the active command to execute: **${commandName}**.`,
           ephemeral: true,
@@ -119,15 +119,21 @@ const createInteractionEvent: Command = {
 
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);
-        return interaction.reply({
+        const cooldownReply = await interaction.reply({
           content: `Please wait, you are on a cooldown for \`${command?.data?.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
           ephemeral: true,
         });
+        setTimeout(() => {
+          cooldownReply.delete();
+        }, cooldownAmount);
+        return;
       }
-
-      timestamps.set(interaction.user.id, now);
-      setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
     }
+
+    timestamps.set(interaction.user.id, now);
+    setTimeout(() => {
+      timestamps.delete(interaction.user.id);
+    }, cooldownAmount);
 
     if (!interaction.isChatInputCommand()) return;
 
