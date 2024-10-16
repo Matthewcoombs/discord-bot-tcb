@@ -62,7 +62,7 @@ async function sendResponse(
       await message.author.send(messageCreateOptions);
     } else {
       messageCreateOptions.content = `${userTag} ${responses[i]}`;
-      message.channel.send(messageCreateOptions);
+      await message.channel.send(messageCreateOptions);
     }
   }
 }
