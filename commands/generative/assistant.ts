@@ -208,6 +208,7 @@ const assistantCommand: Command = {
         console.log(
           `The assistant has been terminated - [interactionTag]: ${interactionTag}`,
         );
+        interaction.deleteReply();
         deleteTempFilesByTag(interactionTag);
         clearTimeout(userResponseTimeout);
         collected.clear();
