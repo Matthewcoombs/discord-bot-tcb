@@ -18,14 +18,13 @@ const countDownCommand: Command = {
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     let count = interaction.options.getInteger('count', true);
-    await interaction.reply(`Beginning Countdown!`);
-    const message = await interaction.fetchReply();
+    const countDownResponse = await interaction.reply(`Beginning Countdown!`);
 
     const intervalId = setInterval(async () => {
       await interaction.editReply(`${count}!`);
       count--;
       if (count === -1) {
-        await interaction.deleteReply(message);
+        await countDownResponse.delete();
         await interaction.followUp(`Ta da :confetti_ball:!`);
         clearInterval(intervalId);
       }

@@ -78,7 +78,7 @@ const assistantCommand: Command = {
           message.author.username === interaction.user.username;
         const startRun =
           message.content.toLowerCase() ===
-            generateAssistantRunKey(selectedProfile.name) && isUserMsg;
+          generateAssistantRunKey(selectedProfile.name) && isUserMsg;
         const isTerminationMsg =
           message.content.toLowerCase() === 'goodbye' && isUserMsg;
         if (isTerminationMsg) {
@@ -208,6 +208,7 @@ const assistantCommand: Command = {
         console.log(
           `The assistant has been terminated - [interactionTag]: ${interactionTag}`,
         );
+        interaction.deleteReply();
         deleteTempFilesByTag(interactionTag);
         clearTimeout(userResponseTimeout);
         collected.clear();

@@ -149,13 +149,16 @@ const createInteractionEvent: Command = {
       console.error(`Error executing ${commandName}`);
       const errorMsg = _err?.errorData
         ? _err.errorData.error
-        : `There was an internal error executing the command ${commandName}.`;
+        : `There was an internal error executing the command \`${commandName}\`.`;
 
       console.error(_err);
-      return interaction.followUp({
+      const errorResponse = {
         content: errorMsg,
         ephemeral: true,
-      });
+      };
+      return interaction.replied
+        ? interaction.followUp(errorResponse)
+        : interaction.reply(errorResponse);
     }
   },
 };
