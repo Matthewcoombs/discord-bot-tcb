@@ -56,13 +56,12 @@ const getUserProfilesBaseQuery = `
         user_profiles
   `;
 
-
 export default {
   async getUserProfiles(discordId: string) {
     const userProfiles = await pg.query<UserProfile>(
       `${getUserProfilesBaseQuery} 
       WHERE 
-        discord_id = '${discordId}'`
+        discord_id = '${discordId}'`,
     );
     return userProfiles.rows;
   },
@@ -71,7 +70,7 @@ export default {
     const userProfiles = await pg.query<UserProfile>(
       `${getUserProfilesBaseQuery}
         WHERE
-          id = ${profileId}`
+          id = ${profileId}`,
     );
     return userProfiles.rows[0];
   },
