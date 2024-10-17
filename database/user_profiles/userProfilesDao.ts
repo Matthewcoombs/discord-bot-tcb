@@ -1,4 +1,4 @@
-import { sql } from '../..';
+import { pg } from '../..';
 import { textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
 import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
@@ -36,8 +36,8 @@ export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
   return userProfiles.length < PROFILES_LIMIT;
 }
 
-const getUserProfilesBaseQuery = sql`
-    SELECT
+const getUserProfilesBaseQuery = `
+  SELECT
         id,
         discord_id AS "discordId",
         name,
@@ -54,58 +54,57 @@ const getUserProfilesBaseQuery = sql`
         retention_size AS "retentionSize"
     FROM
         user_profiles
-`;
+  `;
+
 
 export default {
   async getUserProfiles(discordId: string) {
-    const userProfiles = await sql<UserProfile[]>`
-            ${getUserProfilesBaseQuery}
-            WHERE
-                discord_id = ${discordId}
-        `;
-
-    return userProfiles;
+    const userProfiles = await pg.query<UserProfile>(
+      `${getUserProfilesBaseQuery} 
+      WHERE 
+        discord_id = '${discordId}'`
+    );
+    return userProfiles.rows;
   },
 
   async getUserProfileById(profileId: string) {
-    const userProfiles = await sql<UserProfile[]>`
-            ${getUserProfilesBaseQuery}
-            WHERE
-                id = ${profileId}
-        `;
-    return userProfiles[0];
+    const userProfiles = await pg.query<UserProfile>(
+      `${getUserProfilesBaseQuery}
+        WHERE
+          id = ${profileId}`
+    );
+    return userProfiles.rows[0];
   },
 
   async getSelectedProfile(userId: string) {
-    const userProfiles = await sql<UserProfile[]>`
+    const userProfiles = await pg.query<UserProfile>(`
             ${getUserProfilesBaseQuery}
             WHERE
                 selected = 'true'
             AND
-                discord_id = ${userId}
-        `;
-    const userProfile = userProfiles[0];
-    return userProfile;
+                discord_id = '${userId}'
+        `);
+    return userProfiles.rows[0];
   },
 
   async insertUserProfile(newProfile: CreateProfile) {
     const { name, profile, discordId, assistantId, threadId } = newProfile;
-    await sql`
+    await pg.query(`
             INSERT INTO
                 user_profiles
                 (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
             VALUES
-                (${discordId}, ${name}, ${profile}, ${assistantId}, ${threadId}, true, ${DEFAULT_RETENTION_SIZE})
-        `;
+                ('${discordId}', '${name}', '${profile}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE})
+        `);
   },
 
   async deleteUserProfile(profileId: string) {
-    await sql`
+    await pg.query(`
             DELETE FROM
                 user_profiles
             WHERE
                 id = ${profileId}
-        `;
+        `);
   },
 
   async updateUserProfile(selectedProfile: UserProfile) {
@@ -124,27 +123,27 @@ export default {
       retentionData.splice(0, retentionData.length - Number(retentionSize));
     }
 
-    await sql`
+    await pg.query(`
             UPDATE
                 user_profiles
             SET
-                name = ${name},
-                profile = ${profile},
-                selected = ${selected as boolean},
-                text_model = ${textModel},
+                name = '${name}',
+                profile = '${profile}',
+                selected = ${selected},
+                text_model = '${textModel}',
                 timeout = ${timeout},
                 retention = ${retention},
-                retention_data = ${retentionData as any},
+                retention_data = '${retentionData}'::jsonb[],
                 retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
-        `;
+        `);
   },
 
   async updateProfileSelection(selectedProfile: UserProfile) {
     const { id, discordId } = selectedProfile;
-    await sql`
+    await pg.query(`
             UPDATE
                 user_profiles
             SET
@@ -152,9 +151,9 @@ export default {
                 updated_at = NOW()
             WHERE
                 id = ${id}
-        `;
+        `);
 
-    await sql`
+    await pg.query(`
             UPDATE
                 user_profiles
             SET
@@ -162,13 +161,13 @@ export default {
             WHERE
                 id != ${id}
             AND
-                discord_id = ${discordId}
-        `;
+                discord_id = '${discordId}'
+        `);
   },
 
   async clearProfileRetentionData(selectedProfile: UserProfile) {
     const { id } = selectedProfile;
-    await sql`
+    await pg.query(`
             UPDATE
                 user_profiles
             SET
@@ -176,6 +175,6 @@ export default {
                 updated_at = NOW()
             WHERE
                 id = ${id}
-        `;
+        `);
   },
 };

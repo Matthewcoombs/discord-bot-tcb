@@ -1,4 +1,4 @@
-import { sql } from '../..';
+import { pg } from '../..';
 
 export interface DiscordUser {
   id: string;
@@ -23,57 +23,57 @@ export interface NewUser {
 }
 
 export default {
-  async getUsers(discordId: string) {
-    const user = await sql<DiscordUser[]>`
+  async getUsers(discordId?: string) {
+    const users = await pg.query<DiscordUser>(`
             SELECT
                 id,
-                discord_id AS discordId,
+                discord_id AS "discordId",
                 username,
                 bot,
-                created_at AS createdAt,
-                updated_at AS updatedAt
+                created_at AS "createdAt",
+                updated_at AS "updatedAt"
             FROM 
                 users
-            ${discordId ? sql`WHERE discord_id = ${discordId}` : sql``}
-            `;
-    return user;
+            ${discordId ? `WHERE discord_id = ${discordId}` : ``}
+            `);
+    return users.rows;
   },
 
   async addUser(newUser: NewUser) {
     const { discordId, username } = newUser;
-    await sql`
+    await pg.query(`
             INSERT INTO
                 users
                 (discord_id, username)
             VALUES
-                (${discordId}, ${username})
-        `;
+                ('${discordId}', '${username}')
+        `);
   },
 
   async deleteUser(discordId: string) {
-    await sql`
+    await pg.query(`
             DELETE FROM
                 users
             WHERE
-                discord_id = ${discordId}
-        `;
+                discord_id = '${discordId}'
+        `);
   },
 
   async insertUserOptIn(discordId: string, optIn: boolean) {
-    await sql`
+    await pg.query(`
             INSERT INTO
                 user_opt_in
                 (discord_id, opt_in)
             VALUES
-                (${discordId}, ${optIn})
+                ('${discordId}', ${optIn})
             ON CONFLICT 
                 (discord_id) 
             DO NOTHING
-        `;
+        `);
   },
 
   async getUserOptIn(discordId: string) {
-    const userOptInData = await sql<UserOptInData[]>`
+    const userOptInData = await pg.query<UserOptInData>(`
             SELECT
                 id,
                 discord_id AS "discordId",
@@ -83,9 +83,9 @@ export default {
             FROM
                 user_opt_in
             WHERE
-                discord_id = ${discordId}
-        `;
+                discord_id = '${discordId}'
+        `);
 
-    return userOptInData[0];
+    return userOptInData.rows[0];
   },
 };
