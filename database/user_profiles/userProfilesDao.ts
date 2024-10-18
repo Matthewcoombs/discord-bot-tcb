@@ -122,7 +122,8 @@ export default {
       retentionData.splice(0, retentionData.length - Number(retentionSize));
     }
 
-    await pg.query(`
+    await pg.query(
+      `
             UPDATE
                 user_profiles
             SET
@@ -132,12 +133,14 @@ export default {
                 text_model = '${textModel}',
                 timeout = ${timeout},
                 retention = ${retention},
-                retention_data = '${retentionData}'::jsonb[],
+                retention_data = $1,
                 retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
-        `);
+        `,
+      [retentionData],
+    );
   },
 
   async updateProfileSelection(selectedProfile: UserProfile) {

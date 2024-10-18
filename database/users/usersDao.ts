@@ -22,21 +22,32 @@ export interface NewUser {
   username: string;
 }
 
+const BASE_USER_QUERY = `
+  SELECT
+    id,
+    discord_id AS "discordId",
+    username,
+    bot,
+    created_at AS "createdAt",
+    updated_at AS "updatedAt"
+  FROM
+    users
+  `;
+
 export default {
-  async getUsers(discordId?: string) {
-    const users = await pg.query<DiscordUser>(`
-            SELECT
-                id,
-                discord_id AS "discordId",
-                username,
-                bot,
-                created_at AS "createdAt",
-                updated_at AS "updatedAt"
-            FROM 
-                users
-            ${discordId ? `WHERE discord_id = ${discordId}` : ``}
-            `);
+  async getUsers() {
+    const users = await pg.query<DiscordUser>(BASE_USER_QUERY);
     return users.rows;
+  },
+
+  async getUserById(discordId: string) {
+    const users = await pg.query<DiscordUser>(
+      `${BASE_USER_QUERY}
+      WHERE
+        discord_id = '${discordId}'
+      `,
+    );
+    return users.rows[0];
   },
 
   async addUser(newUser: NewUser) {

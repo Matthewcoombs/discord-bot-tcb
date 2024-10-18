@@ -23,16 +23,15 @@ const memberAvailableEvent: Command = {
 
     if (isUserActive) {
       const { user, userId } = newPresence;
-      let userRecord = await usersDao.getUsers(userId);
+      const userRecord = await usersDao.getUserById(userId);
 
       // If no user record exists for the available user, we will insert them into the database here
-      if (userRecord.length === 0 && user) {
+      if (!userRecord && user) {
         const { id: discordId, username } = user;
         await usersDao.addUser({
           discordId,
           username,
         });
-        userRecord = await usersDao.getUsers(user.id);
       }
 
       const userOptInData = await usersDao.getUserOptIn(userId);
