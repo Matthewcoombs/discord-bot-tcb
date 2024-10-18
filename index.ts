@@ -9,7 +9,15 @@ import { ChatInstance, SingleInstanceCommand } from './shared/discord-js-types';
 require('dotenv').config();
 
 // Init Postgres
-export const sql = connectToPG();
+export const pg = connectToPG();
+(async () => {
+  try {
+    await pg.connect();
+    console.log('Connected to test postgres!');
+  } catch (err) {
+    console.error(`Error connecting to postgres:`, err);
+  }
+})();
 
 // Init openAI
 export const OpenAi = configureOpenAi();

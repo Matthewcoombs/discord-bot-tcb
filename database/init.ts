@@ -1,19 +1,17 @@
-import postgres = require('postgres');
+import { Client } from 'pg';
 
 // init env variables
 require('dotenv').config();
 
 function connectToPG() {
-  const sql = postgres({
-    port: 5432,
+  const pgClient = new Client({
     host: process.env.POSTGRES_HOSTNAME,
-    username: process.env.POSTGRES_USERNAME,
+    user: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DATABASE,
   });
 
-  console.log(`Connected to postgres!`);
-  return sql;
+  return pgClient;
 }
 
 export { connectToPG };
