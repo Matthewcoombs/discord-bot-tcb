@@ -4,6 +4,7 @@ import {
   ButtonInteraction,
   ButtonStyle,
   CollectedInteraction,
+  EmbedBuilder,
   Events,
   Presence,
 } from 'discord.js';
@@ -38,7 +39,23 @@ const memberAvailableEvent: Command = {
 
       // If a user record exists and they have NOT responded to the opt-in question,
       // we will ask the user if they want to opt into data tracking.
-      if (!userOptInData) {
+      if (!userOptInData && user) {
+        const exampleEmbed = new EmbedBuilder()
+          .setColor('Grey')
+          .setTitle('Boop Data Tracking Opt-In')
+          .setURL('https://github.com/Matthewcoombs/discord-bot-tcb')
+          .setAuthor({
+            name: 'Boop Discord Bot',
+            iconURL:
+              'https://camo.githubusercontent.com/394da2f904b93a83a020a2f05cd212ea54efba8ccd2c9ac1d499309b3b94abd0/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f62616e6e6572732f313132383030313137393637313038353138392f33633533336236383232646432653731316435653330663139613262313130663f73697a653d353132',
+            url: 'https://github.com/Matthewcoombs/discord-bot-tcb',
+          })
+          .setDescription(generateOptInCopy(user.username))
+          .setThumbnail(
+            'https://camo.githubusercontent.com/394da2f904b93a83a020a2f05cd212ea54efba8ccd2c9ac1d499309b3b94abd0/68747470733a2f2f63646e2e646973636f72646170702e636f6d2f62616e6e6572732f313132383030313137393637313038353138392f33633533336236383232646432653731316435653330663139613262313130663f73697a653d353132',
+          )
+          .setTimestamp();
+
         const confirm = new ButtonBuilder()
           .setCustomId(CONFIRM_ID)
           .setLabel('confirm')
@@ -51,9 +68,9 @@ const memberAvailableEvent: Command = {
 
         const row = new ActionRowBuilder().addComponents(confirm, cancel);
 
-        const userResponse = await user?.send({
-          content: generateOptInCopy(user.username),
+        const userResponse = await user.send({
           components: [row as any],
+          embeds: [exampleEmbed],
         });
 
         const collectorFilter = (message: CollectedInteraction) => {
@@ -68,10 +85,10 @@ const memberAvailableEvent: Command = {
           })) as ButtonInteraction;
           const isOptIn = optInResponse.customId === CONFIRM_ID;
           await usersDao.insertUserOptIn(userId, isOptIn);
-          await user?.send(
-            `Thank you for responding to the user data tracking questionnaire :slight_smile:.`,
+          await user.send(
+            `Thank you for responding to the user data tracking questionnaire.`,
           );
-          await user?.send(
+          await user.send(
             `You are now opted ${
               isOptIn ? 'in :white_check_mark:' : 'out :x:'
             }.`,
