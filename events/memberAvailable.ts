@@ -40,7 +40,7 @@ const memberAvailableEvent: Command = {
       // If a user record exists and they have NOT responded to the opt-in question,
       // we will ask the user if they want to opt into data tracking.
       if (!userOptInData && user) {
-        const exampleEmbed = new EmbedBuilder()
+        const optInEmbed = new EmbedBuilder()
           .setColor('Grey')
           .setTitle('Boop Data Tracking Opt-In')
           .setURL('https://github.com/Matthewcoombs/discord-bot-tcb')
@@ -70,7 +70,7 @@ const memberAvailableEvent: Command = {
 
         const userResponse = await user.send({
           components: [row as any],
-          embeds: [exampleEmbed],
+          embeds: [optInEmbed],
         });
 
         const collectorFilter = (message: CollectedInteraction) => {
