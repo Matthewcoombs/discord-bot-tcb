@@ -2,7 +2,6 @@ import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
 import profileModal from '../../modals/generative/profileModal';
-import { GENERATIVE_RESPONSE_CONSTRAINTS } from '../../shared/constants';
 
 const updateProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -20,11 +19,6 @@ const updateProfileCommand: Command = {
         ephemeral: true,
       });
     }
-
-    // Removing injected openAI prompt from user visibility
-    selectedProfile.profile = selectedProfile.profile
-      .replace(GENERATIVE_RESPONSE_CONSTRAINTS, '')
-      .trim();
 
     const updateProfileModal =
       profileModal.generateProfileModal(selectedProfile);
