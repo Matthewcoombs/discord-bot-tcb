@@ -6,10 +6,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import {
-  GENERATIVE_RESPONSE_CONSTRAINTS,
-  PROFILE_PLACEHOLDER_TEXT,
-} from '../../shared/constants';
+import { PROFILE_PLACEHOLDER_TEXT } from '../../shared/constants';
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
@@ -64,11 +61,7 @@ export default {
   async handleNewProfileInput(modalInteraction: ModalSubmitInteraction) {
     const { user } = modalInteraction;
     const name = modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
-    let profile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
-
-    // appending additional instructions to ensure the bot response does NOT exceed
-    // discords limit of 2000 characters
-    profile += GENERATIVE_RESPONSE_CONSTRAINTS;
+    const profile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
 
     // creating a new openAI assistant, and assistant thread.
     const assistantPayload: AssistantCreateParams = {
@@ -102,11 +95,8 @@ export default {
     const { user } = modalInteraction;
     const updatedName =
       modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
-    let updatedProfile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
-
-    // appending additional instructions to ensure the bot response does NOT exceed
-    // discords limit of 2000 characters
-    updatedProfile += GENERATIVE_RESPONSE_CONSTRAINTS;
+    const updatedProfile =
+      modalInteraction.fields.getTextInputValue(PROFILE_ID);
 
     const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
     selectedProfile.name = updatedName;

@@ -62,16 +62,24 @@ export enum chatCompletionRoles {
   TOOL = 'tool',
 }
 
-function generateSystemContentMessage(profile: string): ChatCompletionMessage {
-  return {
+function generateSystemContentMessage(
+  chatCompletionMessages: ChatCompletionMessage[],
+  profile?: string,
+): ChatCompletionMessage[] {
+  const systemMessage = {
     role: chatCompletionRoles.SYSTEM,
     content: [
       {
         type: chatCompletionTypes.TEXT,
-        text: profile,
+        text: profile
+          ? `${profile}\n${GENERATIVE_RESPONSE_CONSTRAINTS}`
+          : GENERATIVE_RESPONSE_CONSTRAINTS,
       },
     ],
   };
+
+  chatCompletionMessages.unshift(systemMessage);
+  return chatCompletionMessages;
 }
 
 export default {
@@ -158,13 +166,10 @@ export default {
       ];
     }
 
-    if (selectedProfile) {
-      chatCompletionMessages.unshift(
-        generateSystemContentMessage(selectedProfile.profile),
-      );
-    } else {
-      chatCompletionMessages.unshift(
-        generateSystemContentMessage(GENERATIVE_RESPONSE_CONSTRAINTS),
+    if (chatCompletionMessages[0].role !== chatCompletionRoles.SYSTEM) {
+      generateSystemContentMessage(
+        chatCompletionMessages,
+        selectedProfile?.profile,
       );
     }
     return chatCompletionMessages;
