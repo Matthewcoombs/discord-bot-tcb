@@ -35,23 +35,25 @@ export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
   // more profiles at this time.
   return userProfiles.length < PROFILES_LIMIT;
 }
-
-const getUserProfilesBaseQuery = `
+const PROFILES_BASE_SELECTORS = `
+  id,
+  discord_id AS "discordId",
+  name,
+  profile,
+  created_at AS "createdAt",
+  updated_at AS "updatedAt",
+  assistant_id AS "assistantId",
+  text_model AS "textModel",
+  thread_id AS "threadId",
+  timeout,
+  selected,
+  retention,
+  retention_data AS "retentionData",
+  retention_size AS "retentionSize"
+`;
+const PROFILES_BASE_QUERY = `
   SELECT
-        id,
-        discord_id AS "discordId",
-        name,
-        profile,
-        created_at AS "createdAt",
-        updated_at AS "updatedAt",
-        assistant_id AS "assistantId",
-        text_model AS "textModel",
-        thread_id AS "threadId",
-        timeout,
-        selected,
-        retention,
-        retention_data AS "retentionData",
-        retention_size AS "retentionSize"
+    ${PROFILES_BASE_SELECTORS}
     FROM
         user_profiles
   `;
@@ -59,7 +61,7 @@ const getUserProfilesBaseQuery = `
 export default {
   async getUserProfiles(discordId: string) {
     const userProfiles = await pg.query<UserProfile>(
-      `${getUserProfilesBaseQuery} 
+      `${PROFILES_BASE_QUERY} 
       WHERE 
         discord_id = '${discordId}'`,
     );
@@ -68,7 +70,7 @@ export default {
 
   async getUserProfileById(profileId: string) {
     const userProfiles = await pg.query<UserProfile>(
-      `${getUserProfilesBaseQuery}
+      `${PROFILES_BASE_QUERY}
         WHERE
           id = ${profileId}`,
     );
@@ -77,7 +79,7 @@ export default {
 
   async getSelectedProfile(userId: string) {
     const userProfiles = await pg.query<UserProfile>(`
-            ${getUserProfilesBaseQuery}
+            ${PROFILES_BASE_QUERY}
             WHERE
                 selected = 'true'
             AND
@@ -88,13 +90,17 @@ export default {
 
   async insertUserProfile(newProfile: CreateProfile) {
     const { name, profile, discordId, assistantId, threadId } = newProfile;
-    await pg.query(`
+    const userProfiles = await pg.query<UserProfile>(`
             INSERT INTO
                 user_profiles
                 (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
             VALUES
                 ('${discordId}', '${name}', '${profile}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE})
+            RETURNING
+            ${PROFILES_BASE_SELECTORS}
+
         `);
+    return userProfiles.rows[0];
   },
 
   async deleteUserProfile(profileId: string) {

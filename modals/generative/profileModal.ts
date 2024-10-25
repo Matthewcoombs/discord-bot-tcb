@@ -12,7 +12,10 @@ import userProfilesDao, {
 } from '../../database/user_profiles/userProfilesDao';
 import { OpenAi } from '../..';
 import { config } from '../../config';
-import { AssistantCreateParams } from 'openai/resources/beta/assistants';
+import {
+  AssistantCreateParams,
+  AssistantUpdateParams,
+} from 'openai/resources/beta/assistants';
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
 export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
@@ -79,13 +82,19 @@ export default {
     const { id: assistantId } = assistant;
     const { id: threadId } = thread;
 
-    await userProfilesDao.insertUserProfile({
+    const newUserProfile = await userProfilesDao.insertUserProfile({
       name,
       profile,
       discordId: user.id,
       assistantId,
       threadId,
     });
+
+    const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
+    // If no profile is currently selected, the most recently created profile will be selected.
+    if (!selectedProfile) {
+      await userProfilesDao.updateProfileSelection(newUserProfile);
+    }
     return modalInteraction.reply({
       content: `Your new profile **${name}** was added successfully!`,
     });
@@ -102,12 +111,17 @@ export default {
     selectedProfile.name = updatedName;
     selectedProfile.profile = updatedProfile;
 
-    await OpenAi.beta.assistants.update(selectedProfile.assistantId, {
-      name: updatedName,
-      instructions: updatedProfile,
-    });
-
-    await userProfilesDao.updateUserProfile(selectedProfile);
+    const assistantUpdateParams: AssistantUpdateParams = {
+      name: selectedProfile.name,
+      instructions: selectedProfile.profile,
+    };
+    await Promise.all([
+      await OpenAi.beta.assistants.update(
+        selectedProfile.assistantId,
+        assistantUpdateParams,
+      ),
+      await userProfilesDao.updateUserProfile(selectedProfile),
+    ]);
     return modalInteraction.reply({
       content: `Profile: ${selectedProfile.name} has been updated.`,
       ephemeral: true,
