@@ -358,7 +358,6 @@ const directMessageEvent: Command = {
           deleteTempFilesByTag(userMessageInstance?.interactionTag);
         }
         if (selectedProfile && selectedProfile.retention) {
-          userChatInstance;
           const collectedMsgs = Array.from(collected.values());
           const retentionMsgs =
             chatCompletionService.formatChatCompletionMessages(
