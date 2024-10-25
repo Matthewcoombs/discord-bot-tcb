@@ -23,6 +23,10 @@ export const PROFILE_NAME_ID = 'profileName';
 export const PROFILE_ID = 'profile';
 export const IS_DEFAULT_ID = 'default';
 
+function cleanPGProfileText(profile: string) {
+  return profile.replace(/'/g, "''");
+}
+
 export default {
   generateProfileModal(profileData?: UserProfile) {
     const modal = new ModalBuilder()
@@ -82,9 +86,10 @@ export default {
     const { id: assistantId } = assistant;
     const { id: threadId } = thread;
 
+    const pgSanitzedProfile = cleanPGProfileText(profile);
     const newUserProfile = await userProfilesDao.insertUserProfile({
       name,
-      profile,
+      profile: pgSanitzedProfile,
       discordId: user.id,
       assistantId,
       threadId,
@@ -109,11 +114,11 @@ export default {
 
     const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
     selectedProfile.name = updatedName;
-    selectedProfile.profile = updatedProfile;
+    selectedProfile.profile = cleanPGProfileText(updatedProfile);
 
     const assistantUpdateParams: AssistantUpdateParams = {
-      name: selectedProfile.name,
-      instructions: selectedProfile.profile,
+      name: updatedName,
+      instructions: updatedProfile,
     };
     await Promise.all([
       await OpenAi.beta.assistants.update(
