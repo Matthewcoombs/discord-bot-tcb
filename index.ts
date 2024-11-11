@@ -13,7 +13,7 @@ export const pg = connectToPG();
 (async () => {
   try {
     await pg.connect();
-    console.log('Connected to test postgres!');
+    console.log('Connected to postgres!');
   } catch (err) {
     console.error(`Error connecting to postgres:`, err);
   }
