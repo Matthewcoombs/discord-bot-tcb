@@ -22,7 +22,6 @@ export const pg = connectToPG();
 // Init openAI
 export const OpenAi = configureOpenAi();
 
-// Create a new client instance
 declare module 'discord.js' {
   export interface Client {
     commands: Collection<unknown, any>;
@@ -32,6 +31,7 @@ declare module 'discord.js' {
   }
 }
 
+// Create a new client instance
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
