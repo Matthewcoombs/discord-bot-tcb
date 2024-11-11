@@ -4,6 +4,9 @@ import {
   MessageCollector,
   Message,
   InteractionReplyOptions,
+  Collection,
+  Attachment,
+  User,
 } from 'discord.js';
 import {
   Command,
@@ -15,7 +18,6 @@ import {
   DEFAULT_CHAT_TIMEOUT,
   TEMP_FOLDER_PATH,
   generateAssistantIntroCopy,
-  generateAssistantRunKey,
 } from '../../shared/constants';
 import assistantsService from '../../openAIClient/assistants/assistants.service';
 import * as fs from 'fs';
@@ -27,6 +29,35 @@ import {
   processBotResponseLength,
 } from '../../shared/utils';
 import filesService from '../../openAIClient/files/files.service';
+
+async function processAttachedFiles(
+  user: User,
+  attachments: Collection<string, Attachment>,
+  interactionTag: number,
+) {
+  let fileIds: string[] = [];
+  if (attachments.size > 0) {
+    const asyncFileDataRetrievalList = attachments.map((attachment) => {
+      return getRemoteFileBufferData(attachment.url);
+    });
+
+    const bufferDataList = await Promise.all(asyncFileDataRetrievalList);
+    const tempFilePaths: string[] = [];
+    for (let i = 0; i < bufferDataList.length; i++) {
+      const tempFileName = `${user.username}-assistant-${interactionTag}-${i + 1}`;
+      const filePath = createTempFile(bufferDataList[i], tempFileName);
+      tempFilePaths.push(filePath);
+    }
+
+    const asyncOpenAiFileUpload = tempFilePaths.map((filePath) => {
+      return filesService.uploadFile(filePath, 'assistants');
+    });
+
+    const fileObjects = await Promise.all(asyncOpenAiFileUpload);
+    fileIds = fileObjects.map((fileObject) => fileObject.id);
+  }
+  return fileIds;
+}
 
 const assistantCommand: Command = {
   data: new SlashCommandBuilder()
@@ -50,7 +81,9 @@ const assistantCommand: Command = {
           selectedProfile.name,
           user.username,
         ),
+        ephemeral: true,
       });
+
       const thread = await OpenAi.beta.threads.retrieve(
         selectedProfile.threadId,
       );
@@ -66,108 +99,43 @@ const assistantCommand: Command = {
       const userResponseTimeout = setTimeout(async () => {
         collector.stop();
         await interaction.followUp(
-          `Looks like you're no longer there ${interaction.user.username}. Our assistant session has ended.`,
+          `Looks like you're no longer there ${interaction.user.username}. The assistant session has ended.`,
         );
       }, timeout);
 
+      let isProcessing = false;
       collector.on('collect', async (message) => {
-        userResponseTimeout.refresh();
-        const isFileAttached = message.attachments.size > 0;
-        const isUserMsg =
-          !message.author.bot &&
-          message.author.username === interaction.user.username;
-        const startRun =
-          message.content.toLowerCase() ===
-            generateAssistantRunKey(selectedProfile.name) && isUserMsg;
-        const isTerminationMsg =
-          message.content.toLowerCase() === 'goodbye' && isUserMsg;
-        if (isTerminationMsg) {
-          await interaction.followUp({
-            content: `Goodbye.`,
-          });
-          collector.stop();
-        } else if (!startRun) {
+        if (!isProcessing) {
+          userResponseTimeout.refresh();
+          const isUserMsg = !message.author.bot;
+          const isTerminationMsg =
+            message.content.toLowerCase() === 'goodbye' && isUserMsg;
           // checking for attached files to process and upload
-          let fileIds: string[] = [];
-          if (isFileAttached) {
-            const asyncFileDataRetrievalList = message.attachments.map(
-              (attachment) => {
-                return getRemoteFileBufferData(attachment.url);
-              },
-            );
-
-            const bufferDataList = await Promise.all(
-              asyncFileDataRetrievalList,
-            );
-            const tempFilePaths: string[] = [];
-            for (let i = 0; i < bufferDataList.length; i++) {
-              const tempFileName = `${user.username}-assistant-${interactionTag}-${i + 1}`;
-              const filePath = createTempFile(bufferDataList[i], tempFileName);
-              tempFilePaths.push(filePath);
-            }
-
-            const asyncOpenAiFileUpload = tempFilePaths.map((filePath) => {
-              return filesService.uploadFile(filePath, 'assistants');
-            });
-
-            const fileObjects = await Promise.all(asyncOpenAiFileUpload);
-            fileIds = fileObjects.map((fileObject) => fileObject.id);
-          }
-
+          const attachedFileIds = await processAttachedFiles(
+            user,
+            message.attachments,
+            interactionTag,
+          );
           const assistantMessage = assistantsService.generateAssistantMessage(
             message,
-            fileIds,
+            attachedFileIds,
           );
           await OpenAi.beta.threads.messages.create(
             thread.id,
             assistantMessage,
           );
-        } else if (startRun) {
-          console.log(`Run Starting - [interaction-tag]: ${interactionTag}`);
-          await interaction.followUp({
-            content: `Run starting :checkered_flag:`,
-            ephemeral: true,
-          });
+          isProcessing = true;
+          const run = await OpenAi.beta.threads.runs.createAndPoll(
+            thread.id,
+            {
+              assistant_id: selectedProfile.assistantId,
+              instructions: selectedProfile.profile,
+            },
+            { pollIntervalMs: 500 },
+          );
+          isProcessing = false;
 
-          const run = await OpenAi.beta.threads.runs.create(thread.id, {
-            assistant_id: selectedProfile.assistantId,
-            instructions: selectedProfile.profile,
-          });
-
-          let status;
-          let retries = 0;
-          const maxRetries = 10;
-          const baseDelay = 3000; // 3 seconds
-          const maxDelay = 120000; // 2 minutes
-          while (status !== 'completed' && retries < maxRetries) {
-            userResponseTimeout.refresh();
-            status = await assistantsService.getAssistantRunStatus(
-              thread.id,
-              run.id,
-            );
-            console.log(`checking [status]: ${status} - [retries]: ${retries}`);
-
-            if (status !== 'completed') {
-              const delay = Math.min(
-                baseDelay * Math.pow(2, retries),
-                maxDelay,
-              );
-              const delayToSeconds = delay / 1000;
-              await interaction.followUp({
-                content: `Run in progress :timer: - I will update you in another ${delayToSeconds} seconds.`,
-                ephemeral: true,
-              });
-              await new Promise((resolve) => setTimeout(resolve, delay));
-              retries++;
-            }
-          }
-
-          if (status === 'completed') {
-            await interaction.followUp({
-              content: `Run complete :green_circle:`,
-              ephemeral: true,
-            });
-
+          if (run.status === 'completed') {
             const messages = await OpenAi.beta.threads.messages.list(thread.id);
             const { botResponse, fileIds } =
               assistantsService.processAssistantRunMessages(messages, run.id);
@@ -200,7 +168,15 @@ const assistantCommand: Command = {
               await interaction.followUp(resPayload);
             }
             deleteTempFilesByTag(interactionTag);
+            if (isTerminationMsg) {
+              collector.stop();
+            }
           }
+        } else {
+          await interaction.followUp({
+            content: `Hold on I'm still processing your previous message :thought_balloon:...`,
+            ephemeral: true,
+          });
         }
       });
 

@@ -23,9 +23,8 @@ export function generateAssistantIntroCopy(
   username: string,
 ) {
   return `Hello ${username}\n
-I'm your assistant ${profileName}. Simply enter instructions for me in the chat
-and when you're ready for me to proceed enter the phrase: "**${generateAssistantRunKey(profileName)}**".
-To end this session simply say "**goodbye**"`;
+You have initiated the assistant service with your profile **${profileName}**.
+To end this session simply say **goodbye**`;
 }
 
 export function generateAssistantRunKey(profileName: string) {
