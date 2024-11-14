@@ -107,7 +107,7 @@ async function processGenerativeResponse(
     ),
     messages: chatCompletionMessages as any,
     /**
-     Temperarely disabling message tool call logic until random tool calling is fixed
+     Temporarily disabling message tool call logic until random tool calling is fixed
      **/
     // tools: config.functionTools as any,
   });
