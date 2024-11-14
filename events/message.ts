@@ -106,7 +106,10 @@ async function processGenerativeResponse(
       'structured_response',
     ),
     messages: chatCompletionMessages as any,
-    tools: config.functionTools as any,
+    /**
+     Temperarely disabling message tool call logic until random tool calling is fixed
+     **/
+    // tools: config.functionTools as any,
   });
 
   const structuredResponse = chatCompletion.choices[0].message
