@@ -51,6 +51,11 @@ export interface ChatInstance {
   interactionTag: number;
 }
 
+export enum collectorEndReason {
+  IDLE = 'idle',
+  USER = 'user',
+}
+
 export enum singleInstanceCommandsEnum {
   ASSISTANT = 'assistant',
 }

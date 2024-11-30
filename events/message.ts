@@ -8,7 +8,11 @@ import {
   TextChannel,
   User,
 } from 'discord.js';
-import { ChatInstance, Command } from '../shared/discord-js-types';
+import {
+  ChatInstance,
+  collectorEndReason,
+  Command,
+} from '../shared/discord-js-types';
 import {
   DEFAULT_CHAT_TIMEOUT,
   MAX_MESSAGE_COLLECTORS,
@@ -254,24 +258,16 @@ const directMessageEvent: Command = {
           colMsg.mentions.users.filter((usr) => usr.id === userId).size > 0) ||
         // collect message if its a response to a user from the bot in a DM channel
         (isDirectMessage && colMsg.author.bot);
-      const collector = message.channel.createMessageCollector({
-        filter: collectorFilter,
-      }) as MessageCollector;
-
-      // Terminating the chat if the user has not responded within the timeout window
       const timeout =
         selectedProfile && selectedProfile.timeout
           ? Number(selectedProfile.timeout)
           : DEFAULT_CHAT_TIMEOUT;
-      const userResponseTimeout = setTimeout(async () => {
-        collector.stop();
-        await sendResponse(isDirectMessage, message, {
-          content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
-        });
-      }, timeout);
+      const collector = message.channel.createMessageCollector({
+        filter: collectorFilter,
+        idle: timeout,
+      }) as MessageCollector;
 
       collector.on('collect', async (lastMsg) => {
-        userResponseTimeout.refresh();
         const collected = Array.from(collector.collected.values());
         // If the message is coming from the bot we return
         if (lastMsg.author.bot) {
@@ -356,27 +352,39 @@ const directMessageEvent: Command = {
         }
       });
       collector.on('end', async (collected) => {
-        const userMessageInstance = chatInstanceCollector.get(userId);
-        if (userMessageInstance) {
-          deleteTempFilesByTag(userMessageInstance?.interactionTag);
+        const endReason = collector.endReason;
+        switch (endReason) {
+          case collectorEndReason.IDLE:
+            await sendResponse(isDirectMessage, message, {
+              content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
+            });
+            break;
+          case collectorEndReason.USER:
+            // eslint-disable-next-line no-case-declarations
+            const userMessageInstance = chatInstanceCollector.get(userId);
+            if (userMessageInstance) {
+              deleteTempFilesByTag(userMessageInstance?.interactionTag);
+            }
+            if (selectedProfile && selectedProfile.retention) {
+              const collectedMsgs = Array.from(collected.values());
+              const retentionMsgs =
+                chatCompletionService.formatChatCompletionMessages(
+                  collectedMsgs,
+                  selectedProfile,
+                );
+              const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
+              selectedProfile.retentionData = cleanRetentionMsgs;
+              await userProfilesDao.updateUserProfile(selectedProfile);
+            }
+            break;
+          default:
+            break;
         }
-        if (selectedProfile && selectedProfile.retention) {
-          const collectedMsgs = Array.from(collected.values());
-          const retentionMsgs =
-            chatCompletionService.formatChatCompletionMessages(
-              collectedMsgs,
-              selectedProfile,
-            );
-          const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
-          selectedProfile.retentionData = cleanRetentionMsgs;
-          await userProfilesDao.updateUserProfile(selectedProfile);
-        }
-
         const terminationMsg = isDirectMessage
           ? `The DM chat has been terminated with ${user.username}`
           : `The channel chat has been terminated with ${user.username}`;
-        console.log(terminationMsg);
-        clearTimeout(userResponseTimeout);
+        const time = new Date();
+        console.log(`${terminationMsg} - [time]: ${time.toLocaleString()}`);
         collected.clear();
         message.client.chatInstanceCollector.delete(user.id);
       });
