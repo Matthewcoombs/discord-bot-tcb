@@ -111,3 +111,7 @@ export function validateJsonContent(data: JsonContent) {
     typeof data.endChat === 'boolean'
   );
 }
+
+export function cleanPGText(textData: string) {
+  return textData.replace(/'/g, "''");
+}

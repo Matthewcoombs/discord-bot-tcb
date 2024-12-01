@@ -16,16 +16,13 @@ import {
   AssistantCreateParams,
   AssistantUpdateParams,
 } from 'openai/resources/beta/assistants';
+import { cleanPGText } from '../../shared/utils';
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
 export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
 export const PROFILE_NAME_ID = 'profileName';
 export const PROFILE_ID = 'profile';
 export const IS_DEFAULT_ID = 'default';
-
-function cleanPGProfileText(profile: string) {
-  return profile.replace(/'/g, "''");
-}
 
 export default {
   generateProfileModal(profileData?: UserProfile) {
@@ -86,9 +83,10 @@ export default {
     const { id: assistantId } = assistant;
     const { id: threadId } = thread;
 
-    const pgSanitzedProfile = cleanPGProfileText(profile);
+    const pgSanitzedName = cleanPGText(name);
+    const pgSanitzedProfile = cleanPGText(profile);
     const newUserProfile = await userProfilesDao.insertUserProfile({
-      name,
+      name: pgSanitzedName,
       profile: pgSanitzedProfile,
       discordId: user.id,
       assistantId,
@@ -113,8 +111,8 @@ export default {
       modalInteraction.fields.getTextInputValue(PROFILE_ID);
 
     const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
-    selectedProfile.name = updatedName;
-    selectedProfile.profile = cleanPGProfileText(updatedProfile);
+    selectedProfile.name = cleanPGText(updatedName);
+    selectedProfile.profile = cleanPGText(updatedProfile);
 
     const assistantUpdateParams: AssistantUpdateParams = {
       name: updatedName,
