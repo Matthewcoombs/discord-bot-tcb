@@ -3,6 +3,11 @@ import {
   singleInstanceCommandsEnum,
 } from './shared/discord-js-types';
 
+export enum aiServiceEnums {
+  OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+}
+
 export enum imageModelEnums {
   DALLE2 = 'dall-e-2',
   DALLE3 = 'dall-e-3',
@@ -11,6 +16,8 @@ export enum imageModelEnums {
 export enum textBasedModelEnums {
   GPT4O = 'gpt-4o',
   GPT40_MINI = 'gpt-4o-mini',
+  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20241022',
+  CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
 
 export enum chatToolsEnum {
@@ -32,6 +39,9 @@ export const config = {
   openAi: {
     defaultChatCompletionModel: textBasedModelEnums.GPT40_MINI,
     defaultImageModel: imageModelEnums.DALLE2,
+  },
+  claude: {
+    defaultMessageModel: textBasedModelEnums.CLAUDE_3_5_HAIKU,
   },
   commands: {
     singleInstanceCommands: [singleInstanceCommandsEnum.ASSISTANT],

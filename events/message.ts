@@ -166,7 +166,7 @@ const directMessageEvent: Command = {
         // If the message received by the message collector is not from the bot, we proceed with the following logic.
         const userMessageInstance = chatInstanceCollector.get(userId);
 
-        // If there is no se user message instance return
+        // If there is no set user message instance return
         if (!userMessageInstance) {
           return;
         }
@@ -178,37 +178,6 @@ const directMessageEvent: Command = {
           });
           return;
         }
-
-        // filtering out all unsupported attachment file types from the user's most recent message.
-        const {
-          message: updatedLastMsg,
-          unSupportedFileTypes,
-          overMax,
-        } = filterAttachedFiles(lastMsg);
-
-        // If the user has provided an image file type the bot does not support we return
-        if (unSupportedFileTypes.length > 0) {
-          const unSupportedWarning = `:warning: Sorry, I currently do not support the file types for the following file(s): ${unSupportedFileTypes}\n
-            Supported file types: ${CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES}`;
-          return await sendResponse(isDirectMessage, message, {
-            content: unSupportedWarning,
-          });
-        }
-
-        // If the user has provided image files over the maximum amount of supported image uploads we return
-        if (overMax.length > 0) {
-          const overMaxWarning = `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message: ${overMax}`;
-          return await sendResponse(isDirectMessage, message, {
-            content: overMaxWarning,
-          });
-        }
-
-        collected[collected.length - 1] = updatedLastMsg;
-        const chatCompletionMessages =
-          chatCompletionService.formatChatCompletionMessages(
-            collected,
-            userMessageInstance?.selectedProfile,
-          );
 
         let finalResponse: MessageCreateOptions = {};
         let endChat: boolean = false;
@@ -232,12 +201,57 @@ const directMessageEvent: Command = {
           finalResponse.content = content as string;
         }
 
-        userMessageInstance.isProcessing = false;
-        chatInstanceCollector.set(userId, userMessageInstance);
+          // If the user has provided an image file type the bot does not support we return
+          if (unSupportedFileTypes.length > 0) {
+            const unSupportedWarning = `:warning: Sorry, I currently do not support the file types for the following file(s): ${unSupportedFileTypes}\n
+            Supported file types: ${CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES}`;
+            return await sendResponse(isDirectMessage, message, {
+              content: unSupportedWarning,
+            });
+          }
 
-        await sendResponse(isDirectMessage, message, finalResponse);
-        if (endChat) {
-          collector.stop();
+          // If the user has provided image files over the maximum amount of supported image uploads we return
+          if (overMax.length > 0) {
+            const overMaxWarning = `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message: ${overMax}`;
+            return await sendResponse(isDirectMessage, message, {
+              content: overMaxWarning,
+            });
+          }
+
+          collected[collected.length - 1] = updatedLastMsg;
+          const chatCompletionMessages =
+            chatCompletionService.formatOpenAIChatCompletionMessages(
+              collected,
+              userMessageInstance?.selectedProfile,
+            );
+
+          userMessageInstance.isProcessing = true;
+          chatInstanceCollector.set(userId, userMessageInstance);
+          const { structuredResponse, toolCalls } =
+            await processGenerativeResponse(
+              userMessageInstance,
+              chatCompletionMessages,
+            );
+
+          // This logic handles instances of tool calls during the message instance
+          if (toolCalls && toolCalls.length > 0) {
+            finalResponse = await processToolCalls(
+              user,
+              toolCalls,
+              userMessageInstance.interactionTag,
+            );
+          } else {
+            finalResponse.content = structuredResponse.message;
+            endChat = structuredResponse.endChat;
+          }
+
+          userMessageInstance.isProcessing = false;
+          chatInstanceCollector.set(userId, userMessageInstance);
+
+          await sendResponse(isDirectMessage, message, finalResponse);
+          if (endChat) {
+            collector.stop();
+          }
         }
       });
       collector.on('end', async (collected) => {
@@ -257,7 +271,7 @@ const directMessageEvent: Command = {
             if (selectedProfile && selectedProfile.retention) {
               const collectedMsgs = Array.from(collected.values());
               const retentionMsgs =
-                chatCompletionService.formatChatCompletionMessages(
+                chatCompletionService.formatOpenAIChatCompletionMessages(
                   collectedMsgs,
                   selectedProfile,
                 );

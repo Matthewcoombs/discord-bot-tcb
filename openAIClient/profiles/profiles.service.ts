@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { textBasedModelEnums } from '../../config';
+import { OPEN_AI_MODELS, textBasedModelEnums } from '../../config';
 import {
   CHAT_TIMEOUT_OPTIONS,
   DEFAULT_CHAT_TIMEOUT,
@@ -169,9 +169,11 @@ export default {
         selectedProfile.textModel = updateValue as textBasedModelEnums;
         await Promise.all([
           userProfilesDao.updateUserProfile(selectedProfile),
-          OpenAi.beta.assistants.update(selectedProfile.assistantId, {
-            model: selectedProfile.textModel,
-          }),
+          OPEN_AI_MODELS.includes(selectedProfile.textModel)
+            ? OpenAi.beta.assistants.update(selectedProfile.assistantId, {
+                model: selectedProfile.textModel,
+              })
+            : null,
         ]);
         break;
       case SELECT_CHAT_TIMEOUT_ID:

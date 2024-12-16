@@ -156,6 +156,11 @@ const createInteractionEvent: Command = {
         content: errorMsg,
         ephemeral: true,
       };
+
+      console.log(
+        'error data:',
+        _err.rawError.errors.data.components['2'].components['0']._errors,
+      );
       return interaction.replied
         ? interaction.followUp(errorResponse)
         : interaction.reply(errorResponse);

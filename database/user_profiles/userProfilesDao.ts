@@ -1,5 +1,5 @@
 import { pg } from '../..';
-import { textBasedModelEnums } from '../../config';
+import { aiServiceEnums, textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
 import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
 
@@ -8,6 +8,7 @@ export interface UserProfile {
   discordId: string;
   name: string;
   profile: string;
+  service: aiServiceEnums;
   createdAt: string;
   updatedAt: string;
   assistantId: string;
@@ -27,6 +28,8 @@ export interface CreateProfile {
   assistantId: string;
   selected?: boolean;
   threadId: string;
+  textModel: string;
+  service: aiServiceEnums;
 }
 
 export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
@@ -40,6 +43,7 @@ const PROFILES_BASE_SELECTORS = `
   discord_id AS "discordId",
   name,
   profile,
+  service,
   created_at AS "createdAt",
   updated_at AS "updatedAt",
   assistant_id AS "assistantId",
@@ -89,13 +93,21 @@ export default {
   },
 
   async insertUserProfile(newProfile: CreateProfile) {
-    const { name, profile, discordId, assistantId, threadId } = newProfile;
+    const {
+      name,
+      profile,
+      service,
+      discordId,
+      assistantId,
+      threadId,
+      textModel,
+    } = newProfile;
     const userProfiles = await pg.query<UserProfile>(`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
+                (discord_id, name, profile, service, assistant_id, thread_id, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${name}', '${profile}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE})
+                ('${discordId}', '${name}', '${profile}', '${service}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 
@@ -116,6 +128,7 @@ export default {
     const {
       name,
       profile,
+      service,
       selected,
       textModel,
       timeout,
@@ -135,6 +148,7 @@ export default {
             SET
                 name = '${name}',
                 profile = '${profile}',
+                service = '${service}',
                 selected = ${selected},
                 text_model = '${textModel}',
                 timeout = ${timeout},
