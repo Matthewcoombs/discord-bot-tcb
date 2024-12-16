@@ -111,11 +111,11 @@ export default {
     const { id: assistantId } = assistant;
     const { id: threadId } = thread;
 
-    const pgSanitzedName = cleanPGText(name);
-    const pgSanitzedProfile = cleanPGText(profile);
+    const pgSanitizedName = cleanPGText(name);
+    const pgSanitizedProfile = cleanPGText(profile);
     const newUserProfile = await userProfilesDao.insertUserProfile({
-      name: pgSanitzedName,
-      profile: pgSanitzedProfile,
+      name: pgSanitizedName,
+      profile: pgSanitizedProfile,
       discordId: user.id,
       textModel:
         service === aiServiceEnums.OPENAI
