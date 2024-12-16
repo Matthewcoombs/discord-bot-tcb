@@ -9,6 +9,7 @@ import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
 import profilesService, {
   CLEAR_RETENTION_DATA,
+  SELECT_AI_SERVICE_ID,
   SELECT_CHAT_TIMEOUT_ID,
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
@@ -25,6 +26,10 @@ const selectProfileModelCommand: Command = {
         .setDescription('The profile setting you would like to update')
         .setRequired(true)
         .addChoices(
+          {
+            name: 'ai service',
+            value: SELECT_AI_SERVICE_ID,
+          },
           {
             name: 'text model',
             value: SELECT_TEXT_MODEL_ID,
@@ -95,7 +100,7 @@ const selectProfileModelCommand: Command = {
       selectedProfile,
       settingVal,
     );
-    await settingResponse.edit({
+    return await settingResponse.edit({
       content: `Profile settings for **${selectedProfile.name}** were updated successfully!`,
       components: [],
     });
