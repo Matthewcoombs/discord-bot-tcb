@@ -230,7 +230,6 @@ const directMessageEvent: Command = {
           );
         } else {
           finalResponse.content = content as string;
-          // endChat = structuredResponse.endChat;
         }
 
         userMessageInstance.isProcessing = false;
