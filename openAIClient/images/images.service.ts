@@ -43,11 +43,24 @@ export default {
     return row;
   },
 
+  validateImageCreationOptions(imageOptions: GenerateImageOptions) {
+    return (
+      typeof imageOptions.description === 'string' &&
+      typeof imageOptions.quality === 'string' &&
+      typeof imageOptions.style === 'string' &&
+      typeof imageOptions.count === 'number' &&
+      typeof imageOptions.size === 'string' &&
+      typeof imageOptions.model === 'string'
+    );
+  },
+
   async generateImages(
     user: User,
     imageOptions: GenerateImageOptions,
     interactionTag: number,
   ) {
+    console.log('testing image create options:', imageOptions);
+
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
       .fill(imageOptions)

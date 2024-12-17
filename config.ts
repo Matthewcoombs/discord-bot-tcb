@@ -15,6 +15,7 @@ export enum textBasedModelEnums {
 
 export enum chatToolsEnum {
   GENERATE_IMAGE = 'generate_image',
+  END_CHAT = 'end_chat',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -72,6 +73,25 @@ export const config = {
             },
           },
           required: ['description', 'quality', 'style', 'count', 'size'],
+          additionalProperties: false,
+        },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: chatToolsEnum.END_CHAT,
+        strict: true,
+        description: 'End the chat whenever the user ends or leaves the chat',
+        parameters: {
+          type: 'object',
+          properties: {
+            finalResponse: {
+              type: 'string',
+              description: 'the final response to the user',
+            },
+          },
+          required: ['finalResponse'],
           additionalProperties: false,
         },
       },

@@ -21,8 +21,6 @@ import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
   ChatCompletionMessage,
   chatCompletionRoles,
-  chatCompletionStructuredResponse,
-  JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
 import { chatToolsEnum, config, imageModelEnums } from '../config';
@@ -34,7 +32,6 @@ import {
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import { zodResponseFormat } from 'openai/helpers/zod';
 import imagesService, {
   GenerateImageOptions,
 } from '../openAIClient/images/images.service';
@@ -101,26 +98,20 @@ async function processGenerativeResponse(
   userMessageInstance: ChatInstance,
   chatCompletionMessages: ChatCompletionMessage[],
 ) {
-  const chatCompletion = await OpenAi.beta.chat.completions.parse({
+  const chatCompletion = await OpenAi.chat.completions.create({
     model: userMessageInstance?.selectedProfile
       ? userMessageInstance.selectedProfile.textModel
       : config.openAi.defaultChatCompletionModel,
-    response_format: zodResponseFormat(
-      chatCompletionStructuredResponse,
-      'structured_response',
-    ),
+    response_format: { type: 'text' },
     messages: chatCompletionMessages as any,
-    /**
-     Temporarily disabling message tool call logic until random tool calling is fixed
-     **/
-    // tools: config.functionTools as any,
+    tools: config.functionTools as any,
   });
 
-  const structuredResponse = chatCompletion.choices[0].message
-    .parsed as JsonContent;
+  const content = chatCompletion.choices[0].message.content;
+  console.log('testing message content:', content);
   const toolCalls = chatCompletion.choices[0].message.tool_calls;
 
-  return { structuredResponse, toolCalls };
+  return { content, toolCalls };
 }
 
 async function processToolCalls(
@@ -131,7 +122,7 @@ async function processToolCalls(
   let toolResponse: MessageCreateOptions = {};
   const toolCall = toolCalls[0];
   const { id, type } = toolCall;
-  const { name: toolName, parsed_arguments } = toolCall.function;
+  const { name: toolName, arguments: toolArgs } = toolCall.function;
 
   const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
     { name: 'id', value: id, inline: true },
@@ -142,10 +133,16 @@ async function processToolCalls(
   switch (toolName) {
     case chatToolsEnum.GENERATE_IMAGE: {
       const imageGenerateOptions = {
-        ...(parsed_arguments as GenerateImageOptions),
+        ...(JSON.parse(toolArgs) as GenerateImageOptions),
         model: imageModelEnums.DALLE3,
       };
       imageGenerateOptions.count = Number(imageGenerateOptions.count);
+      // Validation is required as the model may sometimes hallucinate and
+      // generate invalid arguments
+      if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {
+        toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
+        break;
+      }
       const imageFiles = await imagesService.generateImages(
         user,
         imageGenerateOptions,
@@ -159,6 +156,10 @@ async function processToolCalls(
         files: imageFiles,
         embeds: [toolEmbed],
       };
+      break;
+    }
+    case chatToolsEnum.END_CHAT: {
+      toolResponse.content = `Goodbye ${user.username}!`;
       break;
     }
     default:
@@ -325,22 +326,22 @@ const directMessageEvent: Command = {
         let endChat: boolean = false;
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
-        const { structuredResponse, toolCalls } =
-          await processGenerativeResponse(
-            userMessageInstance,
-            chatCompletionMessages,
-          );
+        const { content, toolCalls } = await processGenerativeResponse(
+          userMessageInstance,
+          chatCompletionMessages,
+        );
 
         // This logic handles instances of tool calls during the message instance
         if (toolCalls && toolCalls.length > 0) {
+          console.log('testing toolcalls logic:', toolCalls);
           finalResponse = await processToolCalls(
             user,
             toolCalls,
             userMessageInstance.interactionTag,
           );
         } else {
-          finalResponse.content = structuredResponse.message;
-          endChat = structuredResponse.endChat;
+          finalResponse.content = content as string;
+          // endChat = structuredResponse.endChat;
         }
 
         userMessageInstance.isProcessing = false;
