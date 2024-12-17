@@ -1,31 +1,20 @@
 import {
   ChannelType,
-  EmbedBuilder,
   Events,
   Message,
   MessageCollector,
   MessageCreateOptions,
   TextChannel,
-  User,
 } from 'discord.js';
-import {
-  ChatInstance,
-  collectorEndReason,
-  Command,
-} from '../shared/discord-js-types';
+import { collectorEndReason, Command } from '../shared/discord-js-types';
 import {
   DEFAULT_CHAT_TIMEOUT,
   MAX_MESSAGE_COLLECTORS,
 } from '../shared/constants';
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
-  ChatCompletionMessage,
-  chatCompletionRoles,
-  chatCompletionStructuredResponse,
-  JsonContent,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
-import { OpenAi } from '..';
-import { chatToolsEnum, config, imageModelEnums } from '../config';
+import { chatToolsEnum, config } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
@@ -34,11 +23,7 @@ import {
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import { zodResponseFormat } from 'openai/helpers/zod';
-import imagesService, {
-  GenerateImageOptions,
-} from '../openAIClient/images/images.service';
-import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
+import messagesService from '../openAIClient/messages/messages.service';
 
 async function sendResponse(
   isDM: boolean,
@@ -69,102 +54,6 @@ async function sendResponse(
       await message.channel.send(messageCreateOptions);
     }
   }
-}
-
-function cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
-  const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
-    if (
-      compMsg.role !== chatCompletionRoles.SYSTEM &&
-      compMsg.role !== chatCompletionRoles.TOOL &&
-      compMsg.content
-    ) {
-      const type = compMsg.content[0].type;
-      const text = compMsg.content[0].text as string;
-      acc.push({
-        role: compMsg.role,
-        content: [
-          {
-            type,
-            text: text.replace(/<@\d+>/g, '').trim(),
-          },
-        ],
-      });
-    } else {
-      acc.push(compMsg);
-    }
-    return acc;
-  }, [] as ChatCompletionMessage[]);
-  return cleanedMsgs;
-}
-
-async function processGenerativeResponse(
-  userMessageInstance: ChatInstance,
-  chatCompletionMessages: ChatCompletionMessage[],
-) {
-  const chatCompletion = await OpenAi.beta.chat.completions.parse({
-    model: userMessageInstance?.selectedProfile
-      ? userMessageInstance.selectedProfile.textModel
-      : config.openAi.defaultChatCompletionModel,
-    response_format: zodResponseFormat(
-      chatCompletionStructuredResponse,
-      'structured_response',
-    ),
-    messages: chatCompletionMessages as any,
-    /**
-     Temporarily disabling message tool call logic until random tool calling is fixed
-     **/
-    // tools: config.functionTools as any,
-  });
-
-  const structuredResponse = chatCompletion.choices[0].message
-    .parsed as JsonContent;
-  const toolCalls = chatCompletion.choices[0].message.tool_calls;
-
-  return { structuredResponse, toolCalls };
-}
-
-async function processToolCalls(
-  user: User,
-  toolCalls: ParsedFunctionToolCall[],
-  interactionTag: number,
-): Promise<MessageCreateOptions> {
-  let toolResponse: MessageCreateOptions = {};
-  const toolCall = toolCalls[0];
-  const { id, type } = toolCall;
-  const { name: toolName, parsed_arguments } = toolCall.function;
-
-  const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
-    { name: 'id', value: id, inline: true },
-    { name: 'type', value: type, inline: true },
-    { name: 'arguments', value: toolCall.function.arguments, inline: true },
-  ]);
-
-  switch (toolName) {
-    case chatToolsEnum.GENERATE_IMAGE: {
-      const imageGenerateOptions = {
-        ...(parsed_arguments as GenerateImageOptions),
-        model: imageModelEnums.DALLE3,
-      };
-      imageGenerateOptions.count = Number(imageGenerateOptions.count);
-      const imageFiles = await imagesService.generateImages(
-        user,
-        imageGenerateOptions,
-        interactionTag,
-      );
-      toolResponse = {
-        content:
-          imageFiles.length > 1
-            ? `Here are your requested images ${user.username} :blush:`
-            : `Here is your requested image ${user.username} :blush:`,
-        files: imageFiles,
-        embeds: [toolEmbed],
-      };
-      break;
-    }
-    default:
-      break;
-  }
-  return toolResponse;
 }
 
 function filterAttachedFiles(message: Message<boolean>) {
@@ -274,7 +163,7 @@ const directMessageEvent: Command = {
           return;
         }
 
-        // If the message recieved by the message collector is not from the bot, we proceed with the following logic.
+        // If the message received by the message collector is not from the bot, we proceed with the following logic.
         const userMessageInstance = chatInstanceCollector.get(userId);
 
         // If there is no se user message instance return
@@ -325,22 +214,22 @@ const directMessageEvent: Command = {
         let endChat: boolean = false;
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
-        const { structuredResponse, toolCalls } =
-          await processGenerativeResponse(
+        const { content, toolCalls } =
+          await messagesService.processGenerativeResponse(
             userMessageInstance,
             chatCompletionMessages,
           );
 
         // This logic handles instances of tool calls during the message instance
         if (toolCalls && toolCalls.length > 0) {
-          finalResponse = await processToolCalls(
+          endChat = toolCalls[0].function.name === chatToolsEnum.END_CHAT;
+          finalResponse = await messagesService.processToolCalls(
             user,
             toolCalls,
             userMessageInstance.interactionTag,
           );
         } else {
-          finalResponse.content = structuredResponse.message;
-          endChat = structuredResponse.endChat;
+          finalResponse.content = content as string;
         }
 
         userMessageInstance.isProcessing = false;
@@ -372,10 +261,14 @@ const directMessageEvent: Command = {
                   collectedMsgs,
                   selectedProfile,
                 );
-              const cleanRetentionMsgs = cleanChatCompletionMsgs(retentionMsgs);
+              const cleanRetentionMsgs =
+                messagesService.cleanChatCompletionMsgs(retentionMsgs);
               selectedProfile.retentionData = cleanRetentionMsgs;
               await userProfilesDao.updateUserProfile(selectedProfile);
             }
+            await sendResponse(isDirectMessage, message, {
+              content: `The chat session has ended :wave:`,
+            });
             break;
           default:
             break;

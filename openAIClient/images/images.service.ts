@@ -43,6 +43,17 @@ export default {
     return row;
   },
 
+  validateImageCreationOptions(imageOptions: GenerateImageOptions) {
+    return (
+      typeof imageOptions.description === 'string' &&
+      typeof imageOptions.quality === 'string' &&
+      typeof imageOptions.style === 'string' &&
+      typeof imageOptions.count === 'number' &&
+      typeof imageOptions.size === 'string' &&
+      typeof imageOptions.model === 'string'
+    );
+  },
+
   async generateImages(
     user: User,
     imageOptions: GenerateImageOptions,
@@ -122,7 +133,6 @@ export default {
         .then((response) => {
           fs.writeFileSync(imageFilePath, response.data);
           imageFiles.push(imageFilePath);
-          console.log(`Image downloaded [image]: ${imageFilePath}`);
         })
         .catch((err) => {
           console.error(`Error downloading image:`, err);
