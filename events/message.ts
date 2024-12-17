@@ -23,7 +23,7 @@ import chatCompletionService, {
   chatCompletionRoles,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
-import { chatToolsEnum, config, imageModelEnums } from '../config';
+import { chatToolsEnum, config, FinalResponse, imageModelEnums } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
@@ -108,7 +108,6 @@ async function processGenerativeResponse(
   });
 
   const content = chatCompletion.choices[0].message.content;
-  console.log('testing message content:', content);
   const toolCalls = chatCompletion.choices[0].message.tool_calls;
 
   return { content, toolCalls };
@@ -159,7 +158,8 @@ async function processToolCalls(
       break;
     }
     case chatToolsEnum.END_CHAT: {
-      toolResponse.content = `Goodbye ${user.username}!`;
+      const endChatParams = JSON.parse(toolArgs) as FinalResponse;
+      toolResponse.content = `${endChatParams.finalResponse}`;
       break;
     }
     default:
@@ -323,7 +323,7 @@ const directMessageEvent: Command = {
           );
 
         let finalResponse: MessageCreateOptions = {};
-        const endChat: boolean = false;
+        let endChat: boolean = false;
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
         const { content, toolCalls } = await processGenerativeResponse(
@@ -333,7 +333,7 @@ const directMessageEvent: Command = {
 
         // This logic handles instances of tool calls during the message instance
         if (toolCalls && toolCalls.length > 0) {
-          console.log('testing toolcalls logic:', toolCalls);
+          endChat = toolCalls[0].function.name === chatToolsEnum.END_CHAT ? true : false;
           finalResponse = await processToolCalls(
             user,
             toolCalls,
@@ -377,6 +377,7 @@ const directMessageEvent: Command = {
               selectedProfile.retentionData = cleanRetentionMsgs;
               await userProfilesDao.updateUserProfile(selectedProfile);
             }
+            await sendResponse(isDirectMessage, message, { content: `The chat session has ended :wave:`});
             break;
           default:
             break;

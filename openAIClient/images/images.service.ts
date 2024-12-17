@@ -59,7 +59,6 @@ export default {
     imageOptions: GenerateImageOptions,
     interactionTag: number,
   ) {
-    console.log('testing image create options:', imageOptions);
 
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
@@ -135,7 +134,6 @@ export default {
         .then((response) => {
           fs.writeFileSync(imageFilePath, response.data);
           imageFiles.push(imageFilePath);
-          console.log(`Image downloaded [image]: ${imageFilePath}`);
         })
         .catch((err) => {
           console.error(`Error downloading image:`, err);

@@ -23,6 +23,10 @@ export const IMAGE_PROCESSING_MODELS = [
   textBasedModelEnums.GPT4O,
 ];
 
+export interface FinalResponse {
+  finalResponse: string;
+}
+
 export const config = {
   botId: '',
   openAi: {
