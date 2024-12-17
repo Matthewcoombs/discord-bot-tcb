@@ -323,7 +323,7 @@ const directMessageEvent: Command = {
           );
 
         let finalResponse: MessageCreateOptions = {};
-        let endChat: boolean = false;
+        const endChat: boolean = false;
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
         const { content, toolCalls } = await processGenerativeResponse(
