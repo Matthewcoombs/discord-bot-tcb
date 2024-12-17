@@ -59,7 +59,6 @@ export default {
     imageOptions: GenerateImageOptions,
     interactionTag: number,
   ) {
-
     const model = imageOptions.model;
     const imagesToCreatePromises = Array(imageOptions.count)
       .fill(imageOptions)

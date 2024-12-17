@@ -23,7 +23,12 @@ import chatCompletionService, {
   chatCompletionRoles,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { OpenAi } from '..';
-import { chatToolsEnum, config, FinalResponse, imageModelEnums } from '../config';
+import {
+  chatToolsEnum,
+  config,
+  FinalResponse,
+  imageModelEnums,
+} from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
@@ -333,7 +338,7 @@ const directMessageEvent: Command = {
 
         // This logic handles instances of tool calls during the message instance
         if (toolCalls && toolCalls.length > 0) {
-          endChat = toolCalls[0].function.name === chatToolsEnum.END_CHAT ? true : false;
+          endChat = toolCalls[0].function.name === chatToolsEnum.END_CHAT;
           finalResponse = await processToolCalls(
             user,
             toolCalls,
@@ -377,7 +382,9 @@ const directMessageEvent: Command = {
               selectedProfile.retentionData = cleanRetentionMsgs;
               await userProfilesDao.updateUserProfile(selectedProfile);
             }
-            await sendResponse(isDirectMessage, message, { content: `The chat session has ended :wave:`});
+            await sendResponse(isDirectMessage, message, {
+              content: `The chat session has ended :wave:`,
+            });
             break;
           default:
             break;
