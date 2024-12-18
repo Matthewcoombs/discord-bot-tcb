@@ -14,7 +14,7 @@ import {
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
-import { chatToolsEnum, config } from '../config';
+import { aiServiceEnums, chatToolsEnum, config } from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
@@ -23,7 +23,7 @@ import {
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import messagesService from '../openAIClient/messages/messages.service';
+import  openAIMessagesService from '../openAIClient/messages/openAIMessages.service';
 
 async function sendResponse(
   isDM: boolean,
@@ -166,7 +166,7 @@ const directMessageEvent: Command = {
         // If the message received by the message collector is not from the bot, we proceed with the following logic.
         const userMessageInstance = chatInstanceCollector.get(userId);
 
-        // If there is no set user message instance return
+        // If there is no se user message instance return
         if (!userMessageInstance) {
           return;
         }
@@ -179,12 +179,62 @@ const directMessageEvent: Command = {
           return;
         }
 
+        // filtering out all unsupported attachment file types from the user's most recent message.
+        const {
+          message: updatedLastMsg,
+          unSupportedFileTypes,
+          overMax,
+        } = filterAttachedFiles(lastMsg);
+
+        // If the user has provided an image file type the bot does not support we return
+        if (unSupportedFileTypes.length > 0) {
+          const unSupportedWarning = `:warning: Sorry, I currently do not support the file types for the following file(s): ${unSupportedFileTypes}\n
+            Supported file types: ${CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES}`;
+          return await sendResponse(isDirectMessage, message, {
+            content: unSupportedWarning,
+          });
+        }
+
+        // If the user has provided image files over the maximum amount of supported image uploads we return
+        if (overMax.length > 0) {
+          const overMaxWarning = `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message: ${overMax}`;
+          return await sendResponse(isDirectMessage, message, {
+            content: overMaxWarning,
+          });
+        }
+
+        /**
+         * determine the message logic flow based on the ai service the user has 
+         * selected. If the user has not created a profile then the we will fall 
+         * back to the default system service.
+        **/
         let finalResponse: MessageCreateOptions = {};
         let endChat: boolean = false;
+        switch (userMessageInstance.selectedProfile.service) {
+          case (aiServiceEnums.ANTHROPIC): {
+            break;
+          }
+          case (aiServiceEnums.OPENAI): {
+            break;
+          }
+          default: {
+            break;
+          }
+        }
+
+
+        collected[collected.length - 1] = updatedLastMsg;
+        const chatCompletionMessages =
+          chatCompletionService.formatChatCompletionMessages(
+            collected,
+            userMessageInstance?.selectedProfile,
+          );
+
+    
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
         const { content, toolCalls } =
-          await messagesService.processGenerativeResponse(
+          await openAIMessagesService.processGenerativeResponse(
             userMessageInstance,
             chatCompletionMessages,
           );
@@ -192,7 +242,7 @@ const directMessageEvent: Command = {
         // This logic handles instances of tool calls during the message instance
         if (toolCalls && toolCalls.length > 0) {
           endChat = toolCalls[0].function.name === chatToolsEnum.END_CHAT;
-          finalResponse = await messagesService.processToolCalls(
+          finalResponse = await openAIMessagesService.processToolCalls(
             user,
             toolCalls,
             userMessageInstance.interactionTag,
@@ -201,57 +251,12 @@ const directMessageEvent: Command = {
           finalResponse.content = content as string;
         }
 
-          // If the user has provided an image file type the bot does not support we return
-          if (unSupportedFileTypes.length > 0) {
-            const unSupportedWarning = `:warning: Sorry, I currently do not support the file types for the following file(s): ${unSupportedFileTypes}\n
-            Supported file types: ${CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES}`;
-            return await sendResponse(isDirectMessage, message, {
-              content: unSupportedWarning,
-            });
-          }
+        userMessageInstance.isProcessing = false;
+        chatInstanceCollector.set(userId, userMessageInstance);
 
-          // If the user has provided image files over the maximum amount of supported image uploads we return
-          if (overMax.length > 0) {
-            const overMaxWarning = `:warning: Sorry, you've reached the maximum limit of attachments (4). You can send the following files again in another message: ${overMax}`;
-            return await sendResponse(isDirectMessage, message, {
-              content: overMaxWarning,
-            });
-          }
-
-          collected[collected.length - 1] = updatedLastMsg;
-          const chatCompletionMessages =
-            chatCompletionService.formatOpenAIChatCompletionMessages(
-              collected,
-              userMessageInstance?.selectedProfile,
-            );
-
-          userMessageInstance.isProcessing = true;
-          chatInstanceCollector.set(userId, userMessageInstance);
-          const { structuredResponse, toolCalls } =
-            await processGenerativeResponse(
-              userMessageInstance,
-              chatCompletionMessages,
-            );
-
-          // This logic handles instances of tool calls during the message instance
-          if (toolCalls && toolCalls.length > 0) {
-            finalResponse = await processToolCalls(
-              user,
-              toolCalls,
-              userMessageInstance.interactionTag,
-            );
-          } else {
-            finalResponse.content = structuredResponse.message;
-            endChat = structuredResponse.endChat;
-          }
-
-          userMessageInstance.isProcessing = false;
-          chatInstanceCollector.set(userId, userMessageInstance);
-
-          await sendResponse(isDirectMessage, message, finalResponse);
-          if (endChat) {
-            collector.stop();
-          }
+        await sendResponse(isDirectMessage, message, finalResponse);
+        if (endChat) {
+          collector.stop();
         }
       });
       collector.on('end', async (collected) => {
@@ -271,12 +276,12 @@ const directMessageEvent: Command = {
             if (selectedProfile && selectedProfile.retention) {
               const collectedMsgs = Array.from(collected.values());
               const retentionMsgs =
-                chatCompletionService.formatOpenAIChatCompletionMessages(
+                chatCompletionService.formatChatCompletionMessages(
                   collectedMsgs,
                   selectedProfile,
                 );
               const cleanRetentionMsgs =
-                messagesService.cleanChatCompletionMsgs(retentionMsgs);
+                openAIMessagesService.cleanChatCompletionMsgs(retentionMsgs);
               selectedProfile.retentionData = cleanRetentionMsgs;
               await userProfilesDao.updateUserProfile(selectedProfile);
             }

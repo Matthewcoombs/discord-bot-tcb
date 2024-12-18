@@ -83,7 +83,7 @@ function generateSystemContentMessage(
 }
 
 export default {
-  formatOpenAIChatCompletionMessages(
+  formatChatCompletionMessages(
     messages: Message[],
     selectedProfile?: UserProfile,
   ): ChatCompletionMessage[] {
