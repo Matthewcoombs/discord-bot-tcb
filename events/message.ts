@@ -23,7 +23,7 @@ import {
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import  openAIMessagesService from '../openAIClient/messages/openAIMessages.service';
+import openAIMessagesService from '../openAIClient/messages/openAIMessages.service';
 
 async function sendResponse(
   isDM: boolean,
@@ -204,24 +204,23 @@ const directMessageEvent: Command = {
         }
 
         /**
-         * determine the message logic flow based on the ai service the user has 
-         * selected. If the user has not created a profile then the we will fall 
+         * determine the message logic flow based on the ai service the user has
+         * selected. If the user has not created a profile then the we will fall
          * back to the default system service.
-        **/
+         **/
         let finalResponse: MessageCreateOptions = {};
         let endChat: boolean = false;
         switch (userMessageInstance.selectedProfile.service) {
-          case (aiServiceEnums.ANTHROPIC): {
+          case aiServiceEnums.ANTHROPIC: {
             break;
           }
-          case (aiServiceEnums.OPENAI): {
+          case aiServiceEnums.OPENAI: {
             break;
           }
           default: {
             break;
           }
         }
-
 
         collected[collected.length - 1] = updatedLastMsg;
         const chatCompletionMessages =
@@ -230,7 +229,6 @@ const directMessageEvent: Command = {
             userMessageInstance?.selectedProfile,
           );
 
-    
         userMessageInstance.isProcessing = true;
         chatInstanceCollector.set(userId, userMessageInstance);
         const { content, toolCalls } =

@@ -33,12 +33,12 @@ export const IMAGE_PROCESSING_MODELS = [
 export const OPEN_AI_TEXT_MODELS = [
   textBasedModelEnums.GPT40_MINI,
   textBasedModelEnums.GPT4O,
-]
+];
 
 export const CLAUDE_TEXT_MODELS = [
   textBasedModelEnums.CLAUDE_3_5_HAIKU,
   textBasedModelEnums.CLAUDE_3_5_SONNET,
-]
+];
 
 export interface FinalResponse {
   finalResponse: string;
