@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-function configureOpenAi() {
+function initOpenAI() {
   // creating config object to authenticate openai requests
   const openAI = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -9,4 +9,4 @@ function configureOpenAi() {
   return openAI;
 }
 
-export { configureOpenAi };
+export { initOpenAI };

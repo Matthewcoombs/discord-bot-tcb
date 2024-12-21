@@ -1,5 +1,6 @@
+import { MessageParam } from '@anthropic-ai/sdk/resources';
 import { pg } from '../..';
-import { textBasedModelEnums } from '../../config';
+import { aiServiceEnums, textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
 import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
 
@@ -8,6 +9,7 @@ export interface UserProfile {
   discordId: string;
   name: string;
   profile: string;
+  service: aiServiceEnums;
   createdAt: string;
   updatedAt: string;
   assistantId: string;
@@ -16,7 +18,8 @@ export interface UserProfile {
   threadId: string;
   timeout: string | number;
   retention: boolean;
-  retentionData: ChatCompletionMessage[];
+  openAiRetentionData: ChatCompletionMessage[];
+  anthropicRetentionData: Array<MessageParam>;
   retentionSize: string | number;
 }
 
@@ -27,6 +30,8 @@ export interface CreateProfile {
   assistantId: string;
   selected?: boolean;
   threadId: string;
+  textModel: string;
+  service: aiServiceEnums;
 }
 
 export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
@@ -40,6 +45,7 @@ const PROFILES_BASE_SELECTORS = `
   discord_id AS "discordId",
   name,
   profile,
+  service,
   created_at AS "createdAt",
   updated_at AS "updatedAt",
   assistant_id AS "assistantId",
@@ -48,7 +54,8 @@ const PROFILES_BASE_SELECTORS = `
   timeout,
   selected,
   retention,
-  retention_data AS "retentionData",
+  openai_retention_data AS "openAiRetentionData",
+  anthropic_retention_data AS "anthropicRetentionData",
   retention_size AS "retentionSize"
 `;
 const PROFILES_BASE_QUERY = `
@@ -89,13 +96,21 @@ export default {
   },
 
   async insertUserProfile(newProfile: CreateProfile) {
-    const { name, profile, discordId, assistantId, threadId } = newProfile;
+    const {
+      name,
+      profile,
+      service,
+      discordId,
+      assistantId,
+      threadId,
+      textModel,
+    } = newProfile;
     const userProfiles = await pg.query<UserProfile>(`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, assistant_id, thread_id, retention, retention_size)
+                (discord_id, name, profile, service, assistant_id, thread_id, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${name}', '${profile}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE})
+                ('${discordId}', '${name}', '${profile}', '${service}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 
@@ -116,16 +131,37 @@ export default {
     const {
       name,
       profile,
+      service,
       selected,
       textModel,
       timeout,
       retention,
-      retentionData,
+      openAiRetentionData,
+      anthropicRetentionData,
       retentionSize,
     } = selectedProfile;
 
-    if (retentionData && retentionData.length > Number(retentionSize)) {
-      retentionData.splice(0, retentionData.length - Number(retentionSize));
+    let retentionUpdateColumn: string = '';
+    let retentionDataToReduce: ChatCompletionMessage[] | Array<MessageParam> =
+      [];
+    if (service === aiServiceEnums.OPENAI) {
+      retentionUpdateColumn = `openai_retention_data`;
+      retentionDataToReduce = openAiRetentionData;
+    }
+
+    if (service === aiServiceEnums.ANTHROPIC) {
+      retentionUpdateColumn = `anthropic_retention_data`;
+      retentionDataToReduce = anthropicRetentionData;
+    }
+
+    if (
+      retentionDataToReduce &&
+      retentionDataToReduce.length > Number(retentionSize)
+    ) {
+      retentionDataToReduce.splice(
+        0,
+        retentionDataToReduce.length - Number(retentionSize),
+      );
     }
 
     await pg.query(
@@ -135,17 +171,18 @@ export default {
             SET
                 name = '${name}',
                 profile = '${profile}',
+                service = '${service}',
                 selected = ${selected},
                 text_model = '${textModel}',
                 timeout = ${timeout},
                 retention = ${retention},
-                retention_data = $1,
+                ${retentionUpdateColumn} = $1,
                 retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
         `,
-      [retentionData],
+      [retentionDataToReduce],
     );
   },
 
@@ -179,7 +216,8 @@ export default {
             UPDATE
                 user_profiles
             SET
-                retention_data = '{}',
+                openai_retention_data = '{}',
+                anthropic_retention_data = '{}',
                 updated_at = NOW()
             WHERE
                 id = ${id}

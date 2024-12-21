@@ -3,6 +3,7 @@ export const USER_TIMEOUT_CODE = `i-101`;
 export const INVALID_FILE_CODE = `if-100`;
 export const INVALID_FILE_SIZE_CODE = `if-101`;
 export const INVALID_FILE_TYPE_CODE = `if-102`;
+export const TOO_MANY_ATTACHMENTS_CODE = `ta-100`;
 export const INVALID_IMAGE_GENERATION_ARGS = `ig-100`;
 export const INVALID_RESPONSE_LENGTH_CODE = `ir-100`;
 export const EMAIL_SEND_ERROR = `es-100`;

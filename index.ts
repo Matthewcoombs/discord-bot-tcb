@@ -1,9 +1,10 @@
 import { Client, Collection, GatewayIntentBits, Partials } from 'discord.js';
-import { configureOpenAi } from './openAIClient/init';
+import { initOpenAI } from './openAIClient/init';
 import * as fs from 'fs';
 import * as path from 'path';
 import { connectToPG } from './database/init';
 import { ChatInstance, SingleInstanceCommand } from './shared/discord-js-types';
+import { initAnthropicAI } from './anthropicClient/init';
 
 // init env variables
 require('dotenv').config();
@@ -20,7 +21,9 @@ export const pg = connectToPG();
 })();
 
 // Init openAI
-export const OpenAi = configureOpenAi();
+export const OpenAi = initOpenAI();
+// Init anthropic
+export const Anthropic = initAnthropicAI();
 
 declare module 'discord.js' {
   export interface Client {
