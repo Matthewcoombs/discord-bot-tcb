@@ -274,7 +274,7 @@ const directMessageEvent: Command = {
         let finalResponse: MessageCreateOptions = {};
         let endChat: boolean = false;
         userMessageInstance.isProcessing = true;
-        switch (userMessageInstance.selectedProfile.service) {
+        switch (userMessageInstance.selectedProfile?.service) {
           case aiServiceEnums.ANTHROPIC: {
             const anthropicServiceResp = await processAnthropicMessageService(
               userMessageInstance,
@@ -298,6 +298,15 @@ const directMessageEvent: Command = {
             break;
           }
           default: {
+            const openAIServiceResp = await processOpenAIMessageService(
+              userMessageInstance,
+              collected,
+              user,
+              finalResponse,
+              endChat,
+            );
+            finalResponse = openAIServiceResp.finalResponse;
+            endChat = openAIServiceResp.endChat;
             break;
           }
         }
