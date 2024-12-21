@@ -3,6 +3,11 @@ import {
   singleInstanceCommandsEnum,
 } from './shared/discord-js-types';
 
+export enum aiServiceEnums {
+  OPENAI = 'openai',
+  ANTHROPIC = 'anthropic',
+}
+
 export enum imageModelEnums {
   DALLE2 = 'dall-e-2',
   DALLE3 = 'dall-e-3',
@@ -11,10 +16,17 @@ export enum imageModelEnums {
 export enum textBasedModelEnums {
   GPT4O = 'gpt-4o',
   GPT40_MINI = 'gpt-4o-mini',
+  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20241022',
+  CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
 
-export enum chatToolsEnum {
+export enum openaiToolsEnum {
   GENERATE_IMAGE = 'generate_image',
+  END_CHAT = 'end_chat',
+}
+
+export enum anthropicToolsEnum {
+  END_CHAT = 'end_chat',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -22,11 +34,28 @@ export const IMAGE_PROCESSING_MODELS = [
   textBasedModelEnums.GPT4O,
 ];
 
+export const OPEN_AI_TEXT_MODELS = [
+  textBasedModelEnums.GPT40_MINI,
+  textBasedModelEnums.GPT4O,
+];
+
+export const CLAUDE_TEXT_MODELS = [
+  textBasedModelEnums.CLAUDE_3_5_HAIKU,
+  textBasedModelEnums.CLAUDE_3_5_SONNET,
+];
+
+export interface FinalResponse {
+  finalResponse: string;
+}
+
 export const config = {
   botId: '',
   openAi: {
     defaultChatCompletionModel: textBasedModelEnums.GPT40_MINI,
     defaultImageModel: imageModelEnums.DALLE2,
+  },
+  claude: {
+    defaultMessageModel: textBasedModelEnums.CLAUDE_3_5_HAIKU,
   },
   commands: {
     singleInstanceCommands: [singleInstanceCommandsEnum.ASSISTANT],
@@ -35,11 +64,14 @@ export const config = {
       optInCommands.SELECT_PROFILE_SETTINGS,
     ],
   },
-  functionTools: [
+  defaults: {
+    service: aiServiceEnums.OPENAI,
+  },
+  openAIfunctionTools: [
     {
       type: 'function',
       function: {
-        name: chatToolsEnum.GENERATE_IMAGE,
+        name: openaiToolsEnum.GENERATE_IMAGE,
         strict: true,
         description:
           'Creates an image for the user. Call this when the user explicitly asks to create an image',
@@ -74,6 +106,41 @@ export const config = {
           required: ['description', 'quality', 'style', 'count', 'size'],
           additionalProperties: false,
         },
+      },
+    },
+    {
+      type: 'function',
+      function: {
+        name: openaiToolsEnum.END_CHAT,
+        strict: true,
+        description: 'End the chat whenever the user ends or leaves the chat',
+        parameters: {
+          type: 'object',
+          properties: {
+            finalResponse: {
+              type: 'string',
+              description: 'the final response to the user',
+            },
+          },
+          required: ['finalResponse'],
+          additionalProperties: false,
+        },
+      },
+    },
+  ],
+  claudeFunctionTools: [
+    {
+      name: anthropicToolsEnum.END_CHAT,
+      description: 'End the chat whenever the user ends or leaves the chat',
+      input_schema: {
+        type: 'object',
+        properties: {
+          finalResponse: {
+            type: 'string',
+            description: 'the final response to the user',
+          },
+        },
+        required: ['finalResponse'],
       },
     },
   ],
