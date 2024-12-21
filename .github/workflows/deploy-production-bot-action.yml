@@ -35,7 +35,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           port: 22
           password: ${{ secrets.SSH_PASSWORD }}
-          localPath: "."
+          localPath: '.'
           remotePath: /root/${{ env.REPO_NAME }}
 
   # Creating systemctl service to compile the project
@@ -73,6 +73,7 @@ jobs:
             [Service]
             Type=oneshot
             Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
             WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
@@ -105,6 +106,7 @@ jobs:
             [Service]
             Type=oneshot
             Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
             WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
@@ -139,6 +141,7 @@ jobs:
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
             Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
             Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
             Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
             Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
