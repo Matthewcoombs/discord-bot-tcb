@@ -61,8 +61,6 @@ export default {
         : '',
     });
 
-    console.log('testing claude response:', message.content[0]);
-
     let response = '';
     const content = message.content[0];
 
