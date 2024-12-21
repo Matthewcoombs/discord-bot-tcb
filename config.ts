@@ -20,8 +20,12 @@ export enum textBasedModelEnums {
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
 
-export enum chatToolsEnum {
+export enum openaiToolsEnum {
   GENERATE_IMAGE = 'generate_image',
+  END_CHAT = 'end_chat',
+}
+
+export enum anthropicToolsEnum {
   END_CHAT = 'end_chat',
 }
 
@@ -63,11 +67,11 @@ export const config = {
   defaults: {
     service: aiServiceEnums.OPENAI,
   },
-  functionTools: [
+  openAIfunctionTools: [
     {
       type: 'function',
       function: {
-        name: chatToolsEnum.GENERATE_IMAGE,
+        name: openaiToolsEnum.GENERATE_IMAGE,
         strict: true,
         description:
           'Creates an image for the user. Call this when the user explicitly asks to create an image',
@@ -107,7 +111,7 @@ export const config = {
     {
       type: 'function',
       function: {
-        name: chatToolsEnum.END_CHAT,
+        name: openaiToolsEnum.END_CHAT,
         strict: true,
         description: 'End the chat whenever the user ends or leaves the chat',
         parameters: {
@@ -121,6 +125,22 @@ export const config = {
           required: ['finalResponse'],
           additionalProperties: false,
         },
+      },
+    },
+  ],
+  claudeFunctionTools: [
+    {
+      name: anthropicToolsEnum.END_CHAT,
+      description: 'End the chat whenever the user ends or leaves the chat',
+      input_schema: {
+        type: 'object',
+        properties: {
+          finalResponse: {
+            type: 'string',
+            description: 'the final response to the user',
+          },
+        },
+        required: ['finalResponse'],
       },
     },
   ],

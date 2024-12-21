@@ -1,7 +1,7 @@
 import { EmbedBuilder, MessageCreateOptions, User } from 'discord.js';
 import { OpenAi } from '../..';
 import {
-  chatToolsEnum,
+  openaiToolsEnum,
   config,
   FinalResponse,
   imageModelEnums,
@@ -13,6 +13,9 @@ import {
 } from '../chatCompletion/chatCompletion.service';
 import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
+import userProfilesDao, {
+  UserProfile,
+} from '../../database/user_profiles/userProfilesDao';
 
 export default {
   cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
@@ -41,6 +44,15 @@ export default {
     return cleanedMsgs;
   },
 
+  async processOpenAiRetentionData(
+    chatCompMsgs: ChatCompletionMessage[],
+    selectedProfile: UserProfile,
+  ) {
+    const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
+    selectedProfile.openAiRetentionData = cleanedMsgs;
+    await userProfilesDao.updateUserProfile(selectedProfile);
+  },
+
   async processGenerativeResponse(
     userMessageInstance: ChatInstance,
     chatCompletionMessages: ChatCompletionMessage[],
@@ -51,7 +63,7 @@ export default {
         : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
-      tools: config.functionTools as any,
+      tools: config.openAIfunctionTools as any,
     });
 
     const content = chatCompletion.choices[0].message.content;
@@ -77,7 +89,7 @@ export default {
     ]);
 
     switch (toolName) {
-      case chatToolsEnum.GENERATE_IMAGE: {
+      case openaiToolsEnum.GENERATE_IMAGE: {
         const imageGenerateOptions = {
           ...(JSON.parse(toolArgs) as GenerateImageOptions),
           model: imageModelEnums.DALLE3,
@@ -104,7 +116,7 @@ export default {
         };
         break;
       }
-      case chatToolsEnum.END_CHAT: {
+      case openaiToolsEnum.END_CHAT: {
         const endChatParams = JSON.parse(toolArgs) as FinalResponse;
         toolResponse.content = `${endChatParams.finalResponse}`;
         break;

@@ -1,3 +1,4 @@
+import { MessageParam } from '@anthropic-ai/sdk/resources';
 import { pg } from '../..';
 import { aiServiceEnums, textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
@@ -17,7 +18,8 @@ export interface UserProfile {
   threadId: string;
   timeout: string | number;
   retention: boolean;
-  retentionData: ChatCompletionMessage[];
+  openAiRetentionData: ChatCompletionMessage[];
+  anthropicRetentionData: Array<MessageParam>;
   retentionSize: string | number;
 }
 
@@ -52,7 +54,8 @@ const PROFILES_BASE_SELECTORS = `
   timeout,
   selected,
   retention,
-  retention_data AS "retentionData",
+  openai_retention_data AS "openAiRetentionData",
+  anthropic_retention_data AS "anthropicRetentionData",
   retention_size AS "retentionSize"
 `;
 const PROFILES_BASE_QUERY = `
@@ -133,12 +136,32 @@ export default {
       textModel,
       timeout,
       retention,
-      retentionData,
+      openAiRetentionData,
+      anthropicRetentionData,
       retentionSize,
     } = selectedProfile;
 
-    if (retentionData && retentionData.length > Number(retentionSize)) {
-      retentionData.splice(0, retentionData.length - Number(retentionSize));
+    let retentionUpdateColumn: string = '';
+    let retentionDataToReduce: ChatCompletionMessage[] | Array<MessageParam> =
+      [];
+    if (service === aiServiceEnums.OPENAI) {
+      retentionUpdateColumn = `openai_retention_data`;
+      retentionDataToReduce = openAiRetentionData;
+    }
+
+    if (service === aiServiceEnums.ANTHROPIC) {
+      retentionUpdateColumn = `anthropic_retention_data`;
+      retentionDataToReduce = anthropicRetentionData;
+    }
+
+    if (
+      retentionDataToReduce &&
+      retentionDataToReduce.length > Number(retentionSize)
+    ) {
+      retentionDataToReduce.splice(
+        0,
+        retentionDataToReduce.length - Number(retentionSize),
+      );
     }
 
     await pg.query(
@@ -153,13 +176,13 @@ export default {
                 text_model = '${textModel}',
                 timeout = ${timeout},
                 retention = ${retention},
-                retention_data = $1,
+                ${retentionUpdateColumn} = $1,
                 retention_size = ${retentionSize},
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
         `,
-      [retentionData],
+      [retentionDataToReduce],
     );
   },
 
@@ -193,7 +216,8 @@ export default {
             UPDATE
                 user_profiles
             SET
-                retention_data = '{}',
+                openai_retention_data = '{}',
+                anthropic_retention_data = '{}',
                 updated_at = NOW()
             WHERE
                 id = ${id}

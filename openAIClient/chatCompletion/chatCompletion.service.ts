@@ -7,11 +7,10 @@ import {
 import { UserProfile } from '../../database/user_profiles/userProfilesDao';
 import { GENERATIVE_RESPONSE_CONSTRAINTS } from '../../shared/constants';
 import {
-  chatToolsEnum,
+  openaiToolsEnum,
   IMAGE_PROCESSING_MODELS,
   textBasedModelEnums,
 } from '../../config';
-import * as z from 'zod';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -44,11 +43,6 @@ export interface JsonContent {
   message: string;
   endChat: boolean;
 }
-
-export const chatCompletionStructuredResponse = z.object({
-  message: z.string(),
-  endChat: z.boolean(),
-});
 
 enum chatCompletionTypes {
   TEXT = 'text',
@@ -96,8 +90,8 @@ export default {
         if (
           message.author.bot &&
           message.embeds.length > 0 &&
-          Object.values(chatToolsEnum).includes(
-            message.embeds[0].title as chatToolsEnum,
+          Object.values(openaiToolsEnum).includes(
+            message.embeds[0].title as openaiToolsEnum,
           )
         ) {
           role = chatCompletionRoles.TOOL;
@@ -159,9 +153,9 @@ export default {
       [],
     );
 
-    if (selectedProfile?.retention && selectedProfile.retentionData) {
+    if (selectedProfile?.retention && selectedProfile.openAiRetentionData) {
       chatCompletionMessages = [
-        ...selectedProfile.retentionData,
+        ...selectedProfile.openAiRetentionData,
         ...chatCompletionMessages,
       ];
     }
