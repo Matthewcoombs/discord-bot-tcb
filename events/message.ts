@@ -298,6 +298,7 @@ const directMessageEvent: Command = {
             break;
           }
           default: {
+            // adding default logic for users with no profile set.
             const openAIServiceResp = await processOpenAIMessageService(
               userMessageInstance,
               collected,
