@@ -33,7 +33,10 @@ export default {
     claudeMessages: Array<MessageParam>,
     selectedProfile: UserProfile,
   ) {
-    selectedProfile.anthropicRetentionData = claudeMessages;
+    selectedProfile.anthropicRetentionData = [
+      ...selectedProfile.anthropicRetentionData,
+      ...claudeMessages,
+    ];
     await userProfilesDao.updateUserProfile(selectedProfile);
   },
 
