@@ -15,7 +15,7 @@ const updateProfileCommand: Command = {
     );
     if (userProfiles.length === 0 || !selectedProfile) {
       return interaction.reply({
-        content: `You dont have any selected profile(s) to update`,
+        content: `You don't have any selected profile(s) to update`,
         ephemeral: true,
       });
     }
