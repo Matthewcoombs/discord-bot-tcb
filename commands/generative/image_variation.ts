@@ -19,7 +19,7 @@ import imagesService from '../../openAIClient/images/images.service';
 import { imageModelEnums } from '../../config';
 import { InteractionTimeOutError } from '../../shared/errors';
 
-const aiImageVariotionCommand: Command = {
+const aiImageVariationCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('image_variation')
     .setDescription('Upload a .png image to touch up')
@@ -31,10 +31,10 @@ const aiImageVariotionCommand: Command = {
           `Provide a square .png image file no larger then 4MB to create variations`,
         ),
     )
-    .addIntegerOption((intOtion) =>
-      intOtion
+    .addIntegerOption((intOption) =>
+      intOption
         .setName('image_count')
-        .setDescription('The amount of image varitions to generate')
+        .setDescription('The amount of image variations to generate')
         .addChoices(
           { name: '1', value: 1 },
           { name: '2', value: 2 },
@@ -137,4 +137,4 @@ const aiImageVariotionCommand: Command = {
   },
 };
 
-export = aiImageVariotionCommand;
+export = aiImageVariationCommand;

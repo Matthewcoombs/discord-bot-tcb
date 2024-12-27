@@ -19,7 +19,7 @@ const selectGenerativeProfileCommand: Command = {
     const userProfiles = await userProfilesDao.getUserProfiles(user.id);
     if (userProfiles.length === 0) {
       return interaction.reply({
-        content: `You dont have any profile(s).`,
+        content: `You don't have any profile(s).`,
         ephemeral: true,
       });
     }

@@ -13,13 +13,15 @@ import {
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
-import { OpenAi } from '../..';
+import { OpenAi, pg } from '../..';
 import { aiServiceEnums, config } from '../../config';
 import {
+  Assistant,
   AssistantCreateParams,
   AssistantUpdateParams,
 } from 'openai/resources/beta/assistants';
 import { cleanPGText } from '../../shared/utils';
+import { Thread } from 'openai/resources/beta/threads/threads';
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
 export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
@@ -103,37 +105,55 @@ export default {
       model: config.openAi.defaultChatCompletionModel,
     };
 
-    const [assistant, thread] = await Promise.all([
-      OpenAi.beta.assistants.create(assistantPayload),
-      OpenAi.beta.threads.create(),
-    ]);
+    // Handling transaction logic for creating a new profile.
+    let assistant: Assistant | undefined = undefined;
+    let thread: Thread | undefined = undefined;
+    // const pgTransactionClient = await new Pool().connect();
+    try {
+      await pg.query('BEGIN');
+      [assistant, thread] = await Promise.all([
+        OpenAi.beta.assistants.create(assistantPayload),
+        OpenAi.beta.threads.create(),
+      ]);
 
-    const { id: assistantId } = assistant;
-    const { id: threadId } = thread;
+      const { id: assistantId } = assistant;
+      const { id: threadId } = thread;
 
-    const pgSanitizedName = cleanPGText(name);
-    const pgSanitizedProfile = cleanPGText(profile);
-    const newUserProfile = await userProfilesDao.insertUserProfile({
-      name: pgSanitizedName,
-      profile: pgSanitizedProfile,
-      discordId: user.id,
-      textModel:
-        service === aiServiceEnums.OPENAI
-          ? config.openAi.defaultChatCompletionModel
-          : config.claude.defaultMessageModel,
-      assistantId,
-      threadId,
-      service,
-    });
+      const pgSanitizedName = cleanPGText(name);
+      const pgSanitizedProfile = cleanPGText(profile);
+      const newUserProfile = await userProfilesDao.insertUserProfile({
+        name: pgSanitizedName,
+        profile: pgSanitizedProfile,
+        discordId: user.id,
+        textModel:
+          service === aiServiceEnums.OPENAI
+            ? config.openAi.defaultChatCompletionModel
+            : config.claude.defaultMessageModel,
+        assistantId,
+        threadId,
+        service,
+      });
 
-    const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
-    // If no profile is currently selected, the most recently created profile will be selected.
-    if (!selectedProfile) {
-      await userProfilesDao.updateProfileSelection(newUserProfile);
+      const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
+      // If no profile is currently selected, the most recently created profile will be selected.
+      if (!selectedProfile) {
+        await userProfilesDao.updateProfileSelection(newUserProfile);
+      }
+      await pg.query('COMMIT');
+      return modalInteraction.reply({
+        content: `Your new profile **${name}** was added successfully!`,
+        ephemeral: true,
+      });
+    } catch (err) {
+      console.error(err);
+      await Promise.all([
+        assistant?.id
+          ? OpenAi.beta.assistants.del(assistant.id)
+          : Promise.resolve(),
+        thread?.id ? OpenAi.beta.threads.del(thread.id) : Promise.resolve(),
+      ]);
+      await pg.query('ROLLBACK');
     }
-    return modalInteraction.reply({
-      content: `Your new profile **${name}** was added successfully!`,
-    });
   },
 
   async handleUpdateModalInput(modalInteraction: ModalSubmitInteraction) {
@@ -154,29 +174,46 @@ export default {
       });
     }
 
-    const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
-    selectedProfile.name = cleanPGText(updatedName);
-    selectedProfile.profile = cleanPGText(updatedProfile);
-    selectedProfile.service = service;
-    selectedProfile.textModel =
-      service === aiServiceEnums.OPENAI
-        ? config.openAi.defaultChatCompletionModel
-        : config.claude.defaultMessageModel;
+    // Handling transaction logic for updating a profile.
+    const originalSelectedProfile = await userProfilesDao.getSelectedProfile(
+      user.id,
+    );
+    try {
+      await pg.query('BEGIN');
+      const selectedProfileUpdateCopy: UserProfile = JSON.parse(
+        JSON.stringify(originalSelectedProfile),
+      );
+      selectedProfileUpdateCopy.name = cleanPGText(updatedName);
+      selectedProfileUpdateCopy.profile = cleanPGText(updatedProfile);
+      selectedProfileUpdateCopy.service = service;
+      selectedProfileUpdateCopy.textModel =
+        service === aiServiceEnums.OPENAI
+          ? config.openAi.defaultChatCompletionModel
+          : config.claude.defaultMessageModel;
 
-    const assistantUpdateParams: AssistantUpdateParams = {
-      name: updatedName,
-      instructions: updatedProfile,
-    };
-    await Promise.all([
-      await OpenAi.beta.assistants.update(
-        selectedProfile.assistantId,
-        assistantUpdateParams,
-      ),
-      await userProfilesDao.updateUserProfile(selectedProfile),
-    ]);
-    return modalInteraction.reply({
-      content: `Profile: **${selectedProfile.name}** has been updated.`,
-      ephemeral: true,
-    });
+      const assistantUpdateParams: AssistantUpdateParams = {
+        name: updatedName,
+        instructions: updatedProfile,
+      };
+      await Promise.all([
+        await OpenAi.beta.assistants.update(
+          selectedProfileUpdateCopy.assistantId,
+          assistantUpdateParams,
+        ),
+        await userProfilesDao.updateUserProfile(selectedProfileUpdateCopy),
+      ]);
+      await pg.query('COMMIT');
+      return modalInteraction.reply({
+        content: `Profile: **${selectedProfileUpdateCopy.name}** has been updated.`,
+        ephemeral: true,
+      });
+    } catch (err) {
+      console.error(err);
+      await pg.query('ROLLBACK');
+      await OpenAi.beta.assistants.update(originalSelectedProfile.assistantId, {
+        name: originalSelectedProfile.name,
+        instructions: originalSelectedProfile.profile,
+      });
+    }
   },
 };
