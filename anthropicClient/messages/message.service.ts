@@ -34,7 +34,7 @@ export default {
     selectedProfile: UserProfile,
   ) {
     selectedProfile.anthropicRetentionData = [
-      ...selectedProfile.anthropicRetentionData,
+      ...(selectedProfile.anthropicRetentionData || []),
       ...claudeMessages,
     ];
     await userProfilesDao.updateUserProfile(selectedProfile);
