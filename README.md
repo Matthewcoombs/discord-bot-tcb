@@ -9,20 +9,21 @@ You are not required to have all configured services for the bot to run.
 For information on bot configuration with discord see: https://discord.com/developers/docs/intro
 For information on discordjs see: https://discordjs.guide/
 
-## Pre Requisite
+## 📋 Prerequisites
 
-- DiscordJS Developer Account (https://discord.com/developers/docs/getting-started)
-- PostGres Data Base
-- https://www.postgresql.org/docs/current/tutorial-install.html
-- OpenAI Developer Account (https://platform.openai.com/docs/introduction)
+- [DiscordJS Developer Account](https://discord.com/developers/docs/getting-started)
+- [PostGres Data Base](https://www.postgresql.org/docs/current/tutorial-install.html)
+- [OpenAI Developer Account](https://platform.openai.com/docs/introduction)
+- [Anthropic Developer Account](https://docs.anthropic.com/en/docs/intro-to-claude)
 
-## Running Locally or Development
+## 🛠️ Local Development Setup
 
 1. Generate a **_.env_** file and include the following variables:
 
    - **DISCORD_TOKEN** - The token used by the discord bot to perform actions
    - **CLIENT_ID** - The ID of the application your bot is tied to
-   - **OPENAI_API_KEY** - Your OpenAI Developer API Key
+   - **OPENAI_API_KEY** - Your OpenAI API key
+   - **CLAUDE_API_KEY** - Your Anthropic API key
    - **POSTGRES_USERNAME**
    - **POSTGRES_PASSWORD**
    - **POSTGRES_DATABASE**
@@ -32,7 +33,7 @@ For information on discordjs see: https://discordjs.guide/
    1. `pnpm build`
    2. `pnpm dev`
 
-## Running in Production
+## 🌐 Production Deployment
 
 This project uses github actions for its CI/CD pipeline. You are free to update
 this and use whatever CI/CD service you see fit.
@@ -42,8 +43,10 @@ are set run `pnpm build-prod`.
 
 Starting the bot in production will be at the users discretion
 
-## Deploying Commands
+## 🔧 Command Management
 
 When you are adding new commands to the bot you can run the following commands:
 `pnpm delete-commands` - Clear all existing commands
 `pnpm update-commands` - Create/Update Commands
+
+**Note:** Modify deployment process as per your infrastructure requirements.
