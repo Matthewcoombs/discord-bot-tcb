@@ -3,6 +3,7 @@ import { pg } from '../..';
 import { aiServiceEnums, textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
 import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
+import { cleanPGText } from '../../shared/utils';
 
 export interface UserProfile {
   id: string | number;
@@ -20,6 +21,8 @@ export interface UserProfile {
   retention: boolean;
   openAiRetentionData: ChatCompletionMessage[];
   anthropicRetentionData: Array<MessageParam>;
+  optimizedOpenAiRetentionData: string;
+  optimizedAnthropicRetentionData: string;
   retentionSize: string | number;
 }
 
@@ -56,6 +59,8 @@ const PROFILES_BASE_SELECTORS = `
   retention,
   openai_retention_data AS "openAiRetentionData",
   anthropic_retention_data AS "anthropicRetentionData",
+  optimized_openai_retention_data AS "optimizedOpenAiRetentionData",
+  optimized_anthropic_retention_data AS "optimizedAnthropicRetentionData",
   retention_size AS "retentionSize"
 `;
 const PROFILES_BASE_QUERY = `
@@ -110,7 +115,7 @@ export default {
                 user_profiles
                 (discord_id, name, profile, service, assistant_id, thread_id, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${name}', '${profile}', '${service}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
+                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 
@@ -139,6 +144,8 @@ export default {
       openAiRetentionData,
       anthropicRetentionData,
       retentionSize,
+      optimizedOpenAiRetentionData,
+      optimizedAnthropicRetentionData,
     } = selectedProfile;
 
     let retentionUpdateColumn: string = '';
@@ -169,8 +176,8 @@ export default {
             UPDATE
                 user_profiles
             SET
-                name = '${name}',
-                profile = '${profile}',
+                name = '${cleanPGText(name)}',
+                profile = '${cleanPGText(profile)}',
                 service = '${service}',
                 selected = ${selected},
                 text_model = '${textModel}',
@@ -178,6 +185,8 @@ export default {
                 retention = ${retention},
                 ${retentionUpdateColumn} = $1,
                 retention_size = ${retentionSize},
+                optimized_openai_retention_data = '${cleanPGText(optimizedOpenAiRetentionData || '')}',
+                optimized_anthropic_retention_data = '${cleanPGText(optimizedAnthropicRetentionData || '')}',
                 updated_at = NOW()
             WHERE
                 id = ${selectedProfile.id}
@@ -218,6 +227,8 @@ export default {
             SET
                 openai_retention_data = '{}',
                 anthropic_retention_data = '{}',
+                optimized_openai_retention_data = '',
+                optimized_anthropic_retention_data = '',
                 updated_at = NOW()
             WHERE
                 id = ${id}

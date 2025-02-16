@@ -124,16 +124,17 @@ export default {
   },
 
   generateRetentionSizeProfileSetting(retentionSizeSetting?: number) {
-    const retentionSize = retentionSizeSetting
-      ? retentionSizeSetting
-      : DEFAULT_RETENTION_SIZE;
+    const retentionSize =
+      typeof retentionSizeSetting === 'number'
+        ? retentionSizeSetting
+        : DEFAULT_RETENTION_SIZE;
     const retentionSizeButtons: ButtonBuilder[] = [];
     for (let i = 0; i < RETENTION_SIZE_OPTIONS.length; i++) {
       const optVal = RETENTION_SIZE_OPTIONS[i];
       retentionSizeButtons.push(
         new ButtonBuilder()
           .setCustomId(optVal.toString())
-          .setLabel(optVal.toString())
+          .setLabel(optVal === 0 ? 'optimized' : optVal.toString())
           .setStyle(
             optVal === retentionSize
               ? ButtonStyle.Success
