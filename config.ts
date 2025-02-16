@@ -113,13 +113,15 @@ export const config = {
       function: {
         name: openaiToolsEnum.END_CHAT,
         strict: true,
-        description: 'End the chat whenever the user ends or leaves the chat',
+        description:
+          'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
         parameters: {
           type: 'object',
           properties: {
             finalResponse: {
               type: 'string',
-              description: 'the final response to the user',
+              description:
+                'the final response to the user. This will be sent to the user',
             },
           },
           required: ['finalResponse'],
@@ -131,13 +133,15 @@ export const config = {
   claudeFunctionTools: [
     {
       name: anthropicToolsEnum.END_CHAT,
-      description: 'End the chat whenever the user ends or leaves the chat',
+      description:
+        'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
       input_schema: {
         type: 'object',
         properties: {
           finalResponse: {
             type: 'string',
-            description: 'the final response to the user',
+            description:
+              'the final response to the user. This will be sent to the user',
           },
         },
         required: ['finalResponse'],
