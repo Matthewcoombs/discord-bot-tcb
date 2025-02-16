@@ -56,17 +56,35 @@ export enum chatCompletionRoles {
   TOOL = 'tool',
 }
 
+export const CONDENSED_CONVO_PROMPT: ChatCompletionMessage = {
+  role: chatCompletionRoles.USER,
+  content: [
+    {
+      type: chatCompletionTypes.TEXT,
+      text: `Condense this conversation into a short summary. Include only the most relevant information and remove any unnecessary details. The summary should be concise and to the point.`,
+    },
+  ],
+};
+
 function generateSystemContentMessage(
   chatCompletionMessages: ChatCompletionMessage[],
-  profile?: string,
+  selectedProfile?: UserProfile,
 ): ChatCompletionMessage[] {
+  let profileText;
+  if (selectedProfile) {
+    profileText =
+      selectedProfile.retention && selectedProfile.retentionSize === 0
+        ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedOpenAiRetentionData}`
+        : selectedProfile.profile;
+  }
+
   const systemMessage = {
     role: chatCompletionRoles.SYSTEM,
     content: [
       {
         type: chatCompletionTypes.TEXT,
-        text: profile
-          ? `${profile}\n${GENERATIVE_RESPONSE_CONSTRAINTS}`
+        text: profileText
+          ? `${profileText}\n${GENERATIVE_RESPONSE_CONSTRAINTS}`
           : GENERATIVE_RESPONSE_CONSTRAINTS,
       },
     ],
@@ -161,10 +179,7 @@ export default {
     }
 
     if (chatCompletionMessages[0].role !== chatCompletionRoles.SYSTEM) {
-      generateSystemContentMessage(
-        chatCompletionMessages,
-        selectedProfile?.profile,
-      );
+      generateSystemContentMessage(chatCompletionMessages, selectedProfile);
     }
     return chatCompletionMessages;
   },

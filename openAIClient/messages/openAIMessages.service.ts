@@ -10,6 +10,7 @@ import { ChatInstance } from '../../shared/discord-js-types';
 import {
   ChatCompletionMessage,
   chatCompletionRoles,
+  CONDENSED_CONVO_PROMPT,
 } from '../chatCompletion/chatCompletion.service';
 import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
@@ -48,8 +49,28 @@ export default {
     chatCompMsgs: ChatCompletionMessage[],
     selectedProfile: UserProfile,
   ) {
-    const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
-    selectedProfile.openAiRetentionData = cleanedMsgs;
+    /**
+     * If retention size is set to 0, we do not save messages, but instead we update
+     * the profile with a condensed version of the conversation history.
+     **/
+    if (selectedProfile.retentionSize === 0) {
+      try {
+        chatCompMsgs.push(CONDENSED_CONVO_PROMPT);
+        const chatCompletion = await OpenAi.chat.completions.create({
+          model: selectedProfile.textModel,
+          messages: chatCompMsgs as any,
+          response_format: { type: 'text' },
+        });
+        const condensedConversation = chatCompletion.choices[0].message.content;
+        selectedProfile.optimizedOpenAiRetentionData =
+          condensedConversation as string;
+      } catch (_) {
+        selectedProfile.optimizedOpenAiRetentionData = '';
+      }
+    } else {
+      const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
+      selectedProfile.openAiRetentionData = cleanedMsgs;
+    }
     await userProfilesDao.updateUserProfile(selectedProfile);
   },
 

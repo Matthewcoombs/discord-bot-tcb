@@ -20,7 +20,6 @@ import {
   AssistantCreateParams,
   AssistantUpdateParams,
 } from 'openai/resources/beta/assistants';
-import { cleanPGText } from '../../shared/utils';
 import { Thread } from 'openai/resources/beta/threads/threads';
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
@@ -118,12 +117,9 @@ export default {
 
       const { id: assistantId } = assistant;
       const { id: threadId } = thread;
-
-      const pgSanitizedName = cleanPGText(name);
-      const pgSanitizedProfile = cleanPGText(profile);
       const newUserProfile = await userProfilesDao.insertUserProfile({
-        name: pgSanitizedName,
-        profile: pgSanitizedProfile,
+        name,
+        profile,
         discordId: user.id,
         textModel:
           service === aiServiceEnums.OPENAI
@@ -183,8 +179,8 @@ export default {
       const selectedProfileUpdateCopy: UserProfile = JSON.parse(
         JSON.stringify(originalSelectedProfile),
       );
-      selectedProfileUpdateCopy.name = cleanPGText(updatedName);
-      selectedProfileUpdateCopy.profile = cleanPGText(updatedProfile);
+      selectedProfileUpdateCopy.name = updatedName;
+      selectedProfileUpdateCopy.profile = updatedProfile;
       selectedProfileUpdateCopy.service = service;
       selectedProfileUpdateCopy.textModel =
         service === aiServiceEnums.OPENAI
