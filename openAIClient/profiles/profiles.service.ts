@@ -196,27 +196,27 @@ export default {
       switch (i) {
         case 0: {
           tempLabel = 'precise';
-          tempEmoji = 'dart';
+          tempEmoji = '🎯';
           break;
         }
         case 1: {
           tempLabel = 'structured';
-          tempEmoji = 'clipboard';
+          tempEmoji = '📋';
           break;
         }
         case 2: {
           tempLabel = 'balanced';
-          tempEmoji = 'scales';
+          tempEmoji = '⚖️';
           break;
         }
         case 3: {
           tempLabel = 'explorative';
-          tempEmoji = 'mag';
+          tempEmoji = '🔍';
           break;
         }
         case 4: {
           tempLabel = 'creative';
-          tempEmoji = 'art';
+          tempEmoji ='🎨';
           break;
         }
       }

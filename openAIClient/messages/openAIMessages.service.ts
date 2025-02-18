@@ -60,6 +60,7 @@ export default {
           model: selectedProfile.textModel,
           messages: chatCompMsgs as any,
           response_format: { type: 'text' },
+          temperature: selectedProfile.temperature,
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
         selectedProfile.optimizedOpenAiRetentionData =
@@ -85,6 +86,7 @@ export default {
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
       tools: config.openAIfunctionTools as any,
+      temperature : userMessageInstance?.selectedProfile?.temperature,
     });
 
     const content = chatCompletion.choices[0].message.content;
