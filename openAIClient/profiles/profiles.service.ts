@@ -1,4 +1,8 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} from 'discord.js';
 import {
   aiServiceEnums,
   CLAUDE_TEXT_MODELS,
@@ -7,9 +11,11 @@ import {
   textBasedModelEnums,
 } from '../../config';
 import {
+  ANTHROPIC_TEMPERATURE_RANGE,
   CHAT_TIMEOUT_OPTIONS,
   DEFAULT_CHAT_TIMEOUT,
   DEFAULT_RETENTION_SIZE,
+  OPENAI_TEMPERATURE_RANGE,
   RETENTION_SIZE_OPTIONS,
 } from '../../shared/constants';
 import userProfilesDao, {
@@ -23,6 +29,7 @@ export const SELECT_CHAT_TIMEOUT_ID = 'timeout';
 export const SELECT_RETENTION_ID = 'retention';
 export const SELECT_RETENTION_SIZE_ID = 'retentionSize';
 export const CLEAR_RETENTION_DATA = 'clearRetentionData';
+export const SELECT_PROFILE_TEMPERATURE = 'temperature';
 
 export default {
   generateAIServiceSelectionDisplay(selectedService?: string) {
@@ -171,6 +178,75 @@ export default {
     };
   },
 
+  generateProfileTemperatureSetting(
+    service: aiServiceEnums,
+    temperatureSetting?: number,
+  ) {
+    const profileTemperatureButtons: ButtonBuilder[] = [];
+    // const temperatureOptions = [];
+    const temperatureRange =
+      service === aiServiceEnums.OPENAI
+        ? OPENAI_TEMPERATURE_RANGE
+        : ANTHROPIC_TEMPERATURE_RANGE;
+
+    for (let i = 0; i <= 4; i++) {
+      const t = i / 4;
+      const interpolatedValue =
+        temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
+      const tempOption = Number(interpolatedValue.toFixed(2));
+
+      let tempLabel: string = '';
+      let tempEmoji: string = '';
+      switch (i) {
+        case 0: {
+          tempLabel = 'precise';
+          tempEmoji = 'dart';
+          break;
+        }
+        case 1: {
+          tempLabel = 'structured';
+          tempEmoji = 'clipboard';
+          break;
+        }
+        case 2: {
+          tempLabel = 'balanced';
+          tempEmoji = 'scales';
+          break;
+        }
+        case 3: {
+          tempLabel = 'explorative';
+          tempEmoji = 'mag';
+          break;
+        }
+        case 4: {
+          tempLabel = 'creative';
+          tempEmoji = 'art';
+          break;
+        }
+      }
+
+      profileTemperatureButtons.push(
+        new ButtonBuilder()
+          .setCustomId(tempOption.toString())
+          .setLabel(tempLabel)
+          .setEmoji(tempEmoji)
+          .setStyle(
+            temperatureSetting === tempOption
+              ? ButtonStyle.Success
+              : ButtonStyle.Primary,
+          ),
+      );
+    }
+
+    console.log('testing temperature range:', temperatureRange);
+
+    const row = new ActionRowBuilder().addComponents(profileTemperatureButtons);
+    return {
+      displayMsg: `Profile Temperature :thermometer:`,
+      row,
+    };
+  },
+
   processSettingsDisplay(setting: string, selectedProfile: UserProfile) {
     switch (setting) {
       case SELECT_AI_SERVICE_ID:
@@ -192,6 +268,11 @@ export default {
         );
       case CLEAR_RETENTION_DATA:
         return this.generateClearRetentionDataSetting();
+      case SELECT_PROFILE_TEMPERATURE:
+        return this.generateProfileTemperatureSetting(
+          selectedProfile.service,
+          selectedProfile.temperature,
+        );
       default:
         break;
     }
@@ -248,6 +329,11 @@ export default {
         updateValue === 'true'
           ? await userProfilesDao.clearProfileRetentionData(selectedProfile)
           : null;
+        break;
+      }
+      case SELECT_PROFILE_TEMPERATURE: {
+        selectedProfile.temperature = Number(updateValue);
+        await userProfilesDao.updateUserProfile(selectedProfile);
         break;
       }
       default:

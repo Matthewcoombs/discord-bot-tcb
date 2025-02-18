@@ -24,6 +24,7 @@ export interface UserProfile {
   optimizedOpenAiRetentionData: string;
   optimizedAnthropicRetentionData: string;
   retentionSize: string | number;
+  temperature: number;
 }
 
 export interface CreateProfile {
@@ -66,8 +67,8 @@ const PROFILES_BASE_SELECTORS = `
 const PROFILES_BASE_QUERY = `
   SELECT
     ${PROFILES_BASE_SELECTORS}
-    FROM
-        user_profiles
+  FROM
+    user_profiles
   `;
 
 export default {
