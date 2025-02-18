@@ -53,7 +53,7 @@ export default {
           messages: claudeMessages,
           max_tokens: 1024,
           system: selectedProfile.profile,
-          temperature: selectedProfile.temperature,
+          temperature: Number(selectedProfile.temperature),
         });
 
         const condensedConversation =
@@ -100,7 +100,7 @@ export default {
       tools: config.claudeFunctionTools as any,
       max_tokens: 1024,
       system: systemMessage,
-      temperature: selectedProfile?.temperature,
+      temperature: Number(selectedProfile?.temperature),
     });
 
     let response = '';
