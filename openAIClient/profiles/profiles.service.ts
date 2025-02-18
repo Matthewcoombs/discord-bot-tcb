@@ -176,7 +176,7 @@ export default {
 
   generateProfileTemperatureSetting(
     service: aiServiceEnums,
-    temperatureSetting?: number,
+    temperatureSetting?: string | number,
   ) {
     const profileTemperatureButtons: ButtonBuilder[] = [];
     // const temperatureOptions = [];
@@ -227,14 +227,12 @@ export default {
           .setLabel(tempLabel)
           .setEmoji(tempEmoji)
           .setStyle(
-            temperatureSetting === tempOption
+            Number(temperatureSetting) === tempOption
               ? ButtonStyle.Success
               : ButtonStyle.Primary,
           ),
       );
     }
-
-    console.log('testing temperature range:', temperatureRange);
 
     const row = new ActionRowBuilder().addComponents(profileTemperatureButtons);
     return {
