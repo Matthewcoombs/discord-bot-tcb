@@ -86,7 +86,7 @@ export default {
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
       tools: config.openAIfunctionTools as any,
-      temperature : userMessageInstance?.selectedProfile?.temperature,
+      temperature: userMessageInstance?.selectedProfile?.temperature,
     });
 
     const content = chatCompletion.choices[0].message.content;

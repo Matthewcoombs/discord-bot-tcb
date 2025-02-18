@@ -216,7 +216,7 @@ export default {
         }
         case 4: {
           tempLabel = 'creative';
-          tempEmoji ='🎨';
+          tempEmoji = '🎨';
           break;
         }
       }
