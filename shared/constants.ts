@@ -60,3 +60,6 @@ export const RETENTION_SIZE_OPTIONS = [
   25,
   OPTIMIZED_RETENTION_SIZE,
 ];
+// OpenAI temperature ranges - [min, max]
+export const OPENAI_TEMPERATURE_RANGE = [0, 2];
+export const ANTHROPIC_TEMPERATURE_RANGE = [0, 1];

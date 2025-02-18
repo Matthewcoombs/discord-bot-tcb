@@ -53,6 +53,7 @@ export default {
           messages: claudeMessages,
           max_tokens: 1024,
           system: selectedProfile.profile,
+          temperature: selectedProfile.temperature,
         });
 
         const condensedConversation =
@@ -92,13 +93,14 @@ export default {
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedAnthropicRetentionData}`
         : selectedProfile?.profile || '';
     const message = await Anthropic.messages.create({
-      model: userMessageInstance?.selectedProfile
-        ? userMessageInstance.selectedProfile.textModel
+      model: selectedProfile
+        ? selectedProfile.textModel
         : config.claude.defaultMessageModel,
       messages: claudeMessages,
       tools: config.claudeFunctionTools as any,
       max_tokens: 1024,
       system: systemMessage,
+      temperature: selectedProfile?.temperature,
     });
 
     let response = '';

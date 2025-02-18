@@ -24,6 +24,7 @@ export interface UserProfile {
   optimizedOpenAiRetentionData: string;
   optimizedAnthropicRetentionData: string;
   retentionSize: string | number;
+  temperature: number;
 }
 
 export interface CreateProfile {
@@ -61,13 +62,14 @@ const PROFILES_BASE_SELECTORS = `
   anthropic_retention_data AS "anthropicRetentionData",
   optimized_openai_retention_data AS "optimizedOpenAiRetentionData",
   optimized_anthropic_retention_data AS "optimizedAnthropicRetentionData",
-  retention_size AS "retentionSize"
+  retention_size AS "retentionSize",
+  temperature
 `;
 const PROFILES_BASE_QUERY = `
   SELECT
     ${PROFILES_BASE_SELECTORS}
-    FROM
-        user_profiles
+  FROM
+    user_profiles
   `;
 
 export default {
@@ -146,6 +148,7 @@ export default {
       retentionSize,
       optimizedOpenAiRetentionData,
       optimizedAnthropicRetentionData,
+      temperature,
     } = selectedProfile;
 
     let retentionUpdateColumn: string = '';
@@ -183,6 +186,7 @@ export default {
                 text_model = '${textModel}',
                 timeout = ${timeout},
                 retention = ${retention},
+                temperature = ${temperature},
                 ${retentionUpdateColumn} = $1,
                 retention_size = ${retentionSize},
                 optimized_openai_retention_data = '${cleanPGText(optimizedOpenAiRetentionData || '')}',
