@@ -27,6 +27,30 @@ export const SELECT_RETENTION_SIZE_ID = 'retentionSize';
 export const CLEAR_RETENTION_DATA = 'clearRetentionData';
 export const SELECT_PROFILE_TEMPERATURE = 'temperature';
 
+function convertAIServiceTemperature(selectedProfile: UserProfile) {
+  if (!selectedProfile.temperature) {
+    return;
+  }
+  const selectedService = selectedProfile.service;
+  const temperatureRange =
+    selectedService === aiServiceEnums.OPENAI
+      ? OPENAI_TEMPERATURE_RANGE
+      : ANTHROPIC_TEMPERATURE_RANGE;
+
+  const temperatureOptions: number[] = [];
+  for (let i = 0; i <= 4; i++) {
+    const t = i / 4;
+    const interpolatedValue =
+      temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
+    temperatureOptions.push(Number(interpolatedValue.toFixed(2)));
+  }
+
+  selectedProfile.temperature =
+    selectedService === aiServiceEnums.OPENAI
+      ? selectedProfile.temperature * 2
+      : selectedProfile.temperature / 2;
+}
+
 export default {
   generateAIServiceSelectionDisplay(selectedService?: string) {
     const serviceOptions = [aiServiceEnums.ANTHROPIC, aiServiceEnums.OPENAI];
@@ -176,7 +200,7 @@ export default {
 
   generateProfileTemperatureSetting(
     service: aiServiceEnums,
-    temperatureSetting?: string | number,
+    temperatureSetting?: string | number | undefined,
   ) {
     const profileTemperatureButtons: ButtonBuilder[] = [];
     // const temperatureOptions = [];
@@ -227,7 +251,7 @@ export default {
           .setLabel(tempLabel)
           .setEmoji(tempEmoji)
           .setStyle(
-            Number(temperatureSetting) === tempOption
+            temperatureSetting && Number(temperatureSetting) === tempOption
               ? ButtonStyle.Success
               : ButtonStyle.Primary,
           ),
@@ -288,6 +312,8 @@ export default {
             selectedProfile.service === aiServiceEnums.OPENAI
               ? config.openAi.defaultChatCompletionModel
               : config.claude.defaultMessageModel;
+          selectedProfile;
+          convertAIServiceTemperature(selectedProfile);
           await userProfilesDao.updateUserProfile(selectedProfile);
         }
         break;
