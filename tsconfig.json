@@ -10,5 +10,8 @@
     "outDir": "dist",
     "rootDir": ".",
     "skipLibCheck": true
-  }
+  },
+  "exclude": [
+    "deprecated",
+  ]
 }
