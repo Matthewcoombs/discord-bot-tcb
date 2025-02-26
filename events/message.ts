@@ -285,18 +285,6 @@ const directMessageEvent: Command = {
             endChat = anthropicServiceResp.endChat;
             break;
           }
-          case aiServiceEnums.OPENAI: {
-            const openAIServiceResp = await processOpenAIMessageService(
-              userMessageInstance,
-              collected,
-              user,
-              finalResponse,
-              endChat,
-            );
-            finalResponse = openAIServiceResp.finalResponse;
-            endChat = openAIServiceResp.endChat;
-            break;
-          }
           default: {
             // adding default logic for users with no profile set.
             const openAIServiceResp = await processOpenAIMessageService(
