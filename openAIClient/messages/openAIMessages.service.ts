@@ -22,7 +22,7 @@ export default {
   cleanChatCompletionMsgs(chatCompMsgs: ChatCompletionMessage[]) {
     const cleanedMsgs = chatCompMsgs.reduce((acc, compMsg) => {
       if (
-        compMsg.role !== chatCompletionRoles.SYSTEM &&
+        compMsg.role !== chatCompletionRoles.DEVELOPER &&
         compMsg.role !== chatCompletionRoles.TOOL &&
         compMsg.content
       ) {
