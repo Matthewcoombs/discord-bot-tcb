@@ -50,7 +50,7 @@ enum chatCompletionTypes {
 }
 
 export enum chatCompletionRoles {
-  SYSTEM = 'system',
+  DEVELOPER = 'developer',
   USER = 'user',
   ASSISTANT = 'assistant',
   TOOL = 'tool',
@@ -66,7 +66,7 @@ export const CONDENSED_CONVO_PROMPT: ChatCompletionMessage = {
   ],
 };
 
-function generateSystemContentMessage(
+function generateDeveloperContentMessage(
   chatCompletionMessages: ChatCompletionMessage[],
   selectedProfile?: UserProfile,
 ): ChatCompletionMessage[] {
@@ -78,8 +78,8 @@ function generateSystemContentMessage(
         : selectedProfile.profile;
   }
 
-  const systemMessage = {
-    role: chatCompletionRoles.SYSTEM,
+  const developerMessage = {
+    role: chatCompletionRoles.DEVELOPER,
     content: [
       {
         type: chatCompletionTypes.TEXT,
@@ -90,7 +90,7 @@ function generateSystemContentMessage(
     ],
   };
 
-  chatCompletionMessages.unshift(systemMessage);
+  chatCompletionMessages.unshift(developerMessage);
   return chatCompletionMessages;
 }
 
@@ -178,8 +178,8 @@ export default {
       ];
     }
 
-    if (chatCompletionMessages[0].role !== chatCompletionRoles.SYSTEM) {
-      generateSystemContentMessage(chatCompletionMessages, selectedProfile);
+    if (chatCompletionMessages[0].role !== chatCompletionRoles.DEVELOPER) {
+      generateDeveloperContentMessage(chatCompletionMessages, selectedProfile);
     }
     return chatCompletionMessages;
   },
