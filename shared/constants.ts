@@ -1,3 +1,5 @@
+import { aiServiceEnums } from '../config';
+
 export function generateWelcomeCopy(username: string) {
   return `Hello ${username}, welcome to the server!\n
 I'll be your helpful assistant while you're here
@@ -33,7 +35,7 @@ export function generateAssistantRunKey(profileName: string) {
 
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
 extremely good at...`;
-export const AI_SERVICE_PLACEHOLDER_TEXT = `The AI service your profile will use. Please enter "openai", or "anthropic"`;
+export const AI_SERVICE_PLACEHOLDER_TEXT = `The AI service your profile will use. Valid values [${Object.values(aiServiceEnums).join(', ')}]`;
 export const GENERATIVE_RESPONSE_CONSTRAINTS = `\nNOTE keep your responses as short, clear, and concise as possible. Your messages should not exceed 2000 characters unless absolutely necessary.`;
 export const GENERAL_CHANNEL = 'general';
 export const DEFAULT_CHAT_TIMEOUT = 300000;

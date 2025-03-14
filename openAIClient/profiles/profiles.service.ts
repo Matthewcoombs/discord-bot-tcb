@@ -203,7 +203,6 @@ export default {
     temperatureSetting?: string | number | undefined,
   ) {
     const profileTemperatureButtons: ButtonBuilder[] = [];
-    // const temperatureOptions = [];
     const temperatureRange =
       service === aiServiceEnums.OPENAI
         ? OPENAI_TEMPERATURE_RANGE
