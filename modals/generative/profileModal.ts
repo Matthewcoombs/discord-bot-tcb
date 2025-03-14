@@ -91,7 +91,7 @@ export default {
 
     if (!Object.values(aiServiceEnums).includes(service)) {
       return modalInteraction.reply({
-        content: `You have entered an incorrect **service** value. Please enter either "openai", or "anthropic"`,
+        content: `You have entered an incorrect **service** value. Please enter one of these valid values: [${Object.values(aiServiceEnums).join(', ')}]`,
         ephemeral: true,
       });
     }
