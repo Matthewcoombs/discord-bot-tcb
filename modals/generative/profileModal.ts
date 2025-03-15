@@ -27,7 +27,6 @@ export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
 export const PROFILE_NAME_ID = 'profileName';
 export const SERVICE_ID = 'service';
 export const PROFILE_ID = 'profile';
-export const IS_DEFAULT_ID = 'default';
 
 export default {
   generateProfileModal(profileData?: UserProfile) {
@@ -50,17 +49,9 @@ export default {
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    const serviceInput = new TextInputBuilder()
-      .setCustomId(SERVICE_ID)
-      .setLabel('AI Service')
-      .setPlaceholder(AI_SERVICE_PLACEHOLDER_TEXT)
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true);
-
     if (profileData) {
       profileNameInput.setValue(profileData.name);
       profileInput.setValue(profileData.profile);
-      serviceInput.setValue(profileData.service);
     }
 
     const firstActionRow =
@@ -71,12 +62,24 @@ export default {
       new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
         profileInput,
       );
-    const thirdActionRow =
-      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        serviceInput,
-      );
+    modal.addComponents(firstActionRow, secondActionRow);
 
-    modal.addComponents(firstActionRow, secondActionRow, thirdActionRow);
+    // Only add the service input if the profileData is not provided.
+    if (!profileData) {
+      const serviceInput = new TextInputBuilder()
+        .setCustomId(SERVICE_ID)
+        .setLabel('AI Service')
+        .setPlaceholder(AI_SERVICE_PLACEHOLDER_TEXT)
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true);
+
+      const thirdActionRow =
+        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+          serviceInput,
+        );
+      modal.addComponents(thirdActionRow);
+    }
+
     return modal;
   },
 
@@ -158,17 +161,6 @@ export default {
       modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
     const updatedProfile =
       modalInteraction.fields.getTextInputValue(PROFILE_ID);
-    const service = modalInteraction.fields
-      .getTextInputValue(SERVICE_ID)
-      .trim()
-      .toLowerCase() as aiServiceEnums;
-
-    if (!Object.values(aiServiceEnums).includes(service)) {
-      return modalInteraction.reply({
-        content: `You have entered an incorrect **service** value. Please enter either "openai", or "anthropic"`,
-        ephemeral: true,
-      });
-    }
 
     // Handling transaction logic for updating a profile.
     const originalSelectedProfile = await userProfilesDao.getSelectedProfile(
@@ -181,11 +173,6 @@ export default {
       );
       selectedProfileUpdateCopy.name = updatedName;
       selectedProfileUpdateCopy.profile = updatedProfile;
-      selectedProfileUpdateCopy.service = service;
-      selectedProfileUpdateCopy.textModel =
-        service === aiServiceEnums.OPENAI
-          ? config.openAi.defaultChatCompletionModel
-          : config.claude.defaultMessageModel;
 
       const assistantUpdateParams: AssistantUpdateParams = {
         name: updatedName,
