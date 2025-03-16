@@ -120,8 +120,8 @@ async function processOpenAIMessageService(
 
   const { content, toolCalls } =
     await openAIMessagesService.processGenerativeResponse(
-      userMessageInstance,
       chatCompletionMessages,
+      userMessageInstance?.selectedProfile,
     );
 
   // This logic handles instances of tool calls during the message instance
@@ -149,8 +149,8 @@ async function processAnthropicMessageService(
   const claudeMessages = messageService.formatClaudeMessages(collected);
   const claudeResponse = await messageService.processClaudeResponse(
     claudeMessages,
-    userMessageInstance,
     endChat,
+    userMessageInstance.selectedProfile,
   );
   return claudeResponse;
 }

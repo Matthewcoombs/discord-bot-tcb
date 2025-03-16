@@ -6,7 +6,6 @@ import {
   FinalResponse,
   imageModelEnums,
 } from '../../config';
-import { ChatInstance } from '../../shared/discord-js-types';
 import {
   ChatCompletionMessage,
   chatCompletionRoles,
@@ -76,17 +75,17 @@ export default {
   },
 
   async processGenerativeResponse(
-    userMessageInstance: ChatInstance,
     chatCompletionMessages: ChatCompletionMessage[],
+    selectedProfile?: UserProfile,
   ) {
     const chatCompletion = await OpenAi.chat.completions.create({
-      model: userMessageInstance?.selectedProfile
-        ? userMessageInstance.selectedProfile.textModel
+      model: selectedProfile
+        ? selectedProfile.textModel
         : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
       tools: config.openAIfunctionTools as any,
-      temperature: Number(userMessageInstance?.selectedProfile?.temperature),
+      temperature: Number(selectedProfile?.temperature),
     });
 
     const content = chatCompletion.choices[0].message.content;

@@ -202,6 +202,9 @@ export default {
     service: aiServiceEnums,
     temperatureSetting?: string | number | undefined,
   ) {
+    // Openai and Anthropic have the same default temperature value of 1, so if
+    // the temperature is not set, we default to 1
+    const temperature = temperatureSetting ? temperatureSetting : 1;
     const profileTemperatureButtons: ButtonBuilder[] = [];
     const temperatureRange =
       service === aiServiceEnums.OPENAI
@@ -250,7 +253,7 @@ export default {
           .setLabel(tempLabel)
           .setEmoji(tempEmoji)
           .setStyle(
-            temperatureSetting && Number(temperatureSetting) === tempOption
+            Number(temperature) === tempOption
               ? ButtonStyle.Success
               : ButtonStyle.Primary,
           ),
