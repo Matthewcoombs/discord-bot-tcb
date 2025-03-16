@@ -1,5 +1,4 @@
 import { Message } from 'discord.js';
-import { ChatInstance } from '../../shared/discord-js-types';
 import { Anthropic } from '../..';
 import { anthropicToolsEnum, config } from '../../config';
 import { MessageParam } from '@anthropic-ai/sdk/resources';
@@ -73,10 +72,9 @@ export default {
 
   async processClaudeResponse(
     claudeMessages: Array<MessageParam>,
-    userMessageInstance: ChatInstance,
     endChat: boolean,
+    selectedProfile?: UserProfile,
   ) {
-    const selectedProfile = userMessageInstance?.selectedProfile;
     if (
       selectedProfile?.retention &&
       selectedProfile.anthropicRetentionData &&
@@ -92,6 +90,7 @@ export default {
       selectedProfile?.retention && selectedProfile?.retentionSize === 0
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedAnthropicRetentionData}`
         : selectedProfile?.profile || '';
+
     const message = await Anthropic.messages.create({
       model: selectedProfile
         ? selectedProfile.textModel
