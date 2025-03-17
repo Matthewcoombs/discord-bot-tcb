@@ -94,9 +94,9 @@ export default {
     const message = await Anthropic.messages.create({
       model: selectedProfile
         ? selectedProfile.textModel
-        : config.claude.defaultMessageModel,
+        : config.anthropic.defaultMessageModel,
       messages: claudeMessages,
-      tools: config.claudeFunctionTools as any,
+      tools: config.anthropic.tools as any,
       max_tokens: 1024,
       system: systemMessage,
       temperature: Number(selectedProfile?.temperature),

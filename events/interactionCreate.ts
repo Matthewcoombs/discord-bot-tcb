@@ -13,7 +13,6 @@ import {
 import { config } from '../config';
 import usersDao from '../database/users/usersDao';
 import modalsService from '../modals/modals.service';
-import { MAX_USER_SINGLE_INSTANCE_COMMANDS } from '../shared/constants';
 
 const createInteractionEvent: Command = {
   name: Events.InteractionCreate,
@@ -53,7 +52,7 @@ const createInteractionEvent: Command = {
     // This logic is set to be applied to directMessage and non direct message channels.
     if (isSingleInstanceCommand) {
       // Checking to see if the maximum amount of single instance commands per user has been reached.
-      if (singleInstanceCommands.size === MAX_USER_SINGLE_INSTANCE_COMMANDS) {
+      if (singleInstanceCommands.size === config.singleInstanceCommandsLimit) {
         return interaction.reply({
           content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
           ephemeral: true,

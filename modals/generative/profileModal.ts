@@ -127,7 +127,7 @@ export default {
         textModel:
           service === aiServiceEnums.OPENAI
             ? config.openAi.defaultChatCompletionModel
-            : config.claude.defaultMessageModel,
+            : config.anthropic.defaultMessageModel,
         assistantId,
         threadId,
         service,

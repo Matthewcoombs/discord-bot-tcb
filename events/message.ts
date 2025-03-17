@@ -14,11 +14,6 @@ import {
   collectorEndReason,
   Command,
 } from '../shared/discord-js-types';
-import {
-  DEFAULT_CHAT_TIMEOUT,
-  MAX_MESSAGE_COLLECTORS,
-  MAX_USER_ATTACHMENTS,
-} from '../shared/constants';
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
@@ -79,7 +74,7 @@ function processAttachedFiles(message: Message<boolean>) {
     return errorRestrictions;
   }
 
-  if (message.attachments.size > MAX_USER_ATTACHMENTS) {
+  if (message.attachments.size > config.attachmentsLimit) {
     errorRestrictions.push({
       code: TOO_MANY_ATTACHMENTS_CODE,
       reason: `:warning: Sorry, you've exceeded the limit of attachments per message (4)`,
@@ -178,7 +173,7 @@ const directMessageEvent: Command = {
     }
 
     // if the maximum amount of chat instances has been reached for the server we return
-    if (chatInstanceCollector.size === MAX_MESSAGE_COLLECTORS) {
+    if (chatInstanceCollector.size === config.messageCollectorsLimit) {
       return sendResponse(isDirectMessage, message, {
         content: `The max amount of my chat instances has been reached.`,
       });
@@ -219,7 +214,7 @@ const directMessageEvent: Command = {
       const timeout =
         selectedProfile && selectedProfile.timeout
           ? Number(selectedProfile.timeout)
-          : DEFAULT_CHAT_TIMEOUT;
+          : config.defaults.chatTimeout;
       const collector = message.channel.createMessageCollector({
         filter: collectorFilter,
         idle: timeout,

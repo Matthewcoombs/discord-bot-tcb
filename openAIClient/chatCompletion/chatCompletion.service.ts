@@ -5,11 +5,11 @@ import {
   Message,
 } from 'discord.js';
 import { UserProfile } from '../../database/user_profiles/userProfilesDao';
-import { GENERATIVE_RESPONSE_CONSTRAINTS } from '../../shared/constants';
 import {
   openaiToolsEnum,
   IMAGE_PROCESSING_MODELS,
   textBasedModelEnums,
+  config,
 } from '../../config';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
@@ -84,8 +84,8 @@ function generateDeveloperContentMessage(
       {
         type: chatCompletionTypes.TEXT,
         text: profileText
-          ? `${profileText}\n${GENERATIVE_RESPONSE_CONSTRAINTS}`
-          : GENERATIVE_RESPONSE_CONSTRAINTS,
+          ? `${profileText}\n${config.generativeConstraints}`
+          : config.generativeConstraints,
       },
     ],
   };

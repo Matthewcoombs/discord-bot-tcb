@@ -6,14 +6,6 @@ import {
   OPEN_AI_TEXT_MODELS,
   textBasedModelEnums,
 } from '../../config';
-import {
-  ANTHROPIC_TEMPERATURE_RANGE,
-  CHAT_TIMEOUT_OPTIONS,
-  DEFAULT_CHAT_TIMEOUT,
-  DEFAULT_RETENTION_SIZE,
-  OPENAI_TEMPERATURE_RANGE,
-  RETENTION_SIZE_OPTIONS,
-} from '../../shared/constants';
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
@@ -34,8 +26,8 @@ function convertAIServiceTemperature(selectedProfile: UserProfile) {
   const selectedService = selectedProfile.service;
   const temperatureRange =
     selectedService === aiServiceEnums.OPENAI
-      ? OPENAI_TEMPERATURE_RANGE
-      : ANTHROPIC_TEMPERATURE_RANGE;
+      ? config.openAi.temperatureRange
+      : config.anthropic.temperatureRange;
 
   const temperatureOptions: number[] = [];
   for (let i = 0; i <= 4; i++) {
@@ -104,10 +96,11 @@ export default {
   generateTextModelChatTimeout(selectedTimeout?: string) {
     const numSelectedTimeout = selectedTimeout
       ? Number(selectedTimeout)
-      : DEFAULT_CHAT_TIMEOUT;
+      : config.defaults.chatTimeout;
     const timeoutButtons: ButtonBuilder[] = [];
-    for (let i = 0; i < CHAT_TIMEOUT_OPTIONS.length; i++) {
-      const timeoutVal = CHAT_TIMEOUT_OPTIONS[i];
+    const { chatTimeoutOptions} = config;
+    for (let i = 0; i < chatTimeoutOptions.length; i++) {
+      const timeoutVal = chatTimeoutOptions[i];
       timeoutButtons.push(
         new ButtonBuilder()
           .setCustomId(timeoutVal.toString())
@@ -154,10 +147,11 @@ export default {
     const retentionSize =
       typeof retentionSizeSetting === 'number'
         ? retentionSizeSetting
-        : DEFAULT_RETENTION_SIZE;
+        : config.defaults.retentionSize;
     const retentionSizeButtons: ButtonBuilder[] = [];
-    for (let i = 0; i < RETENTION_SIZE_OPTIONS.length; i++) {
-      const optVal = RETENTION_SIZE_OPTIONS[i];
+    const { retentionSizeOptions } = config;
+    for (let i = 0; i < retentionSizeOptions.length; i++) {
+      const optVal = retentionSizeOptions[i];
       retentionSizeButtons.push(
         new ButtonBuilder()
           .setCustomId(optVal.toString())
@@ -208,8 +202,8 @@ export default {
     const profileTemperatureButtons: ButtonBuilder[] = [];
     const temperatureRange =
       service === aiServiceEnums.OPENAI
-        ? OPENAI_TEMPERATURE_RANGE
-        : ANTHROPIC_TEMPERATURE_RANGE;
+        ? config.openAi.temperatureRange
+        : config.anthropic.temperatureRange;
 
     for (let i = 0; i <= 4; i++) {
       const t = i / 4;
@@ -313,7 +307,7 @@ export default {
           selectedProfile.textModel =
             selectedProfile.service === aiServiceEnums.OPENAI
               ? config.openAi.defaultChatCompletionModel
-              : config.claude.defaultMessageModel;
+              : config.anthropic.defaultMessageModel;
           selectedProfile;
           convertAIServiceTemperature(selectedProfile);
         }

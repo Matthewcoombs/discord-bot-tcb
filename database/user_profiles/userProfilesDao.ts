@@ -1,8 +1,7 @@
 import { MessageParam } from '@anthropic-ai/sdk/resources';
 import { pg } from '../..';
-import { aiServiceEnums, textBasedModelEnums } from '../../config';
+import { aiServiceEnums, config, textBasedModelEnums } from '../../config';
 import { ChatCompletionMessage } from '../../openAIClient/chatCompletion/chatCompletion.service';
-import { DEFAULT_RETENTION_SIZE, PROFILES_LIMIT } from '../../shared/constants';
 import { cleanPGText } from '../../shared/utils';
 
 export interface UserProfile {
@@ -42,7 +41,7 @@ export function validateUserProfileCount(userProfiles: UserProfile[]): boolean {
   // If the amount of profiles the user has is less than the PROFILES_LIMIT, the
   // profile count is valid. Otherwise it is invalid and the user cannot create
   // more profiles at this time.
-  return userProfiles.length < PROFILES_LIMIT;
+  return userProfiles.length < config.profilesLimit;
 }
 const PROFILES_BASE_SELECTORS = `
   id,
@@ -117,7 +116,7 @@ export default {
                 user_profiles
                 (discord_id, name, profile, service, assistant_id, thread_id, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', '${assistantId}', '${threadId}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
+                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', '${assistantId}', '${threadId}', true, ${config.defaults.retentionSize}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 
