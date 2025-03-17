@@ -7,7 +7,6 @@ import {
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
 import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
-import { OpenAi } from '../..';
 
 const deleteGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -42,14 +41,6 @@ const deleteGenerativeProfileCommand: Command = {
         time: 60000,
       })) as ButtonInteraction;
       const profileId = userProfileToDelete.customId;
-      const selectedProfile = userProfiles.find(
-        (profile) => profile.id === parseInt(profileId),
-      );
-
-      await Promise.all([
-        OpenAi.beta.assistants.del(selectedProfile?.assistantId as string),
-        OpenAi.beta.threads.del(selectedProfile?.threadId as string),
-      ]);
       await userProfilesDao.deleteUserProfile(profileId);
       await interaction.followUp({
         content: `The profile has been deleted.`,

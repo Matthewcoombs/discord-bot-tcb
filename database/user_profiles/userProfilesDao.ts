@@ -12,10 +12,8 @@ export interface UserProfile {
   service: aiServiceEnums;
   createdAt: string;
   updatedAt: string;
-  assistantId: string;
   selected?: boolean;
   textModel: textBasedModelEnums;
-  threadId: string;
   timeout: string | number;
   retention: boolean;
   openAiRetentionData: ChatCompletionMessage[];
@@ -30,9 +28,7 @@ export interface CreateProfile {
   name: string;
   profile: string;
   discordId: string;
-  assistantId: string;
   selected?: boolean;
-  threadId: string;
   textModel: string;
   service: aiServiceEnums;
 }
@@ -51,9 +47,7 @@ const PROFILES_BASE_SELECTORS = `
   service,
   created_at AS "createdAt",
   updated_at AS "updatedAt",
-  assistant_id AS "assistantId",
   text_model AS "textModel",
-  thread_id AS "threadId",
   timeout,
   selected,
   retention,
@@ -102,21 +96,13 @@ export default {
   },
 
   async insertUserProfile(newProfile: CreateProfile) {
-    const {
-      name,
-      profile,
-      service,
-      discordId,
-      assistantId,
-      threadId,
-      textModel,
-    } = newProfile;
+    const { name, profile, service, discordId, textModel } = newProfile;
     const userProfiles = await pg.query<UserProfile>(`
             INSERT INTO
                 user_profiles
-                (discord_id, name, profile, service, assistant_id, thread_id, retention, retention_size, text_model)
+                (discord_id, name, profile, service, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', '${assistantId}', '${threadId}', true, ${config.defaults.retentionSize}, '${textModel}')
+                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 

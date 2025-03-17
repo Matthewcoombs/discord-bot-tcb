@@ -13,14 +13,8 @@ import {
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
-import { OpenAi, pg } from '../..';
+import { pg } from '../..';
 import { aiServiceEnums, config } from '../../config';
-import {
-  Assistant,
-  AssistantCreateParams,
-  AssistantUpdateParams,
-} from 'openai/resources/beta/assistants';
-import { Thread } from 'openai/resources/beta/threads/threads';
 
 export const NEW_PROFILE_MODAL_ID = 'newProfile';
 export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
@@ -99,27 +93,9 @@ export default {
       });
     }
 
-    // creating a new openAI assistant, and assistant thread.
-    const assistantPayload: AssistantCreateParams = {
-      instructions: profile,
-      name,
-      tools: [{ type: 'code_interpreter' }],
-      model: config.openAi.defaultChatCompletionModel,
-    };
-
     // Handling transaction logic for creating a new profile.
-    let assistant: Assistant | undefined = undefined;
-    let thread: Thread | undefined = undefined;
-    // const pgTransactionClient = await new Pool().connect();
     try {
       await pg.query('BEGIN');
-      [assistant, thread] = await Promise.all([
-        OpenAi.beta.assistants.create(assistantPayload),
-        OpenAi.beta.threads.create(),
-      ]);
-
-      const { id: assistantId } = assistant;
-      const { id: threadId } = thread;
       const newUserProfile = await userProfilesDao.insertUserProfile({
         name,
         profile,
@@ -128,8 +104,6 @@ export default {
           service === aiServiceEnums.OPENAI
             ? config.openAi.defaultChatCompletionModel
             : config.anthropic.defaultMessageModel,
-        assistantId,
-        threadId,
         service,
       });
 
@@ -145,12 +119,6 @@ export default {
       });
     } catch (err) {
       console.error(err);
-      await Promise.all([
-        assistant?.id
-          ? OpenAi.beta.assistants.del(assistant.id)
-          : Promise.resolve(),
-        thread?.id ? OpenAi.beta.threads.del(thread.id) : Promise.resolve(),
-      ]);
       await pg.query('ROLLBACK');
     }
   },
@@ -173,18 +141,7 @@ export default {
       );
       selectedProfileUpdateCopy.name = updatedName;
       selectedProfileUpdateCopy.profile = updatedProfile;
-
-      const assistantUpdateParams: AssistantUpdateParams = {
-        name: updatedName,
-        instructions: updatedProfile,
-      };
-      await Promise.all([
-        await OpenAi.beta.assistants.update(
-          selectedProfileUpdateCopy.assistantId,
-          assistantUpdateParams,
-        ),
-        await userProfilesDao.updateUserProfile(selectedProfileUpdateCopy),
-      ]);
+      await userProfilesDao.updateUserProfile(selectedProfileUpdateCopy);
       await pg.query('COMMIT');
       return modalInteraction.reply({
         content: `Profile: **${selectedProfileUpdateCopy.name}** has been updated.`,
@@ -193,10 +150,6 @@ export default {
     } catch (err) {
       console.error(err);
       await pg.query('ROLLBACK');
-      await OpenAi.beta.assistants.update(originalSelectedProfile.assistantId, {
-        name: originalSelectedProfile.name,
-        instructions: originalSelectedProfile.profile,
-      });
     }
   },
 };

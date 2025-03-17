@@ -9,7 +9,6 @@ import {
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
-import { OpenAi } from '../..';
 
 export const SELECT_AI_SERVICE_ID = 'service';
 export const SELECT_TEXT_MODEL_ID = 'textModel';
@@ -315,13 +314,6 @@ export default {
       }
       case SELECT_TEXT_MODEL_ID: {
         selectedProfile.textModel = updateValue as textBasedModelEnums;
-        await Promise.all([
-          OPEN_AI_TEXT_MODELS.includes(selectedProfile.textModel)
-            ? OpenAi.beta.assistants.update(selectedProfile.assistantId, {
-                model: selectedProfile.textModel,
-              })
-            : null,
-        ]);
         break;
       }
       case SELECT_CHAT_TIMEOUT_ID: {
