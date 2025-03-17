@@ -316,14 +316,12 @@ export default {
               : config.claude.defaultMessageModel;
           selectedProfile;
           convertAIServiceTemperature(selectedProfile);
-          await userProfilesDao.updateUserProfile(selectedProfile);
         }
         break;
       }
       case SELECT_TEXT_MODEL_ID: {
         selectedProfile.textModel = updateValue as textBasedModelEnums;
         await Promise.all([
-          userProfilesDao.updateUserProfile(selectedProfile),
           OPEN_AI_TEXT_MODELS.includes(selectedProfile.textModel)
             ? OpenAi.beta.assistants.update(selectedProfile.assistantId, {
                 model: selectedProfile.textModel,
@@ -334,32 +332,32 @@ export default {
       }
       case SELECT_CHAT_TIMEOUT_ID: {
         selectedProfile.timeout = Number(updateValue);
-        await userProfilesDao.updateUserProfile(selectedProfile);
         break;
       }
       case SELECT_RETENTION_ID: {
         selectedProfile.retention = updateValue === 'true';
-        await userProfilesDao.updateUserProfile(selectedProfile);
         break;
       }
       case SELECT_RETENTION_SIZE_ID: {
         selectedProfile.retentionSize = Number(updateValue);
-        await userProfilesDao.updateUserProfile(selectedProfile);
         break;
       }
       case CLEAR_RETENTION_DATA: {
-        updateValue === 'true'
-          ? await userProfilesDao.clearProfileRetentionData(selectedProfile)
-          : null;
+        if (updateValue === 'true') {
+          selectedProfile.optimizedOpenAiRetentionData = '';
+          selectedProfile.optimizedAnthropicRetentionData = '';
+          selectedProfile.openAiRetentionData = [];
+          selectedProfile.anthropicRetentionData = [];
+        }
         break;
       }
       case SELECT_PROFILE_TEMPERATURE: {
         selectedProfile.temperature = Number(updateValue);
-        await userProfilesDao.updateUserProfile(selectedProfile);
         break;
       }
       default:
         break;
     }
+    await userProfilesDao.updateUserProfile(selectedProfile);
   },
 };
