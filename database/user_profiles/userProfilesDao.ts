@@ -102,7 +102,7 @@ export default {
                 user_profiles
                 (discord_id, name, profile, service, retention, retention_size, text_model)
             VALUES
-                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', true, ${DEFAULT_RETENTION_SIZE}, '${textModel}')
+                ('${discordId}', '${cleanPGText(name)}', '${cleanPGText(profile)}', '${service}', true, ${config.defaults.retentionSize}, '${textModel}')
             RETURNING
             ${PROFILES_BASE_SELECTORS}
 
