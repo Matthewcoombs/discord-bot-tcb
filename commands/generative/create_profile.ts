@@ -1,10 +1,10 @@
 import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
-import { PROFILES_LIMIT } from '../../shared/constants';
 import userProfilesDao, {
   validateUserProfileCount,
 } from '../../database/user_profiles/userProfilesDao';
 import profileModal from '../../modals/generative/profileModal';
+import { config } from '../../config';
 
 const createAProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -16,7 +16,7 @@ const createAProfileCommand: Command = {
     const userProfiles = await userProfilesDao.getUserProfiles(user.id);
     if (!validateUserProfileCount(userProfiles)) {
       return interaction.reply({
-        content: `You have reached the maximum profile limit of ${PROFILES_LIMIT}`,
+        content: `You have reached the maximum profile limit of ${config.profilesLimit}`,
         ephemeral: true,
       });
     }

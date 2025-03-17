@@ -36,32 +36,4 @@ export function generateAssistantRunKey(profileName: string) {
 export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
 extremely good at...`;
 export const AI_SERVICE_PLACEHOLDER_TEXT = `The AI service your profile will use. Valid values [${Object.values(aiServiceEnums).join(', ')}]`;
-export const GENERATIVE_RESPONSE_CONSTRAINTS = `\nNOTE keep your responses as short, clear, and concise as possible. Your messages should not exceed 2000 characters unless absolutely necessary.`;
-export const GENERAL_CHANNEL = 'general';
-export const DEFAULT_CHAT_TIMEOUT = 300000;
-export const CHAT_TIMEOUT_OPTIONS = [
-  180000,
-  DEFAULT_CHAT_TIMEOUT,
-  480000,
-  600000,
-];
-export const PROFILES_LIMIT = 4;
-// Setting 4mb image size limit
-export const IMAGE_TOUCH_UP_SIZE_LIMIT = 4000000;
 export const TEMP_FOLDER_PATH = `./temp`;
-export const DISCORD_MAX_REPLY_STRING_LENGTH = 2000;
-export const MAX_MESSAGE_COLLECTORS = 100;
-export const MAX_USER_SINGLE_INSTANCE_COMMANDS = 4;
-export const MAX_USER_ATTACHMENTS = 4;
-export const DEFAULT_RETENTION_SIZE = 50;
-export const OPTIMIZED_RETENTION_SIZE = 0;
-export const RETENTION_SIZE_OPTIONS = [
-  100,
-  75,
-  DEFAULT_RETENTION_SIZE,
-  25,
-  OPTIMIZED_RETENTION_SIZE,
-];
-// OpenAI temperature ranges - [min, max]
-export const OPENAI_TEMPERATURE_RANGE = [0, 2];
-export const ANTHROPIC_TEMPERATURE_RANGE = [0, 1];

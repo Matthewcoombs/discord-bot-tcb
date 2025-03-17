@@ -1,9 +1,5 @@
 import * as fs from 'fs';
-import {
-  DISCORD_MAX_REPLY_STRING_LENGTH,
-  IMAGE_TOUCH_UP_SIZE_LIMIT,
-  TEMP_FOLDER_PATH,
-} from './constants';
+import { TEMP_FOLDER_PATH } from './constants';
 import {
   InteractionError,
   InvalidFileError,
@@ -13,6 +9,7 @@ import {
 import axios from 'axios';
 import { Attachment } from 'discord.js';
 import { JsonContent } from '../openAIClient/chatCompletion/chatCompletion.service';
+import { config } from '../config';
 
 export function generateInteractionTag() {
   return Math.floor(10000 + Math.random() * 90000);
@@ -20,8 +17,9 @@ export function generateInteractionTag() {
 
 export function processBotResponseLength(response: string) {
   const responses: string[] = [];
-  for (let i = 0; i < response.length; i += DISCORD_MAX_REPLY_STRING_LENGTH) {
-    responses.push(response.slice(i, i + DISCORD_MAX_REPLY_STRING_LENGTH));
+  const { discordReplyLengthLimit } = config;
+  for (let i = 0; i < response.length; i += discordReplyLengthLimit) {
+    responses.push(response.slice(i, i + discordReplyLengthLimit));
   }
   return responses;
 }
@@ -95,7 +93,7 @@ export function validateImage(imageAttachment: Attachment) {
     });
   }
 
-  if (imageAttachment.size > IMAGE_TOUCH_UP_SIZE_LIMIT) {
+  if (imageAttachment.size > config.imageTouchUpSizeLimit) {
     throw new InvalidFileSizeError({
       error: `The Image provided is too large. Images should be no more than 4MB`,
       metaData: imageAttachment,

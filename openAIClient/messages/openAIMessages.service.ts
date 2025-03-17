@@ -84,7 +84,7 @@ export default {
         : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
-      tools: config.openAIfunctionTools as any,
+      tools: config.openAi.tools as any,
       temperature: Number(selectedProfile?.temperature),
     });
 
