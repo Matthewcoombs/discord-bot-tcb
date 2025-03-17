@@ -98,7 +98,7 @@ export default {
       ? Number(selectedTimeout)
       : config.defaults.chatTimeout;
     const timeoutButtons: ButtonBuilder[] = [];
-    const { chatTimeoutOptions} = config;
+    const { chatTimeoutOptions } = config;
     for (let i = 0; i < chatTimeoutOptions.length; i++) {
       const timeoutVal = chatTimeoutOptions[i];
       timeoutButtons.push(

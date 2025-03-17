@@ -1,7 +1,5 @@
 import * as fs from 'fs';
-import {
-  TEMP_FOLDER_PATH,
-} from './constants';
+import { TEMP_FOLDER_PATH } from './constants';
 import {
   InteractionError,
   InvalidFileError,
