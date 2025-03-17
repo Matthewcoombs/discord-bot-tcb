@@ -222,20 +222,4 @@ export default {
                 discord_id = '${discordId}'
         `);
   },
-
-  async clearProfileRetentionData(selectedProfile: UserProfile) {
-    const { id } = selectedProfile;
-    await pg.query(`
-            UPDATE
-                user_profiles
-            SET
-                openai_retention_data = '{}',
-                anthropic_retention_data = '{}',
-                optimized_openai_retention_data = '',
-                optimized_anthropic_retention_data = '',
-                updated_at = NOW()
-            WHERE
-                id = ${id}
-        `);
-  },
 };
