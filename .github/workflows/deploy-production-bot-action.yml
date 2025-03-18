@@ -176,5 +176,5 @@ jobs:
         uses: jpb06/bump-package@latest
         with:
           major-keywords: major
-          minor-keywords: feature,minor
+          minor-keywords: feature,minor,refactor
           patch-keywords: fix,chore,bug-fix
