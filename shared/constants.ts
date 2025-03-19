@@ -1,5 +1,3 @@
-import { aiServiceEnums } from '../config';
-
 export function generateWelcomeCopy(username: string) {
   return `Hello ${username}, welcome to the server!\n
 I'll be your helpful assistant while you're here
@@ -32,8 +30,4 @@ To end this session simply say **goodbye**`;
 export function generateAssistantRunKey(profileName: string) {
   return `go ${profileName}`.toLowerCase();
 }
-
-export const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
-extremely good at...`;
-export const AI_SERVICE_PLACEHOLDER_TEXT = `The AI service your profile will use. Valid values [${Object.values(aiServiceEnums).join(', ')}]`;
 export const TEMP_FOLDER_PATH = `./temp`;

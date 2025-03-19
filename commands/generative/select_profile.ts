@@ -8,7 +8,7 @@ import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
+import profilesService from '../../profiles/profiles.service';
 
 const selectGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -25,7 +25,7 @@ const selectGenerativeProfileCommand: Command = {
     }
 
     const actionRowComponent =
-      chatCompletionService.generateUserProfileDisplay(userProfiles);
+      profilesService.generateUserProfileDisplay(userProfiles);
 
     const selectResponse = await interaction.reply({
       content: `Select a profile`,

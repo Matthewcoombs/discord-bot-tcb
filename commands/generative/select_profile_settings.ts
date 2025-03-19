@@ -15,7 +15,7 @@ import profilesService, {
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
-} from '../../openAIClient/profiles/profiles.service';
+} from '../../profiles/profiles.service';
 
 const selectProfileModelCommand: Command = {
   data: new SlashCommandBuilder()
