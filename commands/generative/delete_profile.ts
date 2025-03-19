@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
-import chatCompletionService from '../../openAIClient/chatCompletion/chatCompletion.service';
+import profilesService from '../../profiles/profiles.service';
 
 const deleteGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -23,7 +23,7 @@ const deleteGenerativeProfileCommand: Command = {
     }
 
     const actionRowComponent =
-      chatCompletionService.generateUserProfileDisplay(userProfiles);
+      profilesService.generateUserProfileDisplay(userProfiles);
 
     const response = await interaction.reply({
       content: `Select a profile to delete`,

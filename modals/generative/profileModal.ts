@@ -6,10 +6,6 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import {
-  AI_SERVICE_PLACEHOLDER_TEXT,
-  PROFILE_PLACEHOLDER_TEXT,
-} from '../../shared/constants';
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
@@ -21,6 +17,10 @@ export const UPDATE_PROFILE_MODAL_ID = 'updateProfile';
 export const PROFILE_NAME_ID = 'profileName';
 export const SERVICE_ID = 'service';
 export const PROFILE_ID = 'profile';
+
+const AI_SERVICE_PLACEHOLDER_TEXT = `The AI service your profile will use. Valid values [${Object.values(aiServiceEnums).join(', ')}]`;
+const PROFILE_PLACEHOLDER_TEXT = `You're name is {name}. Your favorite color is {color}, you're
+extremely good at...`;
 
 export default {
   generateProfileModal(profileData?: UserProfile) {

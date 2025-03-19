@@ -5,10 +5,10 @@ import {
   config,
   OPEN_AI_TEXT_MODELS,
   textBasedModelEnums,
-} from '../../config';
+} from '../config';
 import userProfilesDao, {
   UserProfile,
-} from '../../database/user_profiles/userProfilesDao';
+} from '../database/user_profiles/userProfilesDao';
 
 export const SELECT_AI_SERVICE_ID = 'service';
 export const SELECT_TEXT_MODEL_ID = 'textModel';
@@ -345,5 +345,18 @@ export default {
         break;
     }
     await userProfilesDao.updateUserProfile(selectedProfile);
+  },
+
+  generateUserProfileDisplay(userProfiles: UserProfile[]) {
+    const buttons = userProfiles.map((profile) => {
+      return new ButtonBuilder()
+        .setCustomId(profile.id.toString())
+        .setLabel(profile.name)
+        .setStyle(profile.selected ? ButtonStyle.Success : ButtonStyle.Primary);
+    });
+
+    const row = new ActionRowBuilder().addComponents(buttons);
+
+    return row;
   },
 };

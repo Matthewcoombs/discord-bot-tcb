@@ -26,7 +26,6 @@ import {
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import openAIMessagesService from '../openAIClient/messages/openAIMessages.service';
 import {
   INVALID_FILE_TYPE_CODE,
   TOO_MANY_ATTACHMENTS_CODE,
@@ -114,7 +113,7 @@ async function processOpenAIMessageService(
     );
 
   const { content, toolCalls } =
-    await openAIMessagesService.processGenerativeResponse(
+    await chatCompletionService.processGenerativeResponse(
       chatCompletionMessages,
       userMessageInstance?.selectedProfile,
     );
@@ -122,7 +121,7 @@ async function processOpenAIMessageService(
   // This logic handles instances of tool calls during the message instance
   if (toolCalls && toolCalls.length > 0) {
     endChat = toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
-    finalResponse = await openAIMessagesService.processToolCalls(
+    finalResponse = await chatCompletionService.processToolCalls(
       user,
       toolCalls,
       userMessageInstance.interactionTag,
@@ -327,7 +326,7 @@ const directMessageEvent: Command = {
                   collectedMsgs,
                   selectedProfile,
                 );
-              await openAIMessagesService.processOpenAiRetentionData(
+              await chatCompletionService.processOpenAiRetentionData(
                 retentionMsgs,
                 selectedProfile,
               );
