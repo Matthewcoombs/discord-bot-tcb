@@ -1,10 +1,7 @@
-import {
-  EmbedBuilder,
-  Message,
-  MessageCreateOptions,
-  User,
-} from 'discord.js';
-import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
+import { EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
+import userProfilesDao, {
+  UserProfile,
+} from '../../database/user_profiles/userProfilesDao';
 import {
   openaiToolsEnum,
   IMAGE_PROCESSING_MODELS,
@@ -266,57 +263,57 @@ export default {
   },
 
   async processToolCalls(
-      user: User,
-      toolCalls: ParsedFunctionToolCall[],
-      interactionTag: number,
-    ): Promise<MessageCreateOptions> {
-      let toolResponse: MessageCreateOptions = {};
-      const toolCall = toolCalls[0];
-      const { id, type } = toolCall;
-      const { name: toolName, arguments: toolArgs } = toolCall.function;
-  
-      const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
-        { name: 'id', value: id, inline: true },
-        { name: 'type', value: type, inline: true },
-        { name: 'arguments', value: toolCall.function.arguments, inline: true },
-      ]);
-  
-      switch (toolName) {
-        case openaiToolsEnum.GENERATE_IMAGE: {
-          const imageGenerateOptions = {
-            ...(JSON.parse(toolArgs) as GenerateImageOptions),
-            model: imageModelEnums.DALLE3,
-          };
-          imageGenerateOptions.count = Number(imageGenerateOptions.count);
-          // Validation is required as the model may sometimes hallucinate and
-          // generate invalid arguments
-          if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {
-            toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
-            break;
-          }
-          const imageFiles = await imagesService.generateImages(
-            user,
-            imageGenerateOptions,
-            interactionTag,
-          );
-          toolResponse = {
-            content:
-              imageFiles.length > 1
-                ? `Here are your requested images ${user.username} :blush:`
-                : `Here is your requested image ${user.username} :blush:`,
-            files: imageFiles,
-            embeds: [toolEmbed],
-          };
+    user: User,
+    toolCalls: ParsedFunctionToolCall[],
+    interactionTag: number,
+  ): Promise<MessageCreateOptions> {
+    let toolResponse: MessageCreateOptions = {};
+    const toolCall = toolCalls[0];
+    const { id, type } = toolCall;
+    const { name: toolName, arguments: toolArgs } = toolCall.function;
+
+    const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
+      { name: 'id', value: id, inline: true },
+      { name: 'type', value: type, inline: true },
+      { name: 'arguments', value: toolCall.function.arguments, inline: true },
+    ]);
+
+    switch (toolName) {
+      case openaiToolsEnum.GENERATE_IMAGE: {
+        const imageGenerateOptions = {
+          ...(JSON.parse(toolArgs) as GenerateImageOptions),
+          model: imageModelEnums.DALLE3,
+        };
+        imageGenerateOptions.count = Number(imageGenerateOptions.count);
+        // Validation is required as the model may sometimes hallucinate and
+        // generate invalid arguments
+        if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {
+          toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
           break;
         }
-        case openaiToolsEnum.END_CHAT: {
-          const endChatParams = JSON.parse(toolArgs) as FinalResponse;
-          toolResponse.content = `${endChatParams.finalResponse}`;
-          break;
-        }
-        default:
-          break;
+        const imageFiles = await imagesService.generateImages(
+          user,
+          imageGenerateOptions,
+          interactionTag,
+        );
+        toolResponse = {
+          content:
+            imageFiles.length > 1
+              ? `Here are your requested images ${user.username} :blush:`
+              : `Here is your requested image ${user.username} :blush:`,
+          files: imageFiles,
+          embeds: [toolEmbed],
+        };
+        break;
       }
-      return toolResponse;
-    },
+      case openaiToolsEnum.END_CHAT: {
+        const endChatParams = JSON.parse(toolArgs) as FinalResponse;
+        toolResponse.content = `${endChatParams.finalResponse}`;
+        break;
+      }
+      default:
+        break;
+    }
+    return toolResponse;
+  },
 };
