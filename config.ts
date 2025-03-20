@@ -26,6 +26,7 @@ export enum openaiToolsEnum {
 }
 
 export enum anthropicToolsEnum {
+  GENERATE_IMAGE = 'generate_image',
   END_CHAT = 'end_chat',
 }
 
@@ -124,6 +125,41 @@ export const config = {
     //temperature ranges - [min, max]
     temperatureRange: [0, 1],
     tools: [
+      {
+        name: anthropicToolsEnum.GENERATE_IMAGE,
+        description:
+          'Creates an image for the user. Call this when the user explicitly asks to create an image',
+        input_schema: {
+          type: 'object',
+          properties: {
+            description: {
+              type: 'string',
+              description: 'the description of the image to create',
+            },
+            quality: {
+              type: 'string',
+              description: 'the quality of the image to create',
+              enum: ['standard', 'hd'],
+            },
+            style: {
+              type: 'string',
+              description: 'the style of the image to create',
+              enum: ['vivid', 'natural'],
+            },
+            count: {
+              type: 'string',
+              description: 'the number of images to create',
+              enum: ['1', '2', '3', '4'],
+            },
+            size: {
+              type: 'string',
+              description: 'the size of image to create',
+              enum: ['1024x1024', '1792x1024', '1024x1792'],
+            },
+          },
+          required: ['description', 'quality', 'style', 'count', 'size'],
+        },
+      },
       {
         name: anthropicToolsEnum.END_CHAT,
         description:
