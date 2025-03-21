@@ -86,7 +86,7 @@ const aiImageEditCommand: Command = {
       .catch(() => {
         sizeResponse.delete();
         throw new InteractionTimeOutError({
-          error: `:warning: Image generation cancelled. Image size selection timeout reached.`,
+          error: `:warning: Image edit cancelled. Image size selection timeout reached.`,
         });
       });
 
@@ -135,13 +135,15 @@ const aiImageEditCommand: Command = {
           });
           deleteTempFilesByTag(interactionTag);
         });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code !== 'InteractionCollectorError') {
+        console.error(err);
+        await interaction.editReply(
+          `Sorry there was an issue creating an image variation :disappointed:`,
+        );
+      }
       deleteTempFilesByName([tempImageName]);
       deleteTempFilesByTag(interactionTag);
-      console.error(err);
-      await interaction.editReply(
-        `Sorry there was an issue creating an image variation :disappointed:`,
-      );
     }
   },
 };
