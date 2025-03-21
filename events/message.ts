@@ -17,7 +17,12 @@ import {
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
-import { aiServiceEnums, openaiToolsEnum, config } from '../config';
+import {
+  aiServiceEnums,
+  openaiToolsEnum,
+  config,
+  anthropicToolsEnum,
+} from '../config';
 import userProfilesDao, {
   UserProfile,
 } from '../database/user_profiles/userProfilesDao';
@@ -121,7 +126,7 @@ async function processOpenAIMessageService(
   // This logic handles instances of tool calls during the message instance
   if (toolCalls && toolCalls.length > 0) {
     endChat = toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
-    finalResponse = await chatCompletionService.processToolCalls(
+    finalResponse = await chatCompletionService.processOpenAIToolCalls(
       user,
       toolCalls,
       userMessageInstance.interactionTag,
@@ -138,15 +143,27 @@ async function processOpenAIMessageService(
 async function processAnthropicMessageService(
   userMessageInstance: ChatInstance,
   collected: Message<boolean>[],
+  user: User,
+  finalResponse: MessageCreateOptions,
   endChat: boolean,
 ) {
   const claudeMessages = messageService.formatClaudeMessages(collected);
-  const claudeResponse = await messageService.processClaudeResponse(
+  const { response, toolUse } = await messageService.processClaudeResponse(
     claudeMessages,
-    endChat,
     userMessageInstance.selectedProfile,
   );
-  return claudeResponse;
+
+  if (!toolUse) {
+    finalResponse.content = response;
+  } else {
+    endChat = toolUse.name === anthropicToolsEnum.END_CHAT;
+    finalResponse = await messageService.processAnthropicToolCalls(
+      user,
+      toolUse,
+      userMessageInstance.interactionTag,
+    );
+  }
+  return { finalResponse, endChat };
 }
 
 const directMessageEvent: Command = {
@@ -273,9 +290,11 @@ const directMessageEvent: Command = {
             const anthropicServiceResp = await processAnthropicMessageService(
               userMessageInstance,
               collected,
+              user,
+              finalResponse,
               endChat,
             );
-            finalResponse.content = anthropicServiceResp.response;
+            finalResponse = anthropicServiceResp.finalResponse;
             endChat = anthropicServiceResp.endChat;
             break;
           }

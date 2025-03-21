@@ -262,7 +262,7 @@ export default {
     return { content, toolCalls };
   },
 
-  async processToolCalls(
+  async processOpenAIToolCalls(
     user: User,
     toolCalls: ParsedFunctionToolCall[],
     interactionTag: number,
