@@ -8,7 +8,10 @@ import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
 import profilesService from '../../profiles/profiles.service';
-import { InteractionTimeOutError } from '../../shared/errors';
+import {
+  InteractionTimeOutError,
+  USER_TIMEOUT_CODE,
+} from '../../shared/errors';
 
 const selectGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -60,7 +63,10 @@ const selectGenerativeProfileCommand: Command = {
       });
       await interaction?.deleteReply();
     } catch (err: any) {
-      if (err?.code !== 'InteractionCollectorError') {
+      if (
+        err?.code !== 'InteractionCollectorError' &&
+        err?.errorData?.code !== USER_TIMEOUT_CODE
+      ) {
         console.error(err);
         await interaction.followUp({
           content: `There was an error selecting your profile.`,
