@@ -1,5 +1,4 @@
 import {
-  ButtonInteraction,
   CollectedInteraction,
   CommandInteraction,
   SlashCommandBuilder,
@@ -9,6 +8,7 @@ import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
 import profilesService from '../../profiles/profiles.service';
+import { InteractionTimeOutError } from '../../shared/errors';
 
 const selectGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -38,10 +38,16 @@ const selectGenerativeProfileCommand: Command = {
     };
     try {
       // If the user does not respond in 1 minutes (60000) the message is deleted.
-      const profileToSelect = (await selectResponse?.awaitMessageComponent({
-        filter: collectorFilter,
-        time: 60000,
-      })) as ButtonInteraction;
+      const profileToSelect = await selectResponse
+        ?.awaitMessageComponent({
+          filter: collectorFilter,
+          time: 60000,
+        })
+        .catch(() => {
+          throw new InteractionTimeOutError({
+            error: `:warning: Profile selection cancelled. Selection timeout reached.`,
+          });
+        });
       const profileId = profileToSelect.customId;
       const selectedProfile = userProfiles.find(
         (profile) => profile.id === parseInt(profileId),
@@ -53,13 +59,15 @@ const selectGenerativeProfileCommand: Command = {
         ephemeral: true,
       });
       await interaction?.deleteReply();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err?.code !== 'InteractionCollectorError') {
+        console.error(err);
+        await interaction.followUp({
+          content: `There was an error selecting your profile.`,
+          ephemeral: true,
+        });
+      }
       await interaction.deleteReply();
-      await interaction.followUp({
-        content: `There was an error selecting your profile.`,
-        ephemeral: true,
-      });
     }
   },
 };

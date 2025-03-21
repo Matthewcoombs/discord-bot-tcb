@@ -126,13 +126,15 @@ const aiImageVariationCommand: Command = {
           });
           deleteTempFilesByTag(interactionTag);
         });
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.code !== 'InteractionCollectorError') {
+        console.error(err);
+        await interaction.editReply(
+          `Sorry there was an issue creating an image variation :disappointed:`,
+        );
+      }
       deleteTempFilesByName([tempImageName]);
       deleteTempFilesByTag(interactionTag);
-      console.error(err);
-      await interaction.editReply(
-        `Sorry there was an issue creating an image variation :disappointed:`,
-      );
     }
   },
 };

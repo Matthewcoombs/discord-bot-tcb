@@ -171,19 +171,21 @@ const aiImageGenerateCommand: Command = {
         files: imageFiles,
       });
       deleteTempFilesByTag(interactionTag);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err?.code !== 'InteractionCollectorError') {
+        console.error(err);
+        await interaction.editReply({
+          content: `Sorry ${username}, I ran into an error attempting to create your 
+                  image! Please check to ensure your question is not offensive and doesn't relate to any known 
+                  people :sweat_smile:.`,
+          components: [],
+        });
+        await interaction.followUp({
+          content: `What you told me to create: ${description}`,
+          ephemeral: true,
+        });
+      }
       deleteTempFilesByTag(interactionTag);
-      await interaction.editReply({
-        content: `Sorry ${username}, I ran into an error attempting to create your 
-                image! Please check to ensure your question is not offensive and doesn't relate to any known 
-                people :sweat_smile:.`,
-        components: [],
-      });
-      await interaction.followUp({
-        content: `What you told me to create: ${description}`,
-        ephemeral: true,
-      });
     }
   },
 };

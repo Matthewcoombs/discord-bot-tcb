@@ -47,13 +47,15 @@ const deleteGenerativeProfileCommand: Command = {
         ephemeral: true,
       });
       await interaction?.deleteReply();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err?.code !== 'InteractionCollectorError') {
+        console.error(err);
+        await interaction.followUp({
+          content: `There was an error deleting your selected profile.`,
+          ephemeral: true,
+        });
+      }
       await interaction.deleteReply();
-      await interaction.followUp({
-        content: `There was an error deleting your selected profile.`,
-        ephemeral: true,
-      });
     }
   },
 };
