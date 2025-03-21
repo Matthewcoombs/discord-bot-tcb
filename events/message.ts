@@ -148,7 +148,6 @@ async function processAnthropicMessageService(
   endChat: boolean,
 ) {
   const claudeMessages = messageService.formatClaudeMessages(collected);
-  console.log('testin claude messages', claudeMessages);
   const { response, toolUse } = await messageService.processClaudeResponse(
     claudeMessages,
     userMessageInstance.selectedProfile,
