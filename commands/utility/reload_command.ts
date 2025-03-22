@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  MessageFlags,
   PermissionFlagsBits,
   SlashCommandBuilder,
   SlashCommandStringOption,
@@ -26,7 +27,7 @@ const reloadCommand: Command = {
     if (!command) {
       return interaction.reply({
         content: `There is no command with name \`${commandName}\`!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -43,7 +44,7 @@ const reloadCommand: Command = {
     if (!commandFilePath) {
       return interaction.reply({
         content: `We could not find the command file!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -55,13 +56,13 @@ const reloadCommand: Command = {
       interaction.client.commands.set(commandName, newCommand);
       await interaction.reply({
         content: `Command \`${commandName}\` was reloaded!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
       console.error(error);
       await interaction.reply({
         content: `There was an error while reloading a command \`${commandName}\`:\n\`${error}\``,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
   },

@@ -4,6 +4,7 @@ import {
   CollectedInteraction,
   SlashCommandStringOption,
   ButtonInteraction,
+  MessageFlags,
 } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
@@ -67,7 +68,7 @@ const selectProfileModelCommand: Command = {
     if (!selectedProfile) {
       return interaction.reply({
         content: `:exclamation: You do not have any profile selected to update a model`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -78,7 +79,7 @@ const selectProfileModelCommand: Command = {
     const settingResponse = await interaction.reply({
       content: settingsReply?.displayMsg,
       components: [settingsReply?.row as any],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = (message: CollectedInteraction) => {

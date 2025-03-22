@@ -1,6 +1,7 @@
 import {
   CollectedInteraction,
   CommandInteraction,
+  MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
@@ -23,7 +24,7 @@ const selectGenerativeProfileCommand: Command = {
     if (userProfiles.length === 0) {
       return interaction.reply({
         content: `You don't have any profile(s).`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -33,7 +34,7 @@ const selectGenerativeProfileCommand: Command = {
     const selectResponse = await interaction.reply({
       content: `Select a profile`,
       components: [actionRowComponent as any],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = (message: CollectedInteraction) => {
@@ -59,7 +60,7 @@ const selectGenerativeProfileCommand: Command = {
 
       await interaction.followUp({
         content: `Profile ${selectedProfile?.name} selected.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       await interaction?.deleteReply();
     } catch (err: any) {
@@ -70,7 +71,7 @@ const selectGenerativeProfileCommand: Command = {
         console.error(err);
         await interaction.followUp({
           content: `There was an error selecting your profile.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       await interaction.deleteReply();

@@ -2,6 +2,7 @@ import {
   ButtonInteraction,
   CollectedInteraction,
   CommandInteraction,
+  MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
@@ -18,7 +19,7 @@ const deleteGenerativeProfileCommand: Command = {
     if (userProfiles.length === 0) {
       return interaction.reply({
         content: `You don't have any profile(s) to delete`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -28,7 +29,7 @@ const deleteGenerativeProfileCommand: Command = {
     const response = await interaction.reply({
       content: `Select a profile to delete`,
       components: [actionRowComponent as any],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = (message: CollectedInteraction) => {
@@ -44,7 +45,7 @@ const deleteGenerativeProfileCommand: Command = {
       await userProfilesDao.deleteUserProfile(profileId);
       await interaction.followUp({
         content: `The profile has been deleted.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       await interaction?.deleteReply();
     } catch (err: any) {
@@ -52,7 +53,7 @@ const deleteGenerativeProfileCommand: Command = {
         console.error(err);
         await interaction.followUp({
           content: `There was an error deleting your selected profile.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       await interaction.deleteReply();

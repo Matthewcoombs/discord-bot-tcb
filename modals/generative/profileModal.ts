@@ -1,5 +1,6 @@
 import {
   ActionRowBuilder,
+  MessageFlags,
   ModalActionRowComponentBuilder,
   ModalBuilder,
   ModalSubmitInteraction,
@@ -89,7 +90,7 @@ export default {
     if (!Object.values(aiServiceEnums).includes(service)) {
       return modalInteraction.reply({
         content: `You have entered an incorrect **service** value. Please enter one of these valid values: [${Object.values(aiServiceEnums).join(', ')}]`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -115,7 +116,7 @@ export default {
       await pg.query('COMMIT');
       return modalInteraction.reply({
         content: `Your new profile **${name}** was added successfully!`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (err) {
       console.error(err);
@@ -145,7 +146,7 @@ export default {
       await pg.query('COMMIT');
       return modalInteraction.reply({
         content: `Profile: **${selectedProfileUpdateCopy.name}** has been updated.`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (err) {
       console.error(err);

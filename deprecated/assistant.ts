@@ -8,6 +8,7 @@ import {
   Collection,
   Attachment,
   User,
+  MessageFlags,
 } from 'discord.js';
 import {
   Command,
@@ -73,7 +74,7 @@ const assistantCommand: Command = {
         interaction.client.singleInstanceCommands.delete(interaction.id);
         return interaction.reply({
           content: `:exclamation: You do not have any profile selected to use the assistant service at this time`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -82,7 +83,7 @@ const assistantCommand: Command = {
           selectedProfile.name,
           user.username,
         ),
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
 
       const thread = await OpenAi.beta.threads.retrieve(
@@ -176,7 +177,7 @@ const assistantCommand: Command = {
         } else {
           await interaction.followUp({
             content: `Hold on I'm still processing your previous message :thought_balloon:...`,
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
       });
@@ -197,7 +198,7 @@ const assistantCommand: Command = {
       const errorMessage = `Sorry there was an error in the assistant service.`;
       await interaction.followUp({
         content: errorMessage,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       interaction.client.singleInstanceCommands.delete(interaction.id);
     }

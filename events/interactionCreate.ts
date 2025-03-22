@@ -3,6 +3,8 @@ import {
   ChatInputCommandInteraction,
   Collection,
   Events,
+  InteractionReplyOptions,
+  MessageFlags,
   ModalSubmitInteraction,
 } from 'discord.js';
 import {
@@ -43,7 +45,7 @@ const createInteractionEvent: Command = {
       if (!optIn) {
         return interaction.reply({
           content: `You do not have access to this command. Only users opted into sharing data can use this command.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
@@ -55,7 +57,7 @@ const createInteractionEvent: Command = {
       if (singleInstanceCommands.size === config.singleInstanceCommandsLimit) {
         return interaction.reply({
           content: `:exclamation: The maximum amount of generative services has been reached at this time. Please wait for user(s) to end their sessions.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -65,7 +67,7 @@ const createInteractionEvent: Command = {
         const channelName = interaction.client.channels.cache.get(channelId);
         return interaction.reply({
           content: `Sorry you already have an active chat initiated in **${channelName}** channel.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -82,7 +84,7 @@ const createInteractionEvent: Command = {
       if (channelSingleInstanceCommand) {
         return interaction.reply({
           content: `You have a single instance command active in this channel. Please terminate the active command to execute: **${commandName}**.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       } else {
         singleInstanceCommands.set(interaction.id, {
@@ -120,7 +122,7 @@ const createInteractionEvent: Command = {
         const expiredTimestamp = Math.round(expirationTime / 1000);
         const cooldownReply = await interaction.reply({
           content: `Please wait, you are on a cooldown for \`${command?.data?.name}\`. You can use it again <t:${expiredTimestamp}:R>.`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
         setTimeout(() => {
           cooldownReply.delete();
@@ -151,9 +153,9 @@ const createInteractionEvent: Command = {
         : `There was an internal error executing the command \`${commandName}\`.`;
 
       console.error(_err);
-      const errorResponse = {
+      const errorResponse: InteractionReplyOptions = {
         content: errorMsg,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       };
 
       return interaction.replied
