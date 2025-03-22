@@ -63,7 +63,7 @@ async function sendResponse(
       await message.author.send(messageCreateOptions);
     } else {
       messageCreateOptions.content = `${userTag} ${responses[i]}`;
-      await message.channel.send(messageCreateOptions);
+      await message.reply(messageCreateOptions);
     }
   }
 }
@@ -174,7 +174,7 @@ const directMessageEvent: Command = {
     const { id: channelId, name: channelName } = channel as TextChannel;
     const { bot: isBot, id: userId } = user;
     const userChatInstance = chatInstanceCollector.get(userId);
-    const isDirectMessage = message.channel.type === ChannelType.DM;
+    const isDirectMessage = channel.type === ChannelType.DM;
     const isBotMentioned =
       message.mentions.users.filter((usr) => usr.id === config.botId).size > 0;
 
@@ -231,7 +231,7 @@ const directMessageEvent: Command = {
         selectedProfile && selectedProfile.timeout
           ? Number(selectedProfile.timeout)
           : config.defaults.chatTimeout;
-      const collector = message.channel.createMessageCollector({
+      const collector = (channel as TextChannel).createMessageCollector({
         filter: collectorFilter,
         idle: timeout,
       }) as MessageCollector;

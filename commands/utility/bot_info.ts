@@ -1,4 +1,8 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  MessageFlags,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
 
 const userInfoCommand: Command = {
@@ -23,7 +27,7 @@ Here are the following commands available for use:\n
 
     await interaction.reply({
       content: botInfoMsg,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

@@ -1,4 +1,8 @@
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
+import {
+  CommandInteraction,
+  MessageFlags,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
 import profileModal from '../../modals/generative/profileModal';
@@ -16,7 +20,7 @@ const updateProfileCommand: Command = {
     if (userProfiles.length === 0 || !selectedProfile) {
       return interaction.reply({
         content: `You don't have any selected profile(s) to update`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

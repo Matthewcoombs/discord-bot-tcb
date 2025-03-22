@@ -2,6 +2,7 @@ import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
   CollectedInteraction,
+  MessageFlags,
 } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
 import {
@@ -72,7 +73,7 @@ const aiImageEditCommand: Command = {
     const sizeResponse = await interaction.reply({
       content: `Select a size for your image(s)`,
       components: [actionRowComponent as any],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = (message: CollectedInteraction) => {

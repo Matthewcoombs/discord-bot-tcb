@@ -1,6 +1,7 @@
 import {
   ChatInputCommandInteraction,
   CollectedInteraction,
+  MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
@@ -114,7 +115,7 @@ const aiImageGenerateCommand: Command = {
     const sizeResponse = await interaction.reply({
       content: `Select a size for your image(s)`,
       components: [actionRowComponent as any],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collectorFilter = (message: CollectedInteraction) => {
@@ -182,7 +183,7 @@ const aiImageGenerateCommand: Command = {
         });
         await interaction.followUp({
           content: `What you told me to create: ${description}`,
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
       deleteTempFilesByTag(interactionTag);

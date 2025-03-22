@@ -1,4 +1,8 @@
-import { CommandInteraction, SlashCommandBuilder } from 'discord.js';
+import {
+  CommandInteraction,
+  MessageFlags,
+  SlashCommandBuilder,
+} from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao, {
   validateUserProfileCount,
@@ -17,7 +21,7 @@ const createAProfileCommand: Command = {
     if (!validateUserProfileCount(userProfiles)) {
       return interaction.reply({
         content: `You have reached the maximum profile limit of ${config.profilesLimit}`,
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
