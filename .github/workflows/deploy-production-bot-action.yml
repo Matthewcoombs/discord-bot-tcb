@@ -76,13 +76,13 @@ jobs:
             Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-            WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
-            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node delete-commands.js
+            WorkingDirectory=/root/${{ env.REPO_NAME }}
+            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node scripts/delete-commands.js
             User=root
             Group=root
             [Install]
             WantedBy=multi-user.target" > /etc/systemd/system/clear-bot-commands.service
-            chmod +x /root/${{ env.REPO_NAME }}/dist/delete-commands.js
+            chmod +x /root/${{ env.REPO_NAME }}/scripts/delete-commands.js
             sudo systemctl enable clear-bot-commands.service
             sudo systemctl daemon-reload
             sudo systemctl restart clear-bot-commands.service
@@ -109,13 +109,13 @@ jobs:
             Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-            WorkingDirectory=/root/${{ env.REPO_NAME }}/dist
-            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node deploy-commands.js
+            WorkingDirectory=/root/${{ env.REPO_NAME }}
+            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node scripts/deploy-commands.js
             User=root
             Group=root
             [Install]
             WantedBy=multi-user.target" > /etc/systemd/system/update-bot-commands.service
-            chmod +x /root/${{ env.REPO_NAME }}/dist/deploy-commands.js
+            chmod +x /root/${{ env.REPO_NAME }}/scripts/deploy-commands.js
             sudo systemctl enable update-bot-commands.service
             sudo systemctl daemon-reload
             sudo systemctl restart update-bot-commands.service

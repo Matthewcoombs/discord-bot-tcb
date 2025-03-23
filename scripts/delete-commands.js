@@ -1,11 +1,11 @@
-import { REST, Routes } from 'discord.js';
-import * as process from 'process';
+const { REST, Routes } = require('discord.js');
+const { env, exit } = require('process');
 
 // init env variables
 require('dotenv').config();
 
-const CLIENT_ID = process.env.CLIENT_ID as string;
-const TOKEN = process.env.DISCORD_TOKEN as string;
+const CLIENT_ID = env.CLIENT_ID;
+const TOKEN = env.DISCORD_TOKEN;
 
 // Construct and prepare an instance of the REST module
 const rest = new REST().setToken(TOKEN);
@@ -15,5 +15,5 @@ const rest = new REST().setToken(TOKEN);
     .then(() => console.log(`Successfully deleted all application commands.`))
     .catch(console.error);
 
-  process.exit();
+  exit();
 })();

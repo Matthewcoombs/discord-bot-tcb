@@ -1,28 +1,29 @@
-import { REST, Routes } from 'discord.js';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as process from 'process';
+const { readdirSync } = require('fs');
+const { join } = require('path');
+const { REST, Routes } = require('discord.js');
+const { env, exit, cwd } = require('process');
 
 // init env variables
 require('dotenv').config();
 
-const CLIENT_ID = process.env.CLIENT_ID as string;
-const TOKEN = process.env.DISCORD_TOKEN as string;
+const CLIENT_ID = env.CLIENT_ID;
+const TOKEN = env.DISCORD_TOKEN;
+const ENVIRONMENT = env.ENVIRONMENT;
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+const foldersPath = join(cwd(), 'commands');
+const commandFolders = readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
   // Grab all the command files from the commands directory you created earlier
-  const commandsPath = path.join(foldersPath, folder);
-  const commandFiles = fs
-    .readdirSync(commandsPath)
-    .filter((file) => file.endsWith('.js'));
+  const commandsPath = join(foldersPath, folder);
+  const commandFiles = readdirSync(commandsPath).filter((file) =>
+    file.endsWith(ENVIRONMENT === 'development' ? '.ts' : '.js'),
+  );
   // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
   for (const file of commandFiles) {
-    const filePath = path.join(commandsPath, file);
+    const filePath = join(commandsPath, file);
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
       commands.push(command.data.toJSON());
@@ -45,14 +46,14 @@ const rest = new REST().setToken(TOKEN);
     );
 
     // The put method is used to fully refresh all commands in the guild with the current set
-    const data = (await rest.put(Routes.applicationCommands(CLIENT_ID), {
+    const data = await rest.put(Routes.applicationCommands(CLIENT_ID), {
       body: commands,
-    })) as any[];
+    });
 
     console.log(
       `Successfully reloaded ${data.length} application (/) commands.`,
     );
-    process.exit();
+    exit();
   } catch (error) {
     // And of course, make sure you catch and log any errors!
     console.error(error);
