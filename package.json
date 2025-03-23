@@ -15,7 +15,6 @@
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start-dev\"",
     "update-commands": "node ./scripts/deploy-commands.js",
     "delete-commands": "node ./scripts/delete-commands.js",
-    "reload-commands": "node ./scripts/delete-commands.js && node ./scripts/deploy-commands.js",
     "update-commands-dev": "ts-node ./scripts/deploy-commands.js",
     "delete-commands-dev": "ts-node ./scripts/delete-commands.js"
   },
