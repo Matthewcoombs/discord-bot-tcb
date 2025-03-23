@@ -12,7 +12,10 @@ const ENVIRONMENT = env.ENVIRONMENT;
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
-const foldersPath = join(cwd(), 'commands');
+const foldersPath = join(
+  cwd(),
+  ENVIRONMENT === 'development' ? 'commands' : 'dist/commands',
+);
 const commandFolders = readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
