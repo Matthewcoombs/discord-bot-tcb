@@ -2,7 +2,6 @@
   "name": "discord-bot",
   "version": "12.4.3",
   "description": "discord bot",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "postinstall": "husky install",
@@ -10,12 +9,15 @@
     "postpack": "pinst --enable",
     "lint": "eslint . --ext .ts --fix",
     "start": "tsc && node dist/index.js",
+    "start-dev": "tsc && ts-node index.ts",
     "build": "pnpm install && tsc",
     "build-prod": "/root/.local/share/pnpm/pnpm install --prod --ignore-scripts && tsc",
-    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start\"",
-    "update-commands": "node ./dist/deploy-commands.js",
-    "delete-commands": "node ./dist/delete-commands.js",
-    "reload-commands": "node ./dist/delete-commands.js && node ./dist/deploy-commands.js"
+    "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start-dev\"",
+    "update-commands": "node ./scripts/deploy-commands.js",
+    "delete-commands": "node ./scripts/delete-commands.js",
+    "reload-commands": "node ./scripts/delete-commands.js && node ./scripts/deploy-commands.js",
+    "update-commands-dev": "ts-node ./scripts/deploy-commands.js",
+    "delete-commands-dev": "ts-node ./scripts/delete-commands.js"
   },
   "author": "matthew c",
   "license": "ISC",
