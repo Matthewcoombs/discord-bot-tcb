@@ -59,7 +59,7 @@ export interface FinalResponse {
 }
 
 export interface ProfileSettingsArgs {
-  selectedSetting: string;
+  selectedSettings: string[];
   textModel: string;
   timeout: string;
   retention: string;
@@ -82,6 +82,8 @@ const TIMEOUT_OPTIONS = [180000, 300000, 480000, 600000];
 const RETENTION_SIZE_OPTIONS = [100, 75, 50, 25, 0];
 const OPEN_AI_TEMP_RANGE = [0, 2];
 const OPEN_AI_TEMP_OPTIONS = generateTemperatureOptions(OPEN_AI_TEMP_RANGE);
+const ANTHROPIC_TEMP_RANGE = [0, 1];
+const ANTHROPIC_TEMP_OPTIONS = generateTemperatureOptions(ANTHROPIC_TEMP_RANGE);
 
 export const config = {
   botId: '',
@@ -90,6 +92,7 @@ export const config = {
     defaultImageModel: imageModelEnums.DALLE2,
     // temperature ranges - [min, max]
     temperatureRange: OPEN_AI_TEMP_RANGE,
+    temperatureOptions: OPEN_AI_TEMP_OPTIONS,
     tools: [
       {
         type: 'function',
@@ -140,17 +143,21 @@ export const config = {
           parameters: {
             type: 'object',
             properties: {
-              selectedSetting: {
-                type: 'string',
-                description: 'the setting chosen to update',
-                enum: [
-                  SELECT_TEXT_MODEL_ID,
-                  SELECT_CHAT_TIMEOUT_ID,
-                  SELECT_RETENTION_ID,
-                  SELECT_RETENTION_SIZE_ID,
-                  CLEAR_RETENTION_DATA,
-                  SELECT_PROFILE_TEMPERATURE,
-                ],
+              selectedSettings: {
+                description:
+                  'the settings chosen to update. This will be used to determine which setting to update',
+                type: 'array',
+                items: {
+                  type: 'string',
+                  enum: [
+                    SELECT_TEXT_MODEL_ID,
+                    SELECT_CHAT_TIMEOUT_ID,
+                    SELECT_RETENTION_ID,
+                    SELECT_RETENTION_SIZE_ID,
+                    CLEAR_RETENTION_DATA,
+                    SELECT_PROFILE_TEMPERATURE,
+                  ],
+                },
               },
               textModel: {
                 type: 'string',
@@ -189,7 +196,7 @@ export const config = {
               },
             },
             required: [
-              'selectedSetting',
+              'selectedSettings',
               'textModel',
               'timeout',
               'retention',
@@ -228,6 +235,7 @@ export const config = {
     defaultMessageModel: textBasedModelEnums.CLAUDE_3_5_HAIKU,
     //temperature ranges - [min, max]
     temperatureRange: [0, 1],
+    temperatureOptions: ANTHROPIC_TEMP_OPTIONS,
     tools: [
       {
         name: anthropicToolsEnum.GENERATE_IMAGE,
