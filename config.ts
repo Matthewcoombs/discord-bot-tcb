@@ -1,4 +1,12 @@
 import {
+  CLEAR_RETENTION_DATA,
+  SELECT_CHAT_TIMEOUT_ID,
+  SELECT_PROFILE_TEMPERATURE,
+  SELECT_RETENTION_ID,
+  SELECT_RETENTION_SIZE_ID,
+  SELECT_TEXT_MODEL_ID,
+} from './profiles/profiles.service';
+import {
   optInCommands,
   singleInstanceCommandsEnum,
 } from './shared/discord-js-types';
@@ -23,6 +31,7 @@ export enum textBasedModelEnums {
 export enum openaiToolsEnum {
   GENERATE_IMAGE = 'generate_image',
   END_CHAT = 'end_chat',
+  PROFILE_SETTINGS = 'profile_settings',
 }
 
 export enum anthropicToolsEnum {
@@ -49,13 +58,38 @@ export interface FinalResponse {
   finalResponse: string;
 }
 
+export interface ProfileSettingsArgs {
+  selectedSetting: string;
+  textModel: string;
+  timeout: string;
+  retention: string;
+  retentionSize: string;
+  clearRetentionData: string;
+  temperature: string;
+}
+
+function generateTemperatureOptions(tempRange: number[]): number[] {
+  const tempOptions: number[] = [];
+  for (let i = 0; i <= 4; i++) {
+    const t = i / 4;
+    const interpolatedValue = tempRange[0] + t * (tempRange[1] - tempRange[0]);
+    tempOptions.push(Number(interpolatedValue.toFixed(2)));
+  }
+  return tempOptions;
+}
+
+const TIMEOUT_OPTIONS = [180000, 300000, 480000, 600000];
+const RETENTION_SIZE_OPTIONS = [100, 75, 50, 25, 0];
+const OPEN_AI_TEMP_RANGE = [0, 2];
+const OPEN_AI_TEMP_OPTIONS = generateTemperatureOptions(OPEN_AI_TEMP_RANGE);
+
 export const config = {
   botId: '',
   openAi: {
     defaultChatCompletionModel: textBasedModelEnums.GPT40_MINI,
     defaultImageModel: imageModelEnums.DALLE2,
     // temperature ranges - [min, max]
-    temperatureRange: [0, 2],
+    temperatureRange: OPEN_AI_TEMP_RANGE,
     tools: [
       {
         type: 'function',
@@ -93,6 +127,76 @@ export const config = {
               },
             },
             required: ['description', 'quality', 'style', 'count', 'size'],
+            additionalProperties: false,
+          },
+        },
+      },
+      {
+        type: 'function',
+        function: {
+          name: openaiToolsEnum.PROFILE_SETTINGS,
+          strict: true,
+          description: `This function should be called whenever the user asks to update the settings for their current profile`,
+          parameters: {
+            type: 'object',
+            properties: {
+              selectedSetting: {
+                type: 'string',
+                description: 'the setting chosen to update',
+                enum: [
+                  SELECT_TEXT_MODEL_ID,
+                  SELECT_CHAT_TIMEOUT_ID,
+                  SELECT_RETENTION_ID,
+                  SELECT_RETENTION_SIZE_ID,
+                  CLEAR_RETENTION_DATA,
+                  SELECT_PROFILE_TEMPERATURE,
+                ],
+              },
+              textModel: {
+                type: 'string',
+                description: 'the text based model the profile will use',
+                enum: OPEN_AI_TEXT_MODELS,
+              },
+              timeout: {
+                type: 'string',
+                description: 'the timeout the profile will use',
+                enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
+              },
+              retention: {
+                type: 'string',
+                description:
+                  'determines wether or not the profile will use retention data',
+                enum: ['true', 'false'],
+              },
+              retentionSize: {
+                type: 'string',
+                description: 'the retention size the profile will use',
+                enum: Array.from(RETENTION_SIZE_OPTIONS, (num) =>
+                  num.toString(),
+                ),
+              },
+              clearRetentionData: {
+                type: 'string',
+                description:
+                  'determines if the user wants to clear the current profile retention data or not',
+                enum: ['true', 'false'],
+              },
+              temperature: {
+                type: 'string',
+                description:
+                  'the temperature the profile will use in its responses',
+                enum: Array.from(OPEN_AI_TEMP_OPTIONS, (num) => num.toString()),
+              },
+            },
+            required: [
+              'selectedSetting',
+              'textModel',
+              'timeout',
+              'retention',
+              'retentionSize',
+              'clearRetentionData',
+              'temperature',
+            ],
             additionalProperties: false,
           },
         },
@@ -185,8 +289,8 @@ export const config = {
       optInCommands.SELECT_PROFILE_SETTINGS,
     ],
   },
-  chatTimeoutOptions: [180000, 300000, 480000, 600000],
-  retentionSizeOptions: [100, 75, 50, 25, 0],
+  chatTimeoutOptions: TIMEOUT_OPTIONS,
+  retentionSizeOptions: RETENTION_SIZE_OPTIONS,
   defaults: {
     service: aiServiceEnums.OPENAI,
     chatTimeout: 300000,
