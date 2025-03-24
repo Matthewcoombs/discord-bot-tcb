@@ -9,10 +9,19 @@ import {
   config,
   FinalResponse,
   imageModelEnums,
+  ProfileSettingsArgs,
 } from '../../config';
 import { OpenAi } from '../..';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
 import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
+import {
+  CLEAR_RETENTION_DATA,
+  SELECT_CHAT_TIMEOUT_ID,
+  SELECT_PROFILE_TEMPERATURE,
+  SELECT_RETENTION_ID,
+  SELECT_RETENTION_SIZE_ID,
+  SELECT_TEXT_MODEL_ID,
+} from '../../profiles/profiles.service';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -272,6 +281,8 @@ export default {
     const { id, type } = toolCall;
     const { name: toolName, arguments: toolArgs } = toolCall.function;
 
+    console.log('testing tool calls function', toolCall.function);
+
     const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
       { name: 'id', value: id, inline: true },
       { name: 'type', value: type, inline: true },
@@ -304,6 +315,52 @@ export default {
           files: imageFiles,
           embeds: [toolEmbed],
         };
+        break;
+      }
+      case openaiToolsEnum.PROFILE_SETTINGS: {
+        const selectedProfile = await userProfilesDao.getSelectedProfile(
+          user.id,
+        );
+        const settingUpdateArgs = {
+          ...(JSON.parse(toolArgs) as ProfileSettingsArgs),
+        };
+        console.log('testing update args:', settingUpdateArgs);
+        if (settingUpdateArgs.selectedSetting === SELECT_TEXT_MODEL_ID) {
+          selectedProfile.textModel =
+            settingUpdateArgs.textModel as textBasedModelEnums;
+        }
+        if (settingUpdateArgs.selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
+          selectedProfile.timeout = Number(settingUpdateArgs.timeout);
+        }
+        if (settingUpdateArgs.selectedSetting === SELECT_RETENTION_ID) {
+          selectedProfile.retention = Boolean(settingUpdateArgs.retention);
+        }
+        if (settingUpdateArgs.selectedSetting === SELECT_RETENTION_SIZE_ID) {
+          selectedProfile.retentionSize = Number(
+            settingUpdateArgs.retentionSize,
+          );
+        }
+        if (settingUpdateArgs.selectedSetting === CLEAR_RETENTION_DATA) {
+          if (settingUpdateArgs.clearRetentionData === 'true') {
+            selectedProfile.optimizedOpenAiRetentionData = '';
+            selectedProfile.optimizedAnthropicRetentionData = '';
+            selectedProfile.openAiRetentionData = [];
+            selectedProfile.anthropicRetentionData = [];
+          }
+        }
+        if (settingUpdateArgs.selectedSetting === SELECT_PROFILE_TEMPERATURE) {
+          selectedProfile.temperature = Number(settingUpdateArgs.temperature);
+          console.log(
+            'testing profile temp update',
+            selectedProfile.temperature,
+          );
+        }
+        await userProfilesDao.updateUserProfile(selectedProfile);
+        toolResponse = {
+          content: `successfully updated user profile setting - **${settingUpdateArgs.selectedSetting}**`,
+          embeds: [toolEmbed],
+        };
+
         break;
       }
       case openaiToolsEnum.END_CHAT: {
