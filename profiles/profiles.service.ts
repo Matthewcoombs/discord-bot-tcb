@@ -199,20 +199,17 @@ export default {
     // the temperature is not set, we default to 1
     const temperature = temperatureSetting ? temperatureSetting : 1;
     const profileTemperatureButtons: ButtonBuilder[] = [];
-    const temperatureRange =
+    const temperatureOptions =
       service === aiServiceEnums.OPENAI
-        ? config.openAi.temperatureRange
-        : config.anthropic.temperatureRange;
+        ? config.openAi.temperatureOptions
+        : config.anthropic.temperatureOptions;
 
-    for (let i = 0; i <= 4; i++) {
-      const t = i / 4;
-      const interpolatedValue =
-        temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
-      const tempOption = Number(interpolatedValue.toFixed(2));
-
+    // temperatureOptions is an array of numbers from 0 to 4 (or 1-5).
+    for (const tempOption of temperatureOptions) {
+      const index = temperatureOptions.indexOf(tempOption);
       let tempLabel: string = '';
       let tempEmoji: string = '';
-      switch (i) {
+      switch (index) {
         case 0: {
           tempLabel = 'precise';
           tempEmoji = '🎯';

@@ -226,6 +226,14 @@ export default {
     selectedProfile: UserProfile,
   ) {
     /**
+     * Pulling the latest user profile from the database to ensure that we are
+     * updating the correct profile.
+     **/
+    const latestSelectedProfile = await userProfilesDao.getSelectedProfile(
+      selectedProfile.discordId,
+    );
+
+    /**
      * If retention size is set to 0, we do not save messages, but instead we update
      * the profile with a condensed version of the conversation history.
      **/
@@ -239,16 +247,16 @@ export default {
           temperature: Number(selectedProfile.temperature),
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
-        selectedProfile.optimizedOpenAiRetentionData =
+        latestSelectedProfile.optimizedOpenAiRetentionData =
           condensedConversation as string;
       } catch (_) {
-        selectedProfile.optimizedOpenAiRetentionData = '';
+        latestSelectedProfile.optimizedOpenAiRetentionData = '';
       }
     } else {
       const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
-      selectedProfile.openAiRetentionData = cleanedMsgs;
+      latestSelectedProfile.openAiRetentionData = cleanedMsgs;
     }
-    await userProfilesDao.updateUserProfile(selectedProfile);
+    await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
 
   async processGenerativeResponse(
@@ -280,8 +288,6 @@ export default {
     const toolCall = toolCalls[0];
     const { id, type } = toolCall;
     const { name: toolName, arguments: toolArgs } = toolCall.function;
-
-    console.log('testing tool calls function', toolCall.function);
 
     const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
       { name: 'id', value: id, inline: true },
@@ -324,40 +330,37 @@ export default {
         const settingUpdateArgs = {
           ...(JSON.parse(toolArgs) as ProfileSettingsArgs),
         };
-        console.log('testing update args:', settingUpdateArgs);
-        if (settingUpdateArgs.selectedSetting === SELECT_TEXT_MODEL_ID) {
-          selectedProfile.textModel =
-            settingUpdateArgs.textModel as textBasedModelEnums;
-        }
-        if (settingUpdateArgs.selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
-          selectedProfile.timeout = Number(settingUpdateArgs.timeout);
-        }
-        if (settingUpdateArgs.selectedSetting === SELECT_RETENTION_ID) {
-          selectedProfile.retention = Boolean(settingUpdateArgs.retention);
-        }
-        if (settingUpdateArgs.selectedSetting === SELECT_RETENTION_SIZE_ID) {
-          selectedProfile.retentionSize = Number(
-            settingUpdateArgs.retentionSize,
-          );
-        }
-        if (settingUpdateArgs.selectedSetting === CLEAR_RETENTION_DATA) {
-          if (settingUpdateArgs.clearRetentionData === 'true') {
-            selectedProfile.optimizedOpenAiRetentionData = '';
-            selectedProfile.optimizedAnthropicRetentionData = '';
-            selectedProfile.openAiRetentionData = [];
-            selectedProfile.anthropicRetentionData = [];
+        for (const selectedSetting of settingUpdateArgs.selectedSettings) {
+          if (selectedSetting === SELECT_TEXT_MODEL_ID) {
+            selectedProfile.textModel =
+              settingUpdateArgs.textModel as textBasedModelEnums;
           }
-        }
-        if (settingUpdateArgs.selectedSetting === SELECT_PROFILE_TEMPERATURE) {
-          selectedProfile.temperature = Number(settingUpdateArgs.temperature);
-          console.log(
-            'testing profile temp update',
-            selectedProfile.temperature,
-          );
+          if (selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
+            selectedProfile.timeout = Number(settingUpdateArgs.timeout);
+          }
+          if (selectedSetting === SELECT_RETENTION_ID) {
+            selectedProfile.retention = settingUpdateArgs.retention === 'true';
+          }
+          if (selectedSetting === SELECT_RETENTION_SIZE_ID) {
+            selectedProfile.retentionSize = Number(
+              settingUpdateArgs.retentionSize,
+            );
+          }
+          if (selectedSetting === CLEAR_RETENTION_DATA) {
+            if (settingUpdateArgs.clearRetentionData === 'true') {
+              selectedProfile.optimizedOpenAiRetentionData = '';
+              selectedProfile.optimizedAnthropicRetentionData = '';
+              selectedProfile.openAiRetentionData = [];
+              selectedProfile.anthropicRetentionData = [];
+            }
+          }
+          if (selectedSetting === SELECT_PROFILE_TEMPERATURE) {
+            selectedProfile.temperature = Number(settingUpdateArgs.temperature);
+          }
         }
         await userProfilesDao.updateUserProfile(selectedProfile);
         toolResponse = {
-          content: `successfully updated user profile setting - **${settingUpdateArgs.selectedSetting}**`,
+          content: `successfully updated user profile setting(s) - **${settingUpdateArgs.selectedSettings}**`,
           embeds: [toolEmbed],
         };
 
