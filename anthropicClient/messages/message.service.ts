@@ -1,6 +1,12 @@
 import { EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
 import { Anthropic } from '../..';
-import { anthropicToolsEnum, config, imageModelEnums } from '../../config';
+import {
+  anthropicToolsEnum,
+  config,
+  imageModelEnums,
+  ProfileSettingsArgs,
+  textBasedModelEnums,
+} from '../../config';
 import { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import userProfilesDao, {
   UserProfile,
@@ -8,6 +14,14 @@ import userProfilesDao, {
 import imagesService, {
   GenerateImageOptions,
 } from '../../openAIClient/images/images.service';
+import {
+  CLEAR_RETENTION_DATA,
+  SELECT_CHAT_TIMEOUT_ID,
+  SELECT_PROFILE_TEMPERATURE,
+  SELECT_RETENTION_ID,
+  SELECT_RETENTION_SIZE_ID,
+  SELECT_TEXT_MODEL_ID,
+} from '../../profiles/profiles.service';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -92,6 +106,14 @@ export default {
     selectedProfile: UserProfile,
   ) {
     /**
+     * Pulling the latest user profile from the database to ensure that we are
+     * updating the correct profile.
+     **/
+    const latestSelectedProfile = await userProfilesDao.getSelectedProfile(
+      selectedProfile.discordId,
+    );
+
+    /**
      * If retention size is set to 0, we do not save messages, but instead we update
      * the profile with a condensed version of the conversation history.
      **/
@@ -116,17 +138,18 @@ export default {
 
         const condensedConversation =
           message.content[0].type === 'text' ? message.content[0].text : '';
-        selectedProfile.optimizedAnthropicRetentionData = condensedConversation;
+        latestSelectedProfile.optimizedAnthropicRetentionData =
+          condensedConversation;
       } catch (_) {
-        selectedProfile.optimizedAnthropicRetentionData = '';
+        latestSelectedProfile.optimizedAnthropicRetentionData = '';
       }
     } else {
-      selectedProfile.anthropicRetentionData = [
+      latestSelectedProfile.anthropicRetentionData = [
         ...(selectedProfile.anthropicRetentionData || []),
         ...claudeMessages,
       ];
     }
-    await userProfilesDao.updateUserProfile(selectedProfile);
+    await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
 
   async processClaudeResponse(
@@ -213,6 +236,46 @@ export default {
               ? `Here are your requested images ${user.username} :blush:`
               : `Here is your requested image ${user.username} :blush:`,
           files: imageFiles,
+          embeds: [toolEmbed],
+        };
+        break;
+      }
+      case anthropicToolsEnum.PROFILE_SETTINGS: {
+        const selectedProfile = await userProfilesDao.getSelectedProfile(
+          user.id,
+        );
+        const profileSettings = input as ProfileSettingsArgs;
+        for (const selectedSetting of profileSettings.selectedSettings) {
+          if (selectedSetting === SELECT_TEXT_MODEL_ID) {
+            selectedProfile.textModel =
+              profileSettings.textModel as textBasedModelEnums;
+          }
+          if (selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
+            selectedProfile.timeout = Number(profileSettings.timeout);
+          }
+          if (selectedSetting === SELECT_RETENTION_ID) {
+            selectedProfile.retention = profileSettings.retention === 'true';
+          }
+          if (selectedSetting === SELECT_RETENTION_SIZE_ID) {
+            selectedProfile.retentionSize = Number(
+              profileSettings.retentionSize,
+            );
+          }
+          if (selectedSetting === CLEAR_RETENTION_DATA) {
+            if (profileSettings.clearRetentionData === 'true') {
+              selectedProfile.optimizedOpenAiRetentionData = '';
+              selectedProfile.optimizedAnthropicRetentionData = '';
+              selectedProfile.openAiRetentionData = [];
+              selectedProfile.anthropicRetentionData = [];
+            }
+          }
+          if (selectedSetting === SELECT_PROFILE_TEMPERATURE) {
+            selectedProfile.temperature = Number(profileSettings.temperature);
+          }
+        }
+        await userProfilesDao.updateUserProfile(selectedProfile);
+        toolResponse = {
+          content: `Successfully updated profile setting(s) - **${profileSettings.selectedSettings}**`,
           embeds: [toolEmbed],
         };
         break;
