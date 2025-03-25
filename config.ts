@@ -37,6 +37,7 @@ export enum openaiToolsEnum {
 export enum anthropicToolsEnum {
   GENERATE_IMAGE = 'generate_image',
   END_CHAT = 'end_chat',
+  PROFILE_SETTINGS = 'profile_settings',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -270,6 +271,73 @@ export const config = {
             },
           },
           required: ['description', 'quality', 'style', 'count', 'size'],
+        },
+      },
+      {
+        name: anthropicToolsEnum.PROFILE_SETTINGS,
+        description: `This function should be called whenever the user asks to update the settings for their current profile`,
+        input_schema: {
+          type: 'object',
+          properties: {
+            selectedSettings: {
+              description:
+                'the settings chosen to update. This will be used to determine which setting to update',
+              type: 'array',
+              items: {
+                type: 'string',
+                enum: [
+                  SELECT_TEXT_MODEL_ID,
+                  SELECT_CHAT_TIMEOUT_ID,
+                  SELECT_RETENTION_ID,
+                  SELECT_RETENTION_SIZE_ID,
+                  CLEAR_RETENTION_DATA,
+                  SELECT_PROFILE_TEMPERATURE,
+                ],
+              },
+            },
+            textModel: {
+              type: 'string',
+              description: 'the text based model the profile will use',
+              enum: CLAUDE_TEXT_MODELS,
+            },
+            timeout: {
+              type: 'string',
+              description: 'the timeout the profile will use',
+              enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
+            },
+            retention: {
+              type: 'string',
+              description:
+                'determines wether or not the profile will use retention data',
+              enum: ['true', 'false'],
+            },
+            retentionSize: {
+              type: 'string',
+              description: 'the retention size the profile will use',
+              enum: Array.from(RETENTION_SIZE_OPTIONS, (num) => num.toString()),
+            },
+            clearRetentionData: {
+              type: 'string',
+              description:
+                'determines if the user wants to clear the current profile retention data or not',
+              enum: ['true', 'false'],
+            },
+            temperature: {
+              type: 'string',
+              description:
+                'the temperature the profile will use in its responses',
+              enum: Array.from(ANTHROPIC_TEMP_OPTIONS, (num) => num.toString()),
+            },
+          },
+          required: [
+            'selectedSettings',
+            'textModel',
+            'timeout',
+            'retention',
+            'retentionSize',
+            'clearRetentionData',
+            'temperature',
+          ],
         },
       },
       {
