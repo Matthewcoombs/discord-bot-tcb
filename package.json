@@ -4,7 +4,7 @@
   "description": "discord bot",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "postinstall": "husky install",
+    "prepare": "husky",
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
     "lint": "eslint . --ext .ts --fix",
@@ -21,23 +21,23 @@
   "author": "matthew c",
   "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^0.39.0",
     "axios": "^1.8.2",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.5",
     "openai": "^4.87.3",
-    "pg": "^8.13.0"
+    "pg": "^8.14.1"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.10",
+    "@types/pg": "^8.11.11",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^6.21.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
-    "husky": "^8.0.3",
-    "nodemon": "^3.1.0",
-    "prettier": "^3.3.3",
+    "nodemon": "^3.1.9",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
     "typescript": "^5.1.6"
   }
