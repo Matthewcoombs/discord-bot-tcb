@@ -60,6 +60,16 @@ const selectProfileModelCommand: Command = {
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     const { user } = interaction;
+    const { chatInstanceCollector } = interaction.client;
+    const userMessageInstance = chatInstanceCollector.get(user.id);
+    // Disabling the use of this command when the user is in a current chat instance
+    if (userMessageInstance) {
+      return interaction.reply({
+        content: `:exclamation: Updating profile settings through the slash command is disabled while in a current chat.`,
+        flags: MessageFlags.Ephemeral,
+      });
+    }
+
     const profileSetting = await interaction.options.getString(
       'profile_setting',
       true,
