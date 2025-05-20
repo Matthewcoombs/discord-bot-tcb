@@ -24,6 +24,8 @@ export enum imageModelEnums {
 export enum textBasedModelEnums {
   GPT4O = 'gpt-4o',
   GPT40_MINI = 'gpt-4o-mini',
+  GPT41 = 'gpt-4.1-2025-04-14',
+  GPT41_MINI = 'gpt-4.1-mini-2025-04-14',
   CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20241022',
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
@@ -48,6 +50,8 @@ export const IMAGE_PROCESSING_MODELS = [
 export const OPEN_AI_TEXT_MODELS = [
   textBasedModelEnums.GPT40_MINI,
   textBasedModelEnums.GPT4O,
+  textBasedModelEnums.GPT41,
+  textBasedModelEnums.GPT41_MINI,
 ];
 
 export const CLAUDE_TEXT_MODELS = [
