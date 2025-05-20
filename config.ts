@@ -69,6 +69,73 @@ export interface ProfileSettingsArgs {
   temperature: string;
 }
 
+// These are the default tools available to users who have not set up their profile(s).
+// By default users with no profile will have access to openai services, so the
+// default tools are set to openai tools.
+export const DEFAULT_TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: openaiToolsEnum.GENERATE_IMAGE,
+      strict: true,
+      description:
+        'Creates an image for the user. Call this when the user explicitly asks to create an image',
+      parameters: {
+        type: 'object',
+        properties: {
+          description: {
+            type: 'string',
+            description: 'the description of the image to create',
+          },
+          quality: {
+            type: 'string',
+            description: 'the quality of the image to create',
+            enum: ['standard', 'hd'],
+          },
+          style: {
+            type: 'string',
+            description: 'the style of the image to create',
+            enum: ['vivid', 'natural'],
+          },
+          count: {
+            type: 'string',
+            description: 'the number of images to create',
+            enum: ['1', '2', '3', '4'],
+          },
+          size: {
+            type: 'string',
+            description: 'the size of image to create',
+            enum: ['1024x1024', '1792x1024', '1024x1792'],
+          },
+        },
+        required: ['description', 'quality', 'style', 'count', 'size'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: openaiToolsEnum.END_CHAT,
+      strict: true,
+      description:
+        'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
+      parameters: {
+        type: 'object',
+        properties: {
+          finalResponse: {
+            type: 'string',
+            description:
+              'the final response to the user. This will be sent to the user',
+          },
+        },
+        required: ['finalResponse'],
+        additionalProperties: false,
+      },
+    },
+  },
+];
+
 function generateTemperatureOptions(tempRange: number[]): number[] {
   const tempOptions: number[] = [];
   for (let i = 0; i <= 4; i++) {
@@ -95,46 +162,7 @@ export const config = {
     temperatureRange: OPEN_AI_TEMP_RANGE,
     temperatureOptions: OPEN_AI_TEMP_OPTIONS,
     tools: [
-      {
-        type: 'function',
-        function: {
-          name: openaiToolsEnum.GENERATE_IMAGE,
-          strict: true,
-          description:
-            'Creates an image for the user. Call this when the user explicitly asks to create an image',
-          parameters: {
-            type: 'object',
-            properties: {
-              description: {
-                type: 'string',
-                description: 'the description of the image to create',
-              },
-              quality: {
-                type: 'string',
-                description: 'the quality of the image to create',
-                enum: ['standard', 'hd'],
-              },
-              style: {
-                type: 'string',
-                description: 'the style of the image to create',
-                enum: ['vivid', 'natural'],
-              },
-              count: {
-                type: 'string',
-                description: 'the number of images to create',
-                enum: ['1', '2', '3', '4'],
-              },
-              size: {
-                type: 'string',
-                description: 'the size of image to create',
-                enum: ['1024x1024', '1792x1024', '1024x1792'],
-              },
-            },
-            required: ['description', 'quality', 'style', 'count', 'size'],
-            additionalProperties: false,
-          },
-        },
-      },
+      ...DEFAULT_TOOLS,
       {
         type: 'function',
         function: {
@@ -205,27 +233,6 @@ export const config = {
               'clearRetentionData',
               'temperature',
             ],
-            additionalProperties: false,
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: openaiToolsEnum.END_CHAT,
-          strict: true,
-          description:
-            'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
-          parameters: {
-            type: 'object',
-            properties: {
-              finalResponse: {
-                type: 'string',
-                description:
-                  'the final response to the user. This will be sent to the user',
-              },
-            },
-            required: ['finalResponse'],
             additionalProperties: false,
           },
         },

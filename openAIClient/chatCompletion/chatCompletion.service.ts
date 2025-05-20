@@ -10,6 +10,7 @@ import {
   FinalResponse,
   imageModelEnums,
   ProfileSettingsArgs,
+  DEFAULT_TOOLS,
 } from '../../config';
 import { OpenAi } from '../..';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
@@ -269,7 +270,9 @@ export default {
         : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
-      tools: config.openAi.tools as any,
+      tools: selectedProfile
+        ? (config.openAi.tools as any)
+        : (DEFAULT_TOOLS as any),
       temperature: Number(selectedProfile?.temperature),
     });
 
