@@ -1,6 +1,5 @@
 <div align="center">
-    <img src="
-    https://cdn.discordapp.com/banners/1128001179671085189/71c88c3e628ee47f3b724eb12472b507.png?size=600" alt="Boop Banner Image">
+    <img src="https://cdn.discordapp.com/banners/1128001179671085189/71c88c3e628ee47f3b724eb12472b507.png?size=600" alt="Boop Banner Image">
 </div>
 
 # Boop - Discord Bot
