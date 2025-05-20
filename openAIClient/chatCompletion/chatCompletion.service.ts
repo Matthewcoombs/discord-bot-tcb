@@ -9,10 +9,20 @@ import {
   config,
   FinalResponse,
   imageModelEnums,
+  ProfileSettingsArgs,
+  DEFAULT_TOOLS,
 } from '../../config';
 import { OpenAi } from '../..';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
 import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
+import {
+  CLEAR_RETENTION_DATA,
+  SELECT_CHAT_TIMEOUT_ID,
+  SELECT_PROFILE_TEMPERATURE,
+  SELECT_RETENTION_ID,
+  SELECT_RETENTION_SIZE_ID,
+  SELECT_TEXT_MODEL_ID,
+} from '../../profiles/profiles.service';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -217,6 +227,14 @@ export default {
     selectedProfile: UserProfile,
   ) {
     /**
+     * Pulling the latest user profile from the database to ensure that we are
+     * updating the correct profile.
+     **/
+    const latestSelectedProfile = await userProfilesDao.getSelectedProfile(
+      selectedProfile.discordId,
+    );
+
+    /**
      * If retention size is set to 0, we do not save messages, but instead we update
      * the profile with a condensed version of the conversation history.
      **/
@@ -230,16 +248,16 @@ export default {
           temperature: Number(selectedProfile.temperature),
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
-        selectedProfile.optimizedOpenAiRetentionData =
+        latestSelectedProfile.optimizedOpenAiRetentionData =
           condensedConversation as string;
       } catch (_) {
-        selectedProfile.optimizedOpenAiRetentionData = '';
+        latestSelectedProfile.optimizedOpenAiRetentionData = '';
       }
     } else {
       const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
-      selectedProfile.openAiRetentionData = cleanedMsgs;
+      latestSelectedProfile.openAiRetentionData = cleanedMsgs;
     }
-    await userProfilesDao.updateUserProfile(selectedProfile);
+    await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
 
   async processGenerativeResponse(
@@ -252,7 +270,9 @@ export default {
         : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
-      tools: config.openAi.tools as any,
+      tools: selectedProfile
+        ? (config.openAi.tools as any)
+        : (DEFAULT_TOOLS as any),
       temperature: Number(selectedProfile?.temperature),
     });
 
@@ -304,6 +324,49 @@ export default {
           files: imageFiles,
           embeds: [toolEmbed],
         };
+        break;
+      }
+      case openaiToolsEnum.PROFILE_SETTINGS: {
+        const selectedProfile = await userProfilesDao.getSelectedProfile(
+          user.id,
+        );
+        const settingUpdateArgs = {
+          ...(JSON.parse(toolArgs) as ProfileSettingsArgs),
+        };
+        for (const selectedSetting of settingUpdateArgs.selectedSettings) {
+          if (selectedSetting === SELECT_TEXT_MODEL_ID) {
+            selectedProfile.textModel =
+              settingUpdateArgs.textModel as textBasedModelEnums;
+          }
+          if (selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
+            selectedProfile.timeout = Number(settingUpdateArgs.timeout);
+          }
+          if (selectedSetting === SELECT_RETENTION_ID) {
+            selectedProfile.retention = settingUpdateArgs.retention === 'true';
+          }
+          if (selectedSetting === SELECT_RETENTION_SIZE_ID) {
+            selectedProfile.retentionSize = Number(
+              settingUpdateArgs.retentionSize,
+            );
+          }
+          if (selectedSetting === CLEAR_RETENTION_DATA) {
+            if (settingUpdateArgs.clearRetentionData === 'true') {
+              selectedProfile.optimizedOpenAiRetentionData = '';
+              selectedProfile.optimizedAnthropicRetentionData = '';
+              selectedProfile.openAiRetentionData = [];
+              selectedProfile.anthropicRetentionData = [];
+            }
+          }
+          if (selectedSetting === SELECT_PROFILE_TEMPERATURE) {
+            selectedProfile.temperature = Number(settingUpdateArgs.temperature);
+          }
+        }
+        await userProfilesDao.updateUserProfile(selectedProfile);
+        toolResponse = {
+          content: `successfully updated user profile setting(s) - **${settingUpdateArgs.selectedSettings}**`,
+          embeds: [toolEmbed],
+        };
+
         break;
       }
       case openaiToolsEnum.END_CHAT: {
