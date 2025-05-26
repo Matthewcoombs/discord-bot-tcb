@@ -19,6 +19,7 @@ export enum aiServiceEnums {
 export enum imageModelEnums {
   DALLE2 = 'dall-e-2',
   DALLE3 = 'dall-e-3',
+  GPT_IMAGE_1 = 'gpt-image-1',
 }
 
 export enum textBasedModelEnums {
@@ -73,10 +74,27 @@ export interface ProfileSettingsArgs {
   temperature: string;
 }
 
+export const imageModelConfigOptions = {
+  [imageModelEnums.DALLE2]: {
+    size: ['256x256', '512x512', '1024x1024'],
+  },
+  [imageModelEnums.DALLE3]: {
+    size: ['1024x1024', '1792x1024', '1024x1792'],
+    quality: ['hd', 'standard', 'auto'],
+    style: ['vivid', 'natural'],
+  },
+  [imageModelEnums.GPT_IMAGE_1]: {
+    size: ['1024x1024', '1536x1024', '1024x1536'],
+    quality: ['high', 'medium', 'low'],
+    output_format: ['jpeg', 'png', 'webp'],
+    background: ['transparent', 'opaque', 'auto'],
+  },
+};
+
 // These are the default tools available to users who have not set up their profile(s).
 // By default users with no profile will have access to openai services, so the
 // default tools are set to openai tools.
-export const DEFAULT_TOOLS = [
+export const DEFAULT_OPENAI_TOOLS = [
   {
     type: 'function',
     function: {
@@ -87,7 +105,7 @@ export const DEFAULT_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
-          description: {
+          prompt: {
             type: 'string',
             description: 'the description of the image to create',
           },
@@ -101,7 +119,7 @@ export const DEFAULT_TOOLS = [
             description: 'the style of the image to create',
             enum: ['vivid', 'natural'],
           },
-          count: {
+          n: {
             type: 'string',
             description: 'the number of images to create',
             enum: ['1', '2', '3', '4'],
@@ -112,7 +130,7 @@ export const DEFAULT_TOOLS = [
             enum: ['1024x1024', '1792x1024', '1024x1792'],
           },
         },
-        required: ['description', 'quality', 'style', 'count', 'size'],
+        required: ['prompt', 'quality', 'style', 'n', 'size'],
         additionalProperties: false,
       },
     },
@@ -166,7 +184,7 @@ export const config = {
     temperatureRange: OPEN_AI_TEMP_RANGE,
     temperatureOptions: OPEN_AI_TEMP_OPTIONS,
     tools: [
-      ...DEFAULT_TOOLS,
+      ...DEFAULT_OPENAI_TOOLS,
       {
         type: 'function',
         function: {
@@ -256,7 +274,7 @@ export const config = {
         input_schema: {
           type: 'object',
           properties: {
-            description: {
+            prompt: {
               type: 'string',
               description: 'the description of the image to create',
             },
@@ -270,7 +288,7 @@ export const config = {
               description: 'the style of the image to create',
               enum: ['vivid', 'natural'],
             },
-            count: {
+            n: {
               type: 'string',
               description: 'the number of images to create',
               enum: ['1', '2', '3', '4'],
@@ -281,7 +299,7 @@ export const config = {
               enum: ['1024x1024', '1792x1024', '1024x1792'],
             },
           },
-          required: ['description', 'quality', 'style', 'count', 'size'],
+          required: ['prompt', 'quality', 'style', 'n', 'size'],
         },
       },
       {

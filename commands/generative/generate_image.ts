@@ -1,6 +1,5 @@
 import {
   ChatInputCommandInteraction,
-  CollectedInteraction,
   MessageFlags,
   SlashCommandBuilder,
 } from 'discord.js';
@@ -39,48 +38,17 @@ const aiImageGenerateCommand: Command = {
             name: imageModelEnums.DALLE3,
             value: imageModelEnums.DALLE3,
           },
-        ),
-    )
-    .addStringOption((strOption) =>
-      strOption
-        .setName('quality')
-        .setDescription(
-          `The quality of image to generate (hd is only supported with ${imageModelEnums.DALLE3})`,
-        )
-        .addChoices(
           {
-            name: 'standard',
-            value: 'standard',
-          },
-          {
-            name: 'high definition',
-            value: 'hd',
-          },
-        ),
-    )
-    .addStringOption((strOption) =>
-      strOption
-        .setName('style')
-        .setDescription(
-          `The style of image to generate (style is only supported with ${imageModelEnums.DALLE3})`,
-        )
-        .addChoices(
-          {
-            name: 'vivid',
-            value: 'vivid',
-          },
-          {
-            name: 'natural',
-            value: 'natural',
+            name: imageModelEnums.GPT_IMAGE_1,
+            value: imageModelEnums.GPT_IMAGE_1,
           },
         ),
     )
     .addIntegerOption((intOption) =>
       intOption
         .setName('image_count')
-        .setDescription(
-          `The amount of images to generate (multiple images is only supported with ${imageModelEnums.DALLE2})`,
-        )
+        .setRequired(true)
+        .setDescription(`The amount of images to generate`)
         .addChoices(
           { name: '1', value: 1 },
           { name: '2', value: 2 },
@@ -91,74 +59,73 @@ const aiImageGenerateCommand: Command = {
   async execute(interaction: ChatInputCommandInteraction) {
     const interactionTag = generateInteractionTag();
     const user = interaction.user;
-    const { id: userId, username } = user;
-
-    const description = await interaction.options
+    const { username } = user;
+    const n = interaction.options.getInteger('image_count', true);
+    const prompt = interaction.options
       .getString('description', true)
       .toLowerCase();
-    const model = await interaction.options.getString('model', true);
-    let quality = (await interaction.options.getString('quality')) as
-      | 'standard'
-      | 'hd';
-    quality = quality ? quality : 'standard';
-    let style = (await interaction.options.getString('style')) as
-      | 'vivid'
-      | 'natural';
-    style = style ? style : 'vivid';
-    let imageCount = await interaction.options.getInteger('image_count', false);
-    imageCount = imageCount ? imageCount : 1;
-
-    // prompting the user for their desired image size(s) based on the image model selected
-    const actionRowComponent = imagesService.generateImageSizeSelection(
+    const model = interaction.options.getString(
+      'model',
+      true,
+    ) as imageModelEnums;
+    const imageGenerationOptions: GenerateImageOptions = {
+      prompt,
+      model,
+      n,
+    };
+    let imageSettingsSelectionCompleted = false;
+    const imageSelectionOptions = imagesService.generateImageSelectionOptions(
       model as imageModelEnums,
     );
-    const sizeResponse = await interaction.reply({
-      content: `Select a size for your image(s)`,
-      components: [actionRowComponent as any],
-      flags: MessageFlags.Ephemeral,
-    });
 
-    const collectorFilter = (message: CollectedInteraction) => {
-      return message?.user?.id === userId;
-    };
-    const imageSizeSelected = await sizeResponse
-      .awaitMessageComponent({
-        filter: collectorFilter,
-        time: 60000,
-      })
-      .catch(() => {
-        sizeResponse.delete();
-        throw new InteractionTimeOutError({
-          error: `:warning: Image generation cancelled. Image size selection timeout reached.`,
-        });
-      });
+    while (!imageSettingsSelectionCompleted) {
+      for (const imageOption of imageSelectionOptions) {
+        const optionIndex = imageSelectionOptions.indexOf(imageOption);
+        const { name, row } = imageOption;
+        const settingResponse =
+          imageSelectionOptions.indexOf(imageOption) === 0
+            ? await interaction.reply({
+                content: name,
+                components: [row as any],
+                flags: MessageFlags.Ephemeral,
+              })
+            : await interaction.editReply({
+                content: name,
+                components: [row as any],
+                // flags: MessageFlags.Ephemeral,
+              });
+        const imageOptionSelected = await settingResponse
+          .awaitMessageComponent({
+            time: 60000,
+          })
+          .catch(() => {
+            throw new InteractionTimeOutError({
+              error: `:warning: Image generation cancelled. Image selection timeout reached.`,
+            });
+          });
+        await imageOptionSelected.update({ components: [] });
+        (imageGenerationOptions as any)[name] = imageOptionSelected.customId;
 
-    const size = imageSizeSelected.customId;
-
-    // checking the model value provided to determine the payload sent to the openAI API
-    let imageGenerateOptions: GenerateImageOptions = {
-      model: model as imageModelEnums,
-      description: description,
-      size: size as any,
-      count: imageCount,
-    };
-
-    if (model === imageModelEnums.DALLE3) {
-      imageGenerateOptions = {
-        ...imageGenerateOptions,
-        quality,
-        style,
-      };
+        // If this is the last image option, set the flag to true
+        if (optionIndex === imageSelectionOptions.length - 1) {
+          imageSettingsSelectionCompleted = true;
+          await interaction.editReply({
+            content: `Options selected: ${JSON.stringify(imageGenerationOptions)}`,
+            components: [],
+          });
+        }
+      }
     }
 
-    await interaction.editReply({
+    await interaction.followUp({
       content: `${username} asked for an image, so I'm working on it :art:...`,
       components: [],
+      flags: MessageFlags.Ephemeral,
     });
     try {
       const imageFiles = await imagesService.generateImages(
         user,
-        imageGenerateOptions,
+        imageGenerationOptions,
         interactionTag,
       );
       const finalResponseMsg =
@@ -182,7 +149,7 @@ const aiImageGenerateCommand: Command = {
           components: [],
         });
         await interaction.followUp({
-          content: `What you told me to create: ${description}`,
+          content: `What you told me to create: ${prompt}`,
           flags: MessageFlags.Ephemeral,
         });
       }
