@@ -5,31 +5,28 @@ import {
   EmbedBuilder,
   User,
 } from 'discord.js';
-import { imageModelEnums } from '../../config';
+import { imageModelConfigOptions, imageModelEnums } from '../../config';
 import { ImageGenerateParams, ImagesResponse } from 'openai/resources';
 import { OpenAi } from '../..';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
-import axios from 'axios';
 import * as fs from 'fs';
 
 export interface GenerateImageOptions {
-  model?: imageModelEnums;
-  description: string;
+  prompt: string;
+  model: imageModelEnums;
+  background?: string;
+  n?: number;
+  output_format?: string;
   quality?: string;
+  size?: string;
   style?: string;
-  count: number;
-  size: string;
+  moderation?: string;
+  response_format?: string;
 }
 
 export default {
   generateImageSizeSelection(imageModel: imageModelEnums) {
-    const dalle2ImageSizes = ['256x256', '512x512', '1024x1024'];
-    const dalle3ImageSizes = ['1024x1024', '1792x1024', '1024x1792'];
-
-    const imageSizesToDisplay =
-      imageModel === imageModelEnums.DALLE3
-        ? dalle3ImageSizes
-        : dalle2ImageSizes;
+    const imageSizesToDisplay = imageModelConfigOptions[imageModel].size;
 
     const buttons = imageSizesToDisplay.map((size) => {
       return new ButtonBuilder()
@@ -43,12 +40,31 @@ export default {
     return row;
   },
 
+  generateImageSelectionOptions(imageModel: imageModelEnums) {
+    const imageSelectionOptions = [];
+    const imageSettingOptions = imageModelConfigOptions[imageModel];
+    for (const [key, value] of Object.entries(imageSettingOptions)) {
+      const buttons = value.map((option) => {
+        return new ButtonBuilder()
+          .setCustomId(option)
+          .setLabel(option)
+          .setStyle(ButtonStyle.Primary);
+      });
+      const row = new ActionRowBuilder().addComponents(buttons);
+      imageSelectionOptions.push({
+        name: key,
+        row,
+      });
+    }
+    return imageSelectionOptions;
+  },
+
   validateImageCreationOptions(imageOptions: GenerateImageOptions) {
     return (
-      typeof imageOptions.description === 'string' &&
+      typeof imageOptions.prompt === 'string' &&
       typeof imageOptions.quality === 'string' &&
       typeof imageOptions.style === 'string' &&
-      typeof imageOptions.count === 'number' &&
+      typeof imageOptions.n === 'number' &&
       typeof imageOptions.size === 'string' &&
       typeof imageOptions.model === 'string'
     );
@@ -60,46 +76,39 @@ export default {
     interactionTag: number,
   ) {
     const model = imageOptions.model;
-    const imagesToCreatePromises = Array(imageOptions.count)
+    // Setting the response format for the image generation request
+    // By default we use b64_json format for all models except GPT Image 1
+    model !== imageModelEnums.GPT_IMAGE_1
+      ? (imageOptions.response_format = 'b64_json')
+      : null;
+    // If the model is DALL-E 3, we need to perform multiple requests since it supports only one image per request
+    // otherwise we can generate multiple images in a single request
+    const promisesToCreate =
+      model === imageModelEnums.DALLE3 ? imageOptions.n : 1;
+    const imagesToCreatePromises = Array(promisesToCreate)
       .fill(imageOptions)
       .map((imageOpt: GenerateImageOptions) => {
-        const imageGenerateParams: ImageGenerateParams = {
-          prompt: imageOpt.description,
-          model: imageOpt.model,
-          n: imageOpt.count,
-          size: imageOpt.size as
-            | '256x256'
-            | '512x512'
-            | '1024x1024'
-            | '1792x1024'
-            | '1024x1792'
-            | null
-            | undefined,
-        };
         if (model === imageModelEnums.DALLE3) {
-          imageGenerateParams.n = 1;
-          imageGenerateParams.quality = imageOpt.quality as
-            | 'standard'
-            | 'hd'
-            | undefined;
-          imageGenerateParams.style = imageOpt.style as
-            | 'vivid'
-            | 'natural'
-            | null
-            | undefined;
+          imageOpt.n = 1;
         }
-        return OpenAi.images.generate(imageGenerateParams);
+        if (model === imageModelEnums.GPT_IMAGE_1) {
+          imageOpt.moderation = 'low';
+        }
+        return OpenAi.images.generate(imageOpt as ImageGenerateParams);
       });
 
     const imageResponses = await Promise.all(imagesToCreatePromises);
-    const imageUrls = imageResponses.reduce((acc, obj) => {
-      return acc.concat(obj.data[0].url as string);
+    const imageData = imageResponses.reduce((acc, obj) => {
+      return acc.concat(obj.data.map((image) => image.b64_json as string));
     }, [] as string[]);
 
-    const imageFiles = await this.downloadAndConvertImagesToJpeg(
-      imageUrls,
+    const imageFiles = this.convertImageDataToFiles(
+      imageData,
       user.username,
       interactionTag,
+      model === imageModelEnums.GPT_IMAGE_1
+        ? (imageOptions.output_format ?? 'jpeg')
+        : 'jpeg',
     );
 
     return imageFiles;
@@ -118,25 +127,17 @@ export default {
     return embeds;
   },
 
-  async downloadAndConvertImagesToJpeg(
-    imageUrls: string[],
+  convertImageDataToFiles(
+    imageData: string[],
     username: string,
     interactionTag: number,
+    fileExtension: string,
   ) {
     const imageFiles: string[] = [];
-    for (let i = 0; i < imageUrls.length; i++) {
-      const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i + 1}.jpeg`;
-      await axios
-        .get(imageUrls[i], {
-          responseType: 'arraybuffer',
-        })
-        .then((response) => {
-          fs.writeFileSync(imageFilePath, response.data);
-          imageFiles.push(imageFilePath);
-        })
-        .catch((err) => {
-          console.error(`Error downloading image:`, err);
-        });
+    for (let i = 0; i < imageData.length; i++) {
+      const imageFilePath = `${TEMP_FOLDER_PATH}/${username}-${interactionTag}-${i + 1}.${fileExtension}`;
+      fs.writeFileSync(imageFilePath, Buffer.from(imageData[i], 'base64'));
+      imageFiles.push(imageFilePath);
     }
     return imageFiles;
   },

@@ -219,7 +219,7 @@ export default {
           ...(input as GenerateImageOptions),
           model: imageModelEnums.DALLE3,
         };
-        imageGenerateOptions.count = Number(imageGenerateOptions.count);
+        imageGenerateOptions.n = Number(imageGenerateOptions.n);
         // Validation is required as the model may sometimes hallucinate and
         // generate invalid arguments
         if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {

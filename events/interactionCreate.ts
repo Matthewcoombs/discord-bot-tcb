@@ -33,7 +33,7 @@ const createInteractionEvent: Command = {
       );
     const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 
-    if (!cooldowns.has(command?.data?.name)) {
+    if (!cooldowns.has(command?.data?.name && commandName)) {
       cooldowns.set(command?.data?.name, new Collection());
     }
 
@@ -114,7 +114,7 @@ const createInteractionEvent: Command = {
     const cooldownAmount =
       (command?.cooldown ?? defaultCooldownDuration) * 1000;
 
-    if (timestamps.has(interaction.user.id)) {
+    if (timestamps.has(interaction.user.id) && commandName) {
       const expirationTime =
         timestamps.get(interaction.user.id) + cooldownAmount;
 

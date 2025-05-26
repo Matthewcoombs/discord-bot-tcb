@@ -10,7 +10,7 @@ import {
   FinalResponse,
   imageModelEnums,
   ProfileSettingsArgs,
-  DEFAULT_TOOLS,
+  DEFAULT_OPENAI_TOOLS,
 } from '../../config';
 import { OpenAi } from '../..';
 import imagesService, { GenerateImageOptions } from '../images/images.service';
@@ -272,7 +272,7 @@ export default {
       messages: chatCompletionMessages as any,
       tools: selectedProfile
         ? (config.openAi.tools as any)
-        : (DEFAULT_TOOLS as any),
+        : (DEFAULT_OPENAI_TOOLS as any),
       temperature: Number(selectedProfile?.temperature),
     });
 
@@ -304,7 +304,7 @@ export default {
           ...(JSON.parse(toolArgs) as GenerateImageOptions),
           model: imageModelEnums.DALLE3,
         };
-        imageGenerateOptions.count = Number(imageGenerateOptions.count);
+        imageGenerateOptions.n = Number(imageGenerateOptions.n);
         // Validation is required as the model may sometimes hallucinate and
         // generate invalid arguments
         if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {

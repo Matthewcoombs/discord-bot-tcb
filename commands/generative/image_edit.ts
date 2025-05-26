@@ -19,6 +19,7 @@ import { TEMP_FOLDER_PATH } from '../../shared/constants';
 import imagesService from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
 import { imageModelEnums } from '../../config';
+import { toFile } from 'openai';
 
 const aiImageEditCommand: Command = {
   data: new SlashCommandBuilder()
@@ -108,18 +109,22 @@ const aiImageEditCommand: Command = {
       await OpenAi.images
         .edit({
           prompt,
-          image: fs.createReadStream(tempImagePath) as any,
+          image: await toFile(fs.createReadStream(tempImagePath) as any, null, {
+            type: 'image/png',
+          }),
           n: imageCount,
           size: size as any,
+          response_format: 'b64_json',
         })
         .then(async (completion) => {
-          const imageUrls = completion.data.map(
-            (image) => image.url,
+          const imageData = completion.data.map(
+            (image) => image.b64_json,
           ) as string[];
-          await imagesService.downloadAndConvertImagesToJpeg(
-            imageUrls,
+          imagesService.convertImageDataToFiles(
+            imageData,
             username,
             interactionTag,
+            'jpeg',
           );
           let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
           imageFiles = imageFiles

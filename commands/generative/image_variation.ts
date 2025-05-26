@@ -19,6 +19,7 @@ import {
 import imagesService from '../../openAIClient/images/images.service';
 import { imageModelEnums } from '../../config';
 import { InteractionTimeOutError } from '../../shared/errors';
+import { toFile } from 'openai';
 
 const aiImageVariationCommand: Command = {
   data: new SlashCommandBuilder()
@@ -99,18 +100,22 @@ const aiImageVariationCommand: Command = {
 
       await OpenAi.images
         .createVariation({
-          image: fs.createReadStream(tempImagePath) as any,
+          image: await toFile(fs.createReadStream(tempImagePath) as any, null, {
+            type: 'image/png',
+          }),
           n: imageCount,
           size: size as any,
+          response_format: 'b64_json',
         })
         .then(async (completion) => {
-          const imageUrls = completion.data.map(
-            (image) => image.url,
+          const imageData = completion.data.map(
+            (image) => image.b64_json,
           ) as string[];
-          await imagesService.downloadAndConvertImagesToJpeg(
-            imageUrls,
+          imagesService.convertImageDataToFiles(
+            imageData,
             username,
             interactionTag,
+            'jpeg',
           );
           let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
           imageFiles = imageFiles
