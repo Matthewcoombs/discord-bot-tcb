@@ -1,7 +1,6 @@
 import {
   SlashCommandBuilder,
   ChatInputCommandInteraction,
-  CollectedInteraction,
   MessageFlags,
 } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
@@ -16,7 +15,9 @@ import {
 import { OpenAi } from '../..';
 import * as fs from 'fs';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
-import imagesService from '../../openAIClient/images/images.service';
+import imagesService, {
+  EditImageOptions,
+} from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
 import { imageModelEnums } from '../../config';
 import { toFile } from 'openai';
@@ -29,8 +30,22 @@ const aiImageEditCommand: Command = {
       image
         .setName('image_file')
         .setRequired(true)
-        .setDescription(
-          'Provide a square .png image file no larger then 4MB to create edits',
+        .setDescription('Provide a square .png image file'),
+    )
+    .addStringOption((strOption) =>
+      strOption
+        .setName('model')
+        .setDescription('The AI model to generate the image')
+        .setRequired(true)
+        .addChoices(
+          {
+            name: imageModelEnums.DALLE2,
+            value: imageModelEnums.DALLE2,
+          },
+          {
+            name: imageModelEnums.GPT_IMAGE_1,
+            value: imageModelEnums.GPT_IMAGE_1,
+          },
         ),
     )
     .addStringOption((strOption) =>
@@ -48,18 +63,17 @@ const aiImageEditCommand: Command = {
           { name: '2', value: 2 },
           { name: '3', value: 3 },
           { name: '4', value: 4 },
-        ),
+        )
+        .setRequired(true),
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     const interactionTag = generateInteractionTag();
     const username = interaction.user.username;
-    const userId = interaction.user.id;
-
-    let imageCount = interaction.options.getInteger(
-      'image_count',
-      false,
-    ) as number;
-    imageCount = imageCount ? imageCount : 1;
+    const model = interaction.options.getString(
+      'model',
+      true,
+    ) as imageModelEnums;
+    const n = interaction.options.getInteger('image_count', true);
     const imageAttachment = interaction.options.getAttachment(
       'image_file',
       true,
@@ -67,32 +81,54 @@ const aiImageEditCommand: Command = {
     const prompt = interaction.options.getString('edit_description', true);
     const tempImageName = `${interaction.id}-${imageAttachment.name}`;
 
-    // prompting the user for their desired image size(s) based on the image model selected
-    const actionRowComponent = imagesService.generateImageSizeSelection(
-      imageModelEnums.DALLE2,
-    );
-    const sizeResponse = await interaction.reply({
-      content: `Select a size for your image(s)`,
-      components: [actionRowComponent as any],
-      flags: MessageFlags.Ephemeral,
-    });
-
-    const collectorFilter = (message: CollectedInteraction) => {
-      return message?.user?.id === userId;
+    const imageEditOptions: EditImageOptions = {
+      prompt,
+      model,
+      n,
     };
-    const imageSizeSelected = await sizeResponse
-      .awaitMessageComponent({
-        filter: collectorFilter,
-        time: 60000,
-      })
-      .catch(() => {
-        sizeResponse.delete();
-        throw new InteractionTimeOutError({
-          error: `:warning: Image edit cancelled. Image size selection timeout reached.`,
-        });
-      });
+    let imageSettingsSelectionCompleted = false;
+    const imageSelectionOptions = imagesService.generateImageSelectionOptions(
+      model as imageModelEnums,
+      'edit',
+    );
 
-    const size = imageSizeSelected.customId;
+    while (!imageSettingsSelectionCompleted) {
+      for (const imageOption of imageSelectionOptions) {
+        const optionIndex = imageSelectionOptions.indexOf(imageOption);
+        const { name, row } = imageOption;
+        const settingResponse =
+          imageSelectionOptions.indexOf(imageOption) === 0
+            ? await interaction.reply({
+                content: name,
+                components: [row as any],
+                flags: MessageFlags.Ephemeral,
+              })
+            : await interaction.editReply({
+                content: name,
+                components: [row as any],
+              });
+        const imageOptionSelected = await settingResponse
+          .awaitMessageComponent({
+            time: 60000,
+          })
+          .catch(() => {
+            throw new InteractionTimeOutError({
+              error: `:warning: Image edits cancelled. Image option selection timeout reached.`,
+            });
+          });
+        await imageOptionSelected.update({ components: [] });
+        (imageEditOptions as any)[name] = imageOptionSelected.customId;
+
+        // If this is the last image option, set the flag to true
+        if (optionIndex === imageSelectionOptions.length - 1) {
+          imageSettingsSelectionCompleted = true;
+          await interaction.editReply({
+            content: `Options selected: ${JSON.stringify(imageEditOptions)}`,
+            components: [],
+          });
+        }
+      }
+    }
 
     await interaction.editReply({
       content: `Hi ${username}, I'm currently processing your image edit request :art:...`,
@@ -100,21 +136,20 @@ const aiImageEditCommand: Command = {
     });
 
     try {
-      validateImage(imageAttachment);
+      validateImage(imageAttachment, model);
       const imageBufferData = await getRemoteFileBufferData(
         imageAttachment.url,
       );
       const tempImagePath = createTempFile(imageBufferData, tempImageName);
-
+      model === imageModelEnums.DALLE2
+        ? (imageEditOptions.response_format = 'b64_json')
+        : null;
       await OpenAi.images
         .edit({
-          prompt,
+          ...(imageEditOptions as any),
           image: await toFile(fs.createReadStream(tempImagePath) as any, null, {
             type: 'image/png',
           }),
-          n: imageCount,
-          size: size as any,
-          response_format: 'b64_json',
         })
         .then(async (completion) => {
           const imageData = completion.data.map(
@@ -135,7 +170,7 @@ const aiImageEditCommand: Command = {
             )
             .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
           deleteTempFilesByName([tempImageName]);
-          await interaction.editReply({
+          await interaction.followUp({
             content: `Here are your image edits ${username} :blush:`,
             files: imageFiles,
           });
@@ -143,9 +178,11 @@ const aiImageEditCommand: Command = {
         });
     } catch (err: any) {
       if (err?.code !== 'InteractionCollectorError') {
+        const errorMessage = err?.errorData?.error;
         console.error(err);
         await interaction.editReply(
-          `Sorry there was an issue creating an image variation :disappointed:`,
+          errorMessage ||
+            `Sorry there was an issue creating an image variation :disappointed:`,
         );
       }
       deleteTempFilesByName([tempImageName]);

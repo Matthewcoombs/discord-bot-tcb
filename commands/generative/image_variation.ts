@@ -92,7 +92,7 @@ const aiImageVariationCommand: Command = {
     });
 
     try {
-      validateImage(imageAttachment);
+      validateImage(imageAttachment, imageModelEnums.DALLE2);
       const imageBufferData = await getRemoteFileBufferData(
         imageAttachment.url,
       );

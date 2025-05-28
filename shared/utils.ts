@@ -9,7 +9,7 @@ import {
 import axios from 'axios';
 import { Attachment } from 'discord.js';
 import { JsonContent } from '../openAIClient/chatCompletion/chatCompletion.service';
-import { config } from '../config';
+import { config, imageModelEnums } from '../config';
 
 export function generateInteractionTag() {
   return Math.floor(10000 + Math.random() * 90000);
@@ -84,18 +84,29 @@ export function deleteTempFilesByTag(interactionTag: number) {
   }
 }
 
-export function validateImage(imageAttachment: Attachment) {
-  const imageType = 'image/png';
-  if (imageAttachment.contentType !== imageType) {
+export function validateImage(
+  imageAttachment: Attachment,
+  model: imageModelEnums,
+) {
+  const supportedImageTypes =
+    model === imageModelEnums.DALLE2
+      ? ['image/png']
+      : ['image/png', 'image/jpg', 'image/webp', 'image/jpeg'];
+  const supportedImageSize =
+    model === imageModelEnums.DALLE2 ? 4000000 : 25000000;
+  if (
+    !imageAttachment.contentType ||
+    !supportedImageTypes.includes(imageAttachment.contentType)
+  ) {
     throw new InvalidFileTypeError({
-      error: `The image provided must be of type '${imageType}'`,
+      error: `The image provided must be of type(s) '${supportedImageTypes.join(', ')}'`,
       metaData: imageAttachment,
     });
   }
 
-  if (imageAttachment.size > config.imageTouchUpSizeLimit) {
+  if (imageAttachment.size > supportedImageSize) {
     throw new InvalidFileSizeError({
-      error: `The Image provided is too large. Images should be no more than 4MB`,
+      error: `The Image provided is too large. Images should be no more than ${supportedImageSize / 1000000}MB`,
       metaData: imageAttachment,
     });
   }
