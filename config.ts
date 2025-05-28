@@ -76,18 +76,32 @@ export interface ProfileSettingsArgs {
 
 export const imageModelConfigOptions = {
   [imageModelEnums.DALLE2]: {
-    size: ['256x256', '512x512', '1024x1024'],
+    imageGeneration: {
+      size: ['256x256', '512x512', '1024x1024'],
+    },
+    imageEdit: {
+      size: ['256x256', '512x512', '1024x1024'],
+    },
   },
   [imageModelEnums.DALLE3]: {
-    size: ['1024x1024', '1792x1024', '1024x1792'],
-    quality: ['hd', 'standard', 'auto'],
-    style: ['vivid', 'natural'],
+    imageGeneration: {
+      size: ['1024x1024', '1792x1024', '1024x1792'],
+      quality: ['hd', 'standard', 'auto'],
+      style: ['vivid', 'natural'],
+    },
+    imageEdit: {},
   },
   [imageModelEnums.GPT_IMAGE_1]: {
-    size: ['1024x1024', '1536x1024', '1024x1536'],
-    quality: ['high', 'medium', 'low'],
-    output_format: ['jpeg', 'png', 'webp'],
-    background: ['transparent', 'opaque', 'auto'],
+    imageGeneration: {
+      size: ['1024x1024', '1792x1024', '1024x1792'],
+      quality: ['hd', 'standard', 'auto'],
+      style: ['vivid', 'natural'],
+    },
+    imageEdit: {
+      size: ['1024x1024', '1536x1024', '1024x1536'],
+      quality: ['high', 'medium', 'low'],
+      background: ['transparent', 'opaque', 'auto'],
+    },
   },
 };
 
@@ -406,7 +420,5 @@ export const config = {
   singleInstanceCommandsLimit: 4,
   messageCollectorsLimit: 100,
   discordReplyLengthLimit: 2000,
-  // Setting 4mb image size limit
-  imageTouchUpSizeLimit: 4000000,
   generativeConstraints: `\nNOTE keep your responses as short, clear, and concise as possible. Your messages should not exceed 2000 characters unless absolutely necessary.`,
 };

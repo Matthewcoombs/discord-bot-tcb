@@ -24,9 +24,21 @@ export interface GenerateImageOptions {
   response_format?: string;
 }
 
+export interface EditImageOptions {
+  prompt: string;
+  image?: string;
+  model?: imageModelEnums;
+  n?: number;
+  size?: string;
+  background?: string;
+  response_format?: string;
+  quality?: string;
+}
+
 export default {
   generateImageSizeSelection(imageModel: imageModelEnums) {
-    const imageSizesToDisplay = imageModelConfigOptions[imageModel].size;
+    const imageSizesToDisplay =
+      imageModelConfigOptions[imageModel].imageGeneration.size;
 
     const buttons = imageSizesToDisplay.map((size) => {
       return new ButtonBuilder()
@@ -40,21 +52,30 @@ export default {
     return row;
   },
 
-  generateImageSelectionOptions(imageModel: imageModelEnums) {
+  generateImageSelectionOptions(
+    imageModel: imageModelEnums,
+    action: 'generate' | 'edit',
+  ) {
     const imageSelectionOptions = [];
     const imageSettingOptions = imageModelConfigOptions[imageModel];
-    for (const [key, value] of Object.entries(imageSettingOptions)) {
-      const buttons = value.map((option) => {
-        return new ButtonBuilder()
-          .setCustomId(option)
-          .setLabel(option)
-          .setStyle(ButtonStyle.Primary);
-      });
-      const row = new ActionRowBuilder().addComponents(buttons);
-      imageSelectionOptions.push({
-        name: key,
-        row,
-      });
+    for (const [key, value] of Object.entries(
+      action === 'generate'
+        ? imageSettingOptions.imageGeneration
+        : imageSettingOptions.imageEdit,
+    )) {
+      if (Array.isArray(value)) {
+        const buttons = value.map((option) => {
+          return new ButtonBuilder()
+            .setCustomId(option)
+            .setLabel(option)
+            .setStyle(ButtonStyle.Primary);
+        });
+        const row = new ActionRowBuilder().addComponents(buttons);
+        imageSelectionOptions.push({
+          name: key,
+          row,
+        });
+      }
     }
     return imageSelectionOptions;
   },

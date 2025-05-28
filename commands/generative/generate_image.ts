@@ -76,6 +76,7 @@ const aiImageGenerateCommand: Command = {
     let imageSettingsSelectionCompleted = false;
     const imageSelectionOptions = imagesService.generateImageSelectionOptions(
       model as imageModelEnums,
+      'generate',
     );
 
     while (!imageSettingsSelectionCompleted) {
