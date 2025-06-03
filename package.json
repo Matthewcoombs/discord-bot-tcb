@@ -25,7 +25,7 @@
     "axios": "^1.9.0",
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.5",
-    "openai": "^4.87.3",
+    "openai": "^5.0.1",
     "pg": "^8.14.1"
   },
   "devDependencies": {
