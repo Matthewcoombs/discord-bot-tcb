@@ -24,6 +24,17 @@ export interface GenerateImageOptions {
   response_format?: string;
 }
 
+export interface ToolCallGenerateImageOptions {
+  prompt: string;
+  model: imageModelEnums;
+  n?: number;
+  dalle3Size?: string;
+  gptImage1Size?: string;
+  dalle3Quality?: string;
+  gptImage1Quality?: string;
+  style?: string;
+}
+
 export interface EditImageOptions {
   prompt: string;
   image?: string;
@@ -80,15 +91,58 @@ export default {
     return imageSelectionOptions;
   },
 
-  validateImageCreationOptions(imageOptions: GenerateImageOptions) {
-    return (
-      typeof imageOptions.prompt === 'string' &&
-      typeof imageOptions.quality === 'string' &&
-      typeof imageOptions.style === 'string' &&
-      typeof imageOptions.n === 'number' &&
-      typeof imageOptions.size === 'string' &&
-      typeof imageOptions.model === 'string'
-    );
+  validateImageCreationOptions(imageOptions: ToolCallGenerateImageOptions) {
+    if (!imageOptions?.model || typeof imageOptions.model !== 'string') {
+      return false;
+    }
+    if (!imageOptions?.prompt || typeof imageOptions.prompt !== 'string') {
+      return false;
+    }
+    if (!imageOptions?.n && typeof imageOptions.n !== 'string') {
+      return false;
+    }
+    if (!imageOptions?.style && typeof imageOptions.style !== 'string') {
+      return false;
+    }
+    if (
+      !imageOptions?.dalle3Size &&
+      !imageOptions?.gptImage1Size &&
+      typeof imageOptions.dalle3Size !== 'string' &&
+      typeof imageOptions.gptImage1Size !== 'string'
+    ) {
+      return false;
+    }
+    if (
+      !imageOptions?.dalle3Quality &&
+      !imageOptions?.gptImage1Quality &&
+      typeof imageOptions.dalle3Quality !== 'string' &&
+      typeof imageOptions.gptImage1Quality !== 'string'
+    ) {
+      return false;
+    }
+    // If all checks pass, return true
+    return true;
+  },
+
+  translateToolCallImageOptionsToGenerateImageOptions(
+    toolCallImageOptions: ToolCallGenerateImageOptions,
+  ) {
+    return {
+      model: toolCallImageOptions.model,
+      prompt: toolCallImageOptions.prompt,
+      n: Number(toolCallImageOptions.n),
+      size:
+        toolCallImageOptions.model === imageModelEnums.DALLE3
+          ? toolCallImageOptions.dalle3Size
+          : toolCallImageOptions.gptImage1Size,
+      quality:
+        toolCallImageOptions.model === imageModelEnums.DALLE3
+          ? toolCallImageOptions.dalle3Quality
+          : toolCallImageOptions.gptImage1Quality,
+      ...(toolCallImageOptions.model === imageModelEnums.DALLE3 && {
+        style: toolCallImageOptions.style,
+      }),
+    };
   },
 
   async generateImages(

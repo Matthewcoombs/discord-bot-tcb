@@ -8,12 +8,14 @@ import {
   textBasedModelEnums,
   config,
   FinalResponse,
-  imageModelEnums,
   ProfileSettingsArgs,
   DEFAULT_OPENAI_TOOLS,
 } from '../../config';
 import { OpenAi } from '../..';
-import imagesService, { GenerateImageOptions } from '../images/images.service';
+import imagesService, {
+  GenerateImageOptions,
+  ToolCallGenerateImageOptions,
+} from '../images/images.service';
 import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
 import {
   CLEAR_RETENTION_DATA,
@@ -300,20 +302,22 @@ export default {
 
     switch (toolName) {
       case openaiToolsEnum.GENERATE_IMAGE: {
-        const imageGenerateOptions = {
-          ...(JSON.parse(toolArgs) as GenerateImageOptions),
-          model: imageModelEnums.DALLE3,
-        };
-        imageGenerateOptions.n = Number(imageGenerateOptions.n);
+        const toolCallImageOptions = JSON.parse(
+          toolArgs,
+        ) as ToolCallGenerateImageOptions;
         // Validation is required as the model may sometimes hallucinate and
         // generate invalid arguments
-        if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {
+        if (!imagesService.validateImageCreationOptions(toolCallImageOptions)) {
           toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
           break;
         }
+        const imageOptions: GenerateImageOptions =
+          imagesService.translateToolCallImageOptionsToGenerateImageOptions(
+            toolCallImageOptions,
+          );
         const imageFiles = await imagesService.generateImages(
           user,
-          imageGenerateOptions,
+          imageOptions,
           interactionTag,
         );
         toolResponse = {
