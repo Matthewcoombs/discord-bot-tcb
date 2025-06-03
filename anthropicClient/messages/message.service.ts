@@ -3,7 +3,6 @@ import { Anthropic } from '../..';
 import {
   anthropicToolsEnum,
   config,
-  imageModelEnums,
   ProfileSettingsArgs,
   textBasedModelEnums,
 } from '../../config';
@@ -215,19 +214,21 @@ export default {
 
     switch (toolName) {
       case anthropicToolsEnum.GENERATE_IMAGE: {
-        const imageGenerateOptions = {
+        const toolCallImageOptions = {
           ...(input as GenerateImageOptions),
-          model: imageModelEnums.DALLE3,
         };
-        imageGenerateOptions.n = Number(imageGenerateOptions.n);
         // Validation is required as the model may sometimes hallucinate and
         // generate invalid arguments
-        if (!imagesService.validateImageCreationOptions(imageGenerateOptions)) {
+        if (!imagesService.validateImageCreationOptions(toolCallImageOptions)) {
           toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
         }
+        const imageOptions: GenerateImageOptions =
+          imagesService.translateToolCallImageOptionsToGenerateImageOptions(
+            toolCallImageOptions,
+          );
         const imageFiles = await imagesService.generateImages(
           user,
-          imageGenerateOptions,
+          imageOptions,
           interactionTag,
         );
         toolResponse = {

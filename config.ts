@@ -93,9 +93,8 @@ export const imageModelConfigOptions = {
   },
   [imageModelEnums.GPT_IMAGE_1]: {
     imageGeneration: {
-      size: ['1024x1024', '1792x1024', '1024x1792'],
-      quality: ['hd', 'standard', 'auto'],
-      style: ['vivid', 'natural'],
+      size: ['1024x1024', '1536x1024', '1024x1536'],
+      quality: ['high', 'medium', 'low'],
     },
     imageEdit: {
       size: ['1024x1024', '1536x1024', '1024x1536'],
@@ -119,18 +118,31 @@ export const DEFAULT_OPENAI_TOOLS = [
       parameters: {
         type: 'object',
         properties: {
+          model: {
+            type: 'string',
+            description: 'the model used to generate the image',
+            enum: [imageModelEnums.DALLE3, imageModelEnums.GPT_IMAGE_1],
+          },
           prompt: {
             type: 'string',
             description: 'the description of the image to create',
           },
-          quality: {
+          dalle3Quality: {
             type: 'string',
-            description: 'the quality of the image to create',
+            description:
+              'the quality of the image to create. This is only used for dalle3',
             enum: ['standard', 'hd'],
+          },
+          gptImage1Quality: {
+            type: 'string',
+            description:
+              'the quality of the image to create. This is only used for gpt-image-1',
+            enum: ['high', 'medium', 'low'],
           },
           style: {
             type: 'string',
-            description: 'the style of the image to create',
+            description:
+              'the style of the image to create. This is only used for dalle3',
             enum: ['vivid', 'natural'],
           },
           n: {
@@ -138,13 +150,29 @@ export const DEFAULT_OPENAI_TOOLS = [
             description: 'the number of images to create',
             enum: ['1', '2', '3', '4'],
           },
-          size: {
+          dalle3Size: {
             type: 'string',
-            description: 'the size of image to create',
+            description:
+              'the size of image to create. This is only used for dalle3',
             enum: ['1024x1024', '1792x1024', '1024x1792'],
           },
+          gptImage1Size: {
+            type: 'string',
+            description:
+              'the size of image to create. This is only used for gpt-image-1',
+            enum: ['1024x1024', '1536x1024', '1024x1536'],
+          },
         },
-        required: ['prompt', 'quality', 'style', 'n', 'size'],
+        required: [
+          'model',
+          'dalle3Quality',
+          'gptImage1Quality',
+          'prompt',
+          'style',
+          'n',
+          'dalle3Size',
+          'gptImage1Size',
+        ],
         additionalProperties: false,
       },
     },
@@ -288,18 +316,31 @@ export const config = {
         input_schema: {
           type: 'object',
           properties: {
+            model: {
+              type: 'string',
+              description: 'the model used to generate the image',
+              enum: [imageModelEnums.DALLE3, imageModelEnums.GPT_IMAGE_1],
+            },
             prompt: {
               type: 'string',
               description: 'the description of the image to create',
             },
-            quality: {
+            dalle3Quality: {
               type: 'string',
-              description: 'the quality of the image to create',
+              description:
+                'the quality of the image to create. This is only used for dalle3',
               enum: ['standard', 'hd'],
+            },
+            gptImage1Quality: {
+              type: 'string',
+              description:
+                'the quality of the image to create. This is only used for gpt-image-1',
+              enum: ['high', 'medium', 'low'],
             },
             style: {
               type: 'string',
-              description: 'the style of the image to create',
+              description:
+                'the style of the image to create. This is only used for dalle3',
               enum: ['vivid', 'natural'],
             },
             n: {
@@ -307,13 +348,29 @@ export const config = {
               description: 'the number of images to create',
               enum: ['1', '2', '3', '4'],
             },
-            size: {
+            dalle3Size: {
               type: 'string',
-              description: 'the size of image to create',
+              description:
+                'the size of image to create. This is only used for dalle3',
               enum: ['1024x1024', '1792x1024', '1024x1792'],
             },
+            gptImage1Size: {
+              type: 'string',
+              description:
+                'the size of image to create. This is only used for gpt-image-1',
+              enum: ['1024x1024', '1536x1024', '1024x1536'],
+            },
           },
-          required: ['prompt', 'quality', 'style', 'n', 'size'],
+          required: [
+            'model',
+            'prompt',
+            'dalle3Quality',
+            'gptImage1Quality',
+            'style',
+            'n',
+            'dalle3Size',
+            'gptImage1Size',
+          ],
         },
       },
       {
