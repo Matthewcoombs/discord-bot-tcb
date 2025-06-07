@@ -174,7 +174,10 @@ export default {
 
     const imageResponses = await Promise.all(imagesToCreatePromises);
     const imageData = imageResponses.reduce((acc, obj) => {
-      return acc.concat(obj.data.map((image) => image.b64_json as string));
+      if (obj.data) {
+        return acc.concat(obj.data.map((image) => image.b64_json as string));
+      }
+      return acc;
     }, [] as string[]);
 
     const imageFiles = this.convertImageDataToFiles(
@@ -190,14 +193,16 @@ export default {
   },
 
   generateImageEmbeds(generatedImages: ImagesResponse, username: string) {
-    const embeds = generatedImages.data.map((image) => {
+    const data = generatedImages.data ?? [];
+    const embeds = data.map((image) => {
       const imageUrl = image?.url as string;
       return new EmbedBuilder().setURL(imageUrl).setImage(imageUrl);
     });
 
-    const title = `${username}'s image(s)`;
-
-    embeds[0].setTitle(title);
+    if (embeds.length > 0) {
+      const title = `${username}'s image(s)`;
+      embeds[0].setTitle(title);
+    }
 
     return embeds;
   },

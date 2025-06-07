@@ -16,7 +16,6 @@ import imagesService, {
   GenerateImageOptions,
   ToolCallGenerateImageOptions,
 } from '../images/images.service';
-import { ParsedFunctionToolCall } from 'openai/resources/beta/chat/completions';
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
@@ -25,6 +24,7 @@ import {
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
+import { ChatCompletionMessageToolCall } from 'openai/resources';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -286,7 +286,7 @@ export default {
 
   async processOpenAIToolCalls(
     user: User,
-    toolCalls: ParsedFunctionToolCall[],
+    toolCalls: ChatCompletionMessageToolCall[],
     interactionTag: number,
   ): Promise<MessageCreateOptions> {
     let toolResponse: MessageCreateOptions = {};
