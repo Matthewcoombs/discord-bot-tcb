@@ -152,7 +152,7 @@ const aiImageEditCommand: Command = {
           }),
         })
         .then(async (completion) => {
-          const imageData = completion.data.map(
+          const imageData = completion?.data?.map(
             (image) => image.b64_json,
           ) as string[];
           imagesService.convertImageDataToFiles(

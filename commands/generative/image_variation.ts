@@ -108,7 +108,7 @@ const aiImageVariationCommand: Command = {
           response_format: 'b64_json',
         })
         .then(async (completion) => {
-          const imageData = completion.data.map(
+          const imageData = completion?.data?.map(
             (image) => image.b64_json,
           ) as string[];
           imagesService.convertImageDataToFiles(

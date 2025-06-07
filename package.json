@@ -23,22 +23,22 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "axios": "^1.9.0",
-    "discord.js": "^14.18.0",
-    "dotenv": "^16.4.5",
-    "openai": "^5.0.1",
-    "pg": "^8.14.1"
+    "discord.js": "^14.19.3",
+    "dotenv": "^16.5.0",
+    "openai": "^5.1.1",
+    "pg": "^8.16.0"
   },
   "devDependencies": {
-    "@types/pg": "^8.11.11",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@types/pg": "^8.15.4",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "eslint": "^8.57.0",
-    "eslint-config-prettier": "^10.1.1",
-    "eslint-plugin-prettier": "^5.2.3",
-    "nodemon": "^3.1.9",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.4.1",
     "husky": "^9.1.7",
+    "nodemon": "^3.1.10",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.1.6"
+    "typescript": "^5.8.3"
   }
 }
