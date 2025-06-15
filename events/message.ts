@@ -105,6 +105,7 @@ function processAttachedFiles(message: Message<boolean>) {
 }
 
 async function processOpenAIMessageService(
+  chatInstanceCollector: Collection<string, ChatInstance>,
   userMessageInstance: ChatInstance,
   collected: Message<boolean>[],
   user: User,
@@ -129,7 +130,8 @@ async function processOpenAIMessageService(
     finalResponse = await chatCompletionService.processOpenAIToolCalls(
       user,
       toolCalls,
-      userMessageInstance.interactionTag,
+      chatInstanceCollector,
+      userMessageInstance,
     );
   } else {
     finalResponse.content = content as string;
@@ -141,6 +143,7 @@ async function processOpenAIMessageService(
 }
 
 async function processAnthropicMessageService(
+  chatInstanceCollector: Collection<string, ChatInstance>,
   userMessageInstance: ChatInstance,
   collected: Message<boolean>[],
   user: User,
@@ -160,7 +163,8 @@ async function processAnthropicMessageService(
     finalResponse = await messageService.processAnthropicToolCalls(
       user,
       toolUse,
-      userMessageInstance.interactionTag,
+      chatInstanceCollector,
+      userMessageInstance,
     );
   }
   return { finalResponse, endChat };
@@ -288,6 +292,7 @@ const directMessageEvent: Command = {
         switch (userMessageInstance.selectedProfile?.service) {
           case aiServiceEnums.ANTHROPIC: {
             const anthropicServiceResp = await processAnthropicMessageService(
+              chatInstanceCollector,
               userMessageInstance,
               collected,
               user,
@@ -301,6 +306,7 @@ const directMessageEvent: Command = {
           default: {
             // adding default logic for users with no profile set.
             const openAIServiceResp = await processOpenAIMessageService(
+              chatInstanceCollector,
               userMessageInstance,
               collected,
               user,
