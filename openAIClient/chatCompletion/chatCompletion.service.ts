@@ -1,4 +1,10 @@
-import { EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
+import {
+  Collection,
+  EmbedBuilder,
+  Message,
+  MessageCreateOptions,
+  User,
+} from 'discord.js';
 import userProfilesDao, {
   UserProfile,
 } from '../../database/user_profiles/userProfilesDao';
@@ -25,6 +31,7 @@ import {
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
 import { ChatCompletionMessageToolCall } from 'openai/resources';
+import { ChatInstance } from '../../shared/discord-js-types';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -287,9 +294,11 @@ export default {
   async processOpenAIToolCalls(
     user: User,
     toolCalls: ChatCompletionMessageToolCall[],
-    interactionTag: number,
+    ChatInstanceCollector: Collection<string, ChatInstance>,
+    userChatInstance: ChatInstance,
   ): Promise<MessageCreateOptions> {
     let toolResponse: MessageCreateOptions = {};
+    const { interactionTag } = userChatInstance;
     const toolCall = toolCalls[0];
     const { id, type } = toolCall;
     const { name: toolName, arguments: toolArgs } = toolCall.function;
@@ -365,6 +374,8 @@ export default {
             selectedProfile.temperature = Number(settingUpdateArgs.temperature);
           }
         }
+        userChatInstance.selectedProfile = selectedProfile;
+        ChatInstanceCollector.set(user.id, userChatInstance);
         await userProfilesDao.updateUserProfile(selectedProfile);
         toolResponse = {
           content: `successfully updated user profile setting(s) - **${settingUpdateArgs.selectedSettings}**`,

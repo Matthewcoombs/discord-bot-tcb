@@ -1,4 +1,10 @@
-import { EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
+import {
+  Collection,
+  EmbedBuilder,
+  Message,
+  MessageCreateOptions,
+  User,
+} from 'discord.js';
 import { Anthropic } from '../..';
 import {
   anthropicToolsEnum,
@@ -21,6 +27,7 @@ import {
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
+import { ChatInstance } from '../../shared/discord-js-types';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -202,9 +209,11 @@ export default {
   async processAnthropicToolCalls(
     user: User,
     toolCalls: ToolUseBlock,
-    interactionTag: number,
+    ChatInstanceCollector: Collection<string, ChatInstance>,
+    userChatInstance: ChatInstance,
   ): Promise<MessageCreateOptions> {
     let toolResponse: MessageCreateOptions = {};
+    const { interactionTag } = userChatInstance;
     const { name: toolName, input, id, type } = toolCalls;
     const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
       { name: 'id', value: id as string, inline: true },
@@ -274,6 +283,8 @@ export default {
             selectedProfile.temperature = Number(profileSettings.temperature);
           }
         }
+        userChatInstance.selectedProfile = selectedProfile;
+        ChatInstanceCollector.set(user.id, userChatInstance);
         await userProfilesDao.updateUserProfile(selectedProfile);
         toolResponse = {
           content: `Successfully updated profile setting(s) - **${profileSettings.selectedSettings}**`,
