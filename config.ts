@@ -259,7 +259,8 @@ export const config = {
               },
               timeout: {
                 type: 'string',
-                description: 'the timeout the profile will use',
+                description:
+                  'the timeout the profile will use warn the user this will not be applied to the current session',
                 enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
               },
               retention: {
@@ -312,7 +313,7 @@ export const config = {
       {
         name: anthropicToolsEnum.GENERATE_IMAGE,
         description:
-          'Creates an image for the user. Call this when the user explicitly asks to create an image',
+          'Creates an image for the user call this when the user explicitly asks to create an image',
         input_schema: {
           type: 'object',
           properties: {
@@ -328,19 +329,19 @@ export const config = {
             dalle3Quality: {
               type: 'string',
               description:
-                'the quality of the image to create. This is only used for dalle3',
+                'the quality of the image to create this is only used for dalle3',
               enum: ['standard', 'hd'],
             },
             gptImage1Quality: {
               type: 'string',
               description:
-                'the quality of the image to create. This is only used for gpt-image-1',
+                'the quality of the image to create this is only used for gpt-image-1',
               enum: ['high', 'medium', 'low'],
             },
             style: {
               type: 'string',
               description:
-                'the style of the image to create. This is only used for dalle3',
+                'the style of the image to create this is only used for dalle3',
               enum: ['vivid', 'natural'],
             },
             n: {
@@ -351,13 +352,13 @@ export const config = {
             dalle3Size: {
               type: 'string',
               description:
-                'the size of image to create. This is only used for dalle3',
+                'the size of image to create this is only used for dalle3',
               enum: ['1024x1024', '1792x1024', '1024x1792'],
             },
             gptImage1Size: {
               type: 'string',
               description:
-                'the size of image to create. This is only used for gpt-image-1',
+                'the size of image to create this is only used for gpt-image-1',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
           },
@@ -381,7 +382,7 @@ export const config = {
           properties: {
             selectedSettings: {
               description:
-                'the settings chosen to update. This will be used to determine which setting to update',
+                'the settings chosen to update this will be used to determine which setting to update',
               type: 'array',
               items: {
                 type: 'string',
@@ -402,7 +403,8 @@ export const config = {
             },
             timeout: {
               type: 'string',
-              description: 'the timeout the profile will use',
+              description:
+                'the timeout the profile will use warn the user this will not be applied to the current session',
               enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
             },
             retention: {
@@ -450,7 +452,7 @@ export const config = {
             finalResponse: {
               type: 'string',
               description:
-                'the final response to the user. This will be sent to the user',
+                'the final response to the user this will be sent to the user',
             },
           },
           required: ['finalResponse'],
