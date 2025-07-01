@@ -26,7 +26,7 @@
     "discord.js": "^14.19.3",
     "dotenv": "^16.5.0",
     "openai": "^5.1.1",
-    "pg": "^8.16.0"
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/pg": "^8.15.4",
