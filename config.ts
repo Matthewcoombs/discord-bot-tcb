@@ -106,7 +106,7 @@ export const imageModelConfigOptions = {
 
 // These are the default tools available to users who have not set up their profile(s).
 // By default users with no profile will have access to openai services, so the
-// default tools are set to openai tools.
+// default tools are set to openai tools
 export const DEFAULT_OPENAI_TOOLS = [
   {
     type: 'function',
