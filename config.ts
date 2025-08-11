@@ -23,10 +23,11 @@ export enum imageModelEnums {
 }
 
 export enum textBasedModelEnums {
-  GPT4O = 'gpt-4o',
-  GPT40_MINI = 'gpt-4o-mini',
   GPT41 = 'gpt-4.1-2025-04-14',
   GPT41_MINI = 'gpt-4.1-mini-2025-04-14',
+  GPT5 = 'gpt-5-2025-08-07',
+  GPT5_NANO = 'gpt-5-nano-2025-08-07',
+  GPT5_MINI = 'gpt-5-mini-2025-08-07',
   CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20241022',
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
@@ -44,15 +45,19 @@ export enum anthropicToolsEnum {
 }
 
 export const IMAGE_PROCESSING_MODELS = [
-  textBasedModelEnums.GPT40_MINI,
-  textBasedModelEnums.GPT4O,
+  textBasedModelEnums.GPT41_MINI,
+  textBasedModelEnums.GPT41,
+  textBasedModelEnums.GPT5,
+  textBasedModelEnums.GPT5_NANO,
+  textBasedModelEnums.GPT5_MINI,
 ];
 
 export const OPEN_AI_TEXT_MODELS = [
-  textBasedModelEnums.GPT40_MINI,
-  textBasedModelEnums.GPT4O,
   textBasedModelEnums.GPT41,
   textBasedModelEnums.GPT41_MINI,
+  textBasedModelEnums.GPT5,
+  textBasedModelEnums.GPT5_NANO,
+  textBasedModelEnums.GPT5_MINI,
 ];
 
 export const CLAUDE_TEXT_MODELS = [
@@ -220,7 +225,7 @@ const ANTHROPIC_TEMP_OPTIONS = generateTemperatureOptions(ANTHROPIC_TEMP_RANGE);
 export const config = {
   botId: '',
   openAi: {
-    defaultChatCompletionModel: textBasedModelEnums.GPT40_MINI,
+    defaultChatCompletionModel: textBasedModelEnums.GPT41_MINI,
     defaultImageModel: imageModelEnums.DALLE2,
     // temperature ranges - [min, max]
     temperatureRange: OPEN_AI_TEMP_RANGE,
