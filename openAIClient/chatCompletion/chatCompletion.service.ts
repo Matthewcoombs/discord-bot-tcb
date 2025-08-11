@@ -254,7 +254,13 @@ export default {
           model: selectedProfile.textModel,
           messages: chatCompMsgs as any,
           response_format: { type: 'text' },
-          temperature: Number(selectedProfile.temperature),
+          // temperature variations are currently supported with gpt 4.1 and below.
+          // newer models such as gpt 5 do not support temperature variations at this
+          // time.
+          ...(selectedProfile.textModel === textBasedModelEnums.GPT41 ||
+          selectedProfile.textModel === textBasedModelEnums.GPT41_MINI
+            ? { temperature: Number(selectedProfile.temperature) }
+            : {}),
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
         latestSelectedProfile.optimizedOpenAiRetentionData =
@@ -282,7 +288,14 @@ export default {
       tools: selectedProfile
         ? (config.openAi.tools as any)
         : (DEFAULT_OPENAI_TOOLS as any),
-      temperature: Number(selectedProfile?.temperature),
+      // temperature variations are currently supported with gpt 4.1 and below.
+      // newer models such as gpt 5 do not support temperature variations at this
+      // time.
+      ...(selectedProfile &&
+      (selectedProfile.textModel === textBasedModelEnums.GPT41 ||
+        selectedProfile.textModel === textBasedModelEnums.GPT41_MINI)
+        ? { temperature: Number(selectedProfile.temperature) }
+        : {}),
     });
 
     const content = chatCompletion.choices[0].message.content;
