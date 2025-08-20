@@ -9,16 +9,19 @@ A feature-rich Discord bot built with TypeScript and Discord.js, designed for sm
 ## ✨ Features
 
 ### 🤖 AI-Powered Commands
+
 - **Image Generation** - Create images using OpenAI's DALL-E
 - **Image Editing** - Edit existing images with AI
 - **Image Variations** - Generate variations of uploaded images
 - **Profile Management** - Create and manage AI conversation profiles
 
 ### 🛠️ Utility Commands
+
 - **Bot Info** - Display available commands and bot information
 - **Command Reload** - Hot-reload commands during development
 
 ### 🎉 Fun Commands
+
 - **Ping** - Check bot responsiveness
 - **Countdown** - Create interactive countdowns
 - **And They Say** - Fun text responses
@@ -34,11 +37,13 @@ A feature-rich Discord bot built with TypeScript and Discord.js, designed for sm
 ## 🛠️ Local Development Setup
 
 1. Clone the repository and install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Create a `.env` file with the following variables:
+
    ```env
    DISCORD_TOKEN=your_discord_bot_token
    CLIENT_ID=your_discord_application_id

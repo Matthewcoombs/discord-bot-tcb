@@ -137,8 +137,7 @@ export default {
     } = selectedProfile;
 
     let retentionUpdateColumn: string = '';
-    let retentionDataToReduce: ChatCompletionMessage[] | Array<MessageParam> =
-      [];
+    let retentionDataToReduce: ChatCompletionMessage[] | Array<MessageParam> = [];
     if (service === aiServiceEnums.OPENAI) {
       retentionUpdateColumn = `openai_retention_data`;
       retentionDataToReduce = openAiRetentionData;
@@ -149,14 +148,8 @@ export default {
       retentionDataToReduce = anthropicRetentionData;
     }
 
-    if (
-      retentionDataToReduce &&
-      retentionDataToReduce.length > Number(retentionSize)
-    ) {
-      retentionDataToReduce.splice(
-        0,
-        retentionDataToReduce.length - Number(retentionSize),
-      );
+    if (retentionDataToReduce && retentionDataToReduce.length > Number(retentionSize)) {
+      retentionDataToReduce.splice(0, retentionDataToReduce.length - Number(retentionSize));
     }
 
     await pg.query(

@@ -10,10 +10,7 @@ import {
   User,
   MessageFlags,
 } from 'discord.js';
-import {
-  Command,
-  singleInstanceCommandsEnum,
-} from '../../shared/discord-js-types';
+import { Command, singleInstanceCommandsEnum } from '../../shared/discord-js-types';
 import userProfilesDao from '../../database/user_profiles/userProfilesDao';
 import { OpenAi } from '../..';
 import {
@@ -39,7 +36,7 @@ async function processAttachedFiles(
 ) {
   let fileIds: string[] = [];
   if (attachments.size > 0) {
-    const asyncFileDataRetrievalList = attachments.map((attachment) => {
+    const asyncFileDataRetrievalList = attachments.map(attachment => {
       return getRemoteFileBufferData(attachment.url);
     });
 
@@ -51,12 +48,12 @@ async function processAttachedFiles(
       tempFilePaths.push(filePath);
     }
 
-    const asyncOpenAiFileUpload = tempFilePaths.map((filePath) => {
+    const asyncOpenAiFileUpload = tempFilePaths.map(filePath => {
       return filesService.uploadFile(filePath, 'assistants');
     });
 
     const fileObjects = await Promise.all(asyncOpenAiFileUpload);
-    fileIds = fileObjects.map((fileObject) => fileObject.id);
+    fileIds = fileObjects.map(fileObject => fileObject.id);
   }
   return fileIds;
 }
@@ -79,16 +76,11 @@ const assistantCommand: Command = {
       }
 
       await interaction.reply({
-        content: generateAssistantIntroCopy(
-          selectedProfile.name,
-          user.username,
-        ),
+        content: generateAssistantIntroCopy(selectedProfile.name, user.username),
         flags: MessageFlags.Ephemeral,
       });
 
-      const thread = await OpenAi.beta.threads.retrieve(
-        selectedProfile.threadId,
-      );
+      const thread = await OpenAi.beta.threads.retrieve(selectedProfile.threadId);
       const collectorFilter = (colMsg: Message) =>
         // collect message if the message is coming from the user who initiated
         colMsg.author.id === user.id;
@@ -106,12 +98,11 @@ const assistantCommand: Command = {
       }, timeout);
 
       let isProcessing = false;
-      collector.on('collect', async (message) => {
+      collector.on('collect', async message => {
         if (!isProcessing) {
           userResponseTimeout.refresh();
           const isUserMsg = !message.author.bot;
-          const isTerminationMsg =
-            message.content.toLowerCase() === 'goodbye' && isUserMsg;
+          const isTerminationMsg = message.content.toLowerCase() === 'goodbye' && isUserMsg;
           // checking for attached files to process and upload
           const attachedFileIds = await processAttachedFiles(
             user,
@@ -122,10 +113,7 @@ const assistantCommand: Command = {
             message,
             attachedFileIds,
           );
-          await OpenAi.beta.threads.messages.create(
-            thread.id,
-            assistantMessage,
-          );
+          await OpenAi.beta.threads.messages.create(thread.id, assistantMessage);
           isProcessing = true;
           const run = await OpenAi.beta.threads.runs.createAndPoll(
             thread.id,
@@ -139,8 +127,10 @@ const assistantCommand: Command = {
 
           if (run.status === 'completed') {
             const messages = await OpenAi.beta.threads.messages.list(thread.id);
-            const { botResponse, fileIds } =
-              assistantsService.processAssistantRunMessages(messages, run.id);
+            const { botResponse, fileIds } = assistantsService.processAssistantRunMessages(
+              messages,
+              run.id,
+            );
 
             let botResponseFiles: string[] = [];
             if (fileIds.length > 0) {
@@ -152,11 +142,11 @@ const assistantCommand: Command = {
               botResponseFiles = fs.readdirSync(TEMP_FOLDER_PATH);
               botResponseFiles = botResponseFiles
                 .filter(
-                  (fileName) =>
+                  fileName =>
                     fileName.includes(user.username) &&
                     fileName.includes(interactionTag.toString()),
                 )
-                .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
+                .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
             }
 
             const responses = processBotResponseLength(botResponse);
@@ -182,10 +172,8 @@ const assistantCommand: Command = {
         }
       });
 
-      collector.on('end', (collected) => {
-        console.log(
-          `The assistant has been terminated - [interactionTag]: ${interactionTag}`,
-        );
+      collector.on('end', collected => {
+        console.log(`The assistant has been terminated - [interactionTag]: ${interactionTag}`);
         interaction.deleteReply();
         deleteTempFilesByTag(interactionTag);
         clearTimeout(userResponseTimeout);

@@ -6,10 +6,7 @@ import {
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
 } from './profiles/profiles.service';
-import {
-  optInCommands,
-  singleInstanceCommandsEnum,
-} from './shared/discord-js-types';
+import { optInCommands, singleInstanceCommandsEnum } from './shared/discord-js-types';
 
 export enum aiServiceEnums {
   OPENAI = 'openai',
@@ -134,20 +131,17 @@ export const DEFAULT_OPENAI_TOOLS = [
           },
           dalle3Quality: {
             type: 'string',
-            description:
-              'the quality of the image to create. This is only used for dalle3',
+            description: 'the quality of the image to create. This is only used for dalle3',
             enum: ['standard', 'hd'],
           },
           gptImage1Quality: {
             type: 'string',
-            description:
-              'the quality of the image to create. This is only used for gpt-image-1',
+            description: 'the quality of the image to create. This is only used for gpt-image-1',
             enum: ['high', 'medium', 'low'],
           },
           style: {
             type: 'string',
-            description:
-              'the style of the image to create. This is only used for dalle3',
+            description: 'the style of the image to create. This is only used for dalle3',
             enum: ['vivid', 'natural'],
           },
           n: {
@@ -157,14 +151,12 @@ export const DEFAULT_OPENAI_TOOLS = [
           },
           dalle3Size: {
             type: 'string',
-            description:
-              'the size of image to create. This is only used for dalle3',
+            description: 'the size of image to create. This is only used for dalle3',
             enum: ['1024x1024', '1792x1024', '1024x1792'],
           },
           gptImage1Size: {
             type: 'string',
-            description:
-              'the size of image to create. This is only used for gpt-image-1',
+            description: 'the size of image to create. This is only used for gpt-image-1',
             enum: ['1024x1024', '1536x1024', '1024x1536'],
           },
         },
@@ -194,8 +186,7 @@ export const DEFAULT_OPENAI_TOOLS = [
         properties: {
           finalResponse: {
             type: 'string',
-            description:
-              'the final response to the user. This will be sent to the user',
+            description: 'the final response to the user. This will be sent to the user',
           },
         },
         required: ['finalResponse'],
@@ -266,20 +257,17 @@ export const config = {
                 type: 'string',
                 description:
                   'the timeout the profile will use warn the user this will not be applied to the current session',
-                enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
+                enum: Array.from(TIMEOUT_OPTIONS, num => num.toString()),
               },
               retention: {
                 type: 'string',
-                description:
-                  'determines wether or not the profile will use retention data',
+                description: 'determines wether or not the profile will use retention data',
                 enum: ['true', 'false'],
               },
               retentionSize: {
                 type: 'string',
                 description: 'the retention size the profile will use',
-                enum: Array.from(RETENTION_SIZE_OPTIONS, (num) =>
-                  num.toString(),
-                ),
+                enum: Array.from(RETENTION_SIZE_OPTIONS, num => num.toString()),
               },
               clearRetentionData: {
                 type: 'string',
@@ -289,9 +277,8 @@ export const config = {
               },
               temperature: {
                 type: 'string',
-                description:
-                  'the temperature the profile will use in its responses',
-                enum: Array.from(OPEN_AI_TEMP_OPTIONS, (num) => num.toString()),
+                description: 'the temperature the profile will use in its responses',
+                enum: Array.from(OPEN_AI_TEMP_OPTIONS, num => num.toString()),
               },
             },
             required: [
@@ -333,20 +320,17 @@ export const config = {
             },
             dalle3Quality: {
               type: 'string',
-              description:
-                'the quality of the image to create this is only used for dalle3',
+              description: 'the quality of the image to create this is only used for dalle3',
               enum: ['standard', 'hd'],
             },
             gptImage1Quality: {
               type: 'string',
-              description:
-                'the quality of the image to create this is only used for gpt-image-1',
+              description: 'the quality of the image to create this is only used for gpt-image-1',
               enum: ['high', 'medium', 'low'],
             },
             style: {
               type: 'string',
-              description:
-                'the style of the image to create this is only used for dalle3',
+              description: 'the style of the image to create this is only used for dalle3',
               enum: ['vivid', 'natural'],
             },
             n: {
@@ -356,14 +340,12 @@ export const config = {
             },
             dalle3Size: {
               type: 'string',
-              description:
-                'the size of image to create this is only used for dalle3',
+              description: 'the size of image to create this is only used for dalle3',
               enum: ['1024x1024', '1792x1024', '1024x1792'],
             },
             gptImage1Size: {
               type: 'string',
-              description:
-                'the size of image to create this is only used for gpt-image-1',
+              description: 'the size of image to create this is only used for gpt-image-1',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
           },
@@ -410,18 +392,17 @@ export const config = {
               type: 'string',
               description:
                 'the timeout the profile will use warn the user this will not be applied to the current session',
-              enum: Array.from(TIMEOUT_OPTIONS, (num) => num.toString()),
+              enum: Array.from(TIMEOUT_OPTIONS, num => num.toString()),
             },
             retention: {
               type: 'string',
-              description:
-                'determines wether or not the profile will use retention data',
+              description: 'determines wether or not the profile will use retention data',
               enum: ['true', 'false'],
             },
             retentionSize: {
               type: 'string',
               description: 'the retention size the profile will use',
-              enum: Array.from(RETENTION_SIZE_OPTIONS, (num) => num.toString()),
+              enum: Array.from(RETENTION_SIZE_OPTIONS, num => num.toString()),
             },
             clearRetentionData: {
               type: 'string',
@@ -431,9 +412,8 @@ export const config = {
             },
             temperature: {
               type: 'string',
-              description:
-                'the temperature the profile will use in its responses',
-              enum: Array.from(ANTHROPIC_TEMP_OPTIONS, (num) => num.toString()),
+              description: 'the temperature the profile will use in its responses',
+              enum: Array.from(ANTHROPIC_TEMP_OPTIONS, num => num.toString()),
             },
           },
           required: [
@@ -456,8 +436,7 @@ export const config = {
           properties: {
             finalResponse: {
               type: 'string',
-              description:
-                'the final response to the user this will be sent to the user',
+              description: 'the final response to the user this will be sent to the user',
             },
           },
           required: ['finalResponse'],
@@ -467,10 +446,7 @@ export const config = {
   },
   commands: {
     singleInstanceCommands: [singleInstanceCommandsEnum.ASSISTANT],
-    optInCommands: [
-      optInCommands.CREATE_PROFILE,
-      optInCommands.SELECT_PROFILE_SETTINGS,
-    ],
+    optInCommands: [optInCommands.CREATE_PROFILE, optInCommands.SELECT_PROFILE_SETTINGS],
   },
   chatTimeoutOptions: TIMEOUT_OPTIONS,
   retentionSizeOptions: RETENTION_SIZE_OPTIONS,

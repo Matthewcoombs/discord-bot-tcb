@@ -25,15 +25,13 @@ const aiImageVariationCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('image_variation')
     .setDescription('Upload a .png image to touch up')
-    .addAttachmentOption((image) =>
+    .addAttachmentOption(image =>
       image
         .setName('image_file')
         .setRequired(true)
-        .setDescription(
-          `Provide a square .png image file no larger then 4MB to create variations`,
-        ),
+        .setDescription(`Provide a square .png image file no larger then 4MB to create variations`),
     )
-    .addIntegerOption((intOption) =>
+    .addIntegerOption(intOption =>
       intOption
         .setName('image_count')
         .setDescription('The amount of image variations to generate')
@@ -48,21 +46,13 @@ const aiImageVariationCommand: Command = {
     const interactionTag = generateInteractionTag();
     const { username, id: userId } = interaction.user;
 
-    let imageCount = interaction.options.getInteger(
-      'image_count',
-      false,
-    ) as number;
+    let imageCount = interaction.options.getInteger('image_count', false) as number;
     imageCount = imageCount ? imageCount : 1;
-    const imageAttachment = interaction.options.getAttachment(
-      'image_file',
-      true,
-    );
+    const imageAttachment = interaction.options.getAttachment('image_file', true);
     const tempImageName = `${interaction.id}-${imageAttachment.name}`;
 
     // prompting the user for their desired image size(s) based on the image model selected
-    const actionRowComponent = imagesService.generateImageSizeSelection(
-      imageModelEnums.DALLE2,
-    );
+    const actionRowComponent = imagesService.generateImageSizeSelection(imageModelEnums.DALLE2);
     const sizeResponse = await interaction.reply({
       content: `Select a size for your image(s)`,
       components: [actionRowComponent as any],
@@ -93,9 +83,7 @@ const aiImageVariationCommand: Command = {
 
     try {
       validateImage(imageAttachment, imageModelEnums.DALLE2);
-      const imageBufferData = await getRemoteFileBufferData(
-        imageAttachment.url,
-      );
+      const imageBufferData = await getRemoteFileBufferData(imageAttachment.url);
       const tempImagePath = createTempFile(imageBufferData, tempImageName);
 
       await OpenAi.images
@@ -107,24 +95,16 @@ const aiImageVariationCommand: Command = {
           size: size as any,
           response_format: 'b64_json',
         })
-        .then(async (completion) => {
-          const imageData = completion?.data?.map(
-            (image) => image.b64_json,
-          ) as string[];
-          imagesService.convertImageDataToFiles(
-            imageData,
-            username,
-            interactionTag,
-            'jpeg',
-          );
+        .then(async completion => {
+          const imageData = completion?.data?.map(image => image.b64_json) as string[];
+          imagesService.convertImageDataToFiles(imageData, username, interactionTag, 'jpeg');
           let imageFiles = fs.readdirSync(TEMP_FOLDER_PATH);
           imageFiles = imageFiles
             .filter(
-              (fileName) =>
-                fileName.includes(username) &&
-                fileName.includes(interactionTag.toString()),
+              fileName =>
+                fileName.includes(username) && fileName.includes(interactionTag.toString()),
             )
-            .map((fileName) => `${TEMP_FOLDER_PATH}/${fileName}`);
+            .map(fileName => `${TEMP_FOLDER_PATH}/${fileName}`);
           deleteTempFilesByName([tempImageName]);
           await interaction.editReply({
             content: `Here are your image variations ${username} :blush:`,

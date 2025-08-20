@@ -8,6 +8,7 @@
     "prepack": "pinst --disable",
     "postpack": "pinst --enable",
     "lint": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
     "start": "tsc && node dist/index.js",
     "start-dev": "tsc && ts-node index.ts",
     "build": "pnpm install && tsc",

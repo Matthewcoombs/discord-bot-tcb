@@ -1,9 +1,6 @@
 import { Message } from 'discord.js';
 import { OpenAi } from '../..';
-import {
-  MessageCreateParams,
-  MessagesPage,
-} from 'openai/resources/beta/threads/messages';
+import { MessageCreateParams, MessagesPage } from 'openai/resources/beta/threads/messages';
 import * as fs from 'fs';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
 
@@ -23,11 +20,8 @@ export enum runStatuses {
 }
 
 export default {
-  generateAssistantMessage(
-    message: Message,
-    fileIds?: string[],
-  ): MessageCreateParams {
-    const attachments = fileIds?.map((fileId) => {
+  generateAssistantMessage(message: Message, fileIds?: string[]): MessageCreateParams {
+    const attachments = fileIds?.map(fileId => {
       return {
         file_id: fileId,
         tools: [
@@ -47,10 +41,7 @@ export default {
     return assistantMessage;
   },
 
-  async getAssistantRunStatus(
-    threadId: string,
-    runId: string,
-  ): Promise<runStatuses> {
+  async getAssistantRunStatus(threadId: string, runId: string): Promise<runStatuses> {
     const { status } = await OpenAi.beta.threads.runs.retrieve(threadId, runId);
 
     return status as runStatuses;
@@ -59,12 +50,8 @@ export default {
   processAssistantRunMessages(messages: MessagesPage, runId: string) {
     let botResponse = '';
     const fileIds: string[] = [];
-    const filteredThreadMsgs = messages.data.filter((msg) => {
-      return (
-        msg.role === 'assistant' &&
-        msg.run_id === runId &&
-        msg.content[0].type === 'text'
-      );
+    const filteredThreadMsgs = messages.data.filter(msg => {
+      return msg.role === 'assistant' && msg.run_id === runId && msg.content[0].type === 'text';
     });
 
     for (let i = 0; i < filteredThreadMsgs.length; i++) {
@@ -81,11 +68,7 @@ export default {
     return { botResponse, fileIds };
   },
 
-  async processAssistantRunFiles(
-    fileIds: string[],
-    userName: string,
-    interactionTag: number,
-  ) {
+  async processAssistantRunFiles(fileIds: string[], userName: string, interactionTag: number) {
     for (const fileId of fileIds) {
       const fileData = await Promise.all([
         OpenAi.files.retrieve(fileId),

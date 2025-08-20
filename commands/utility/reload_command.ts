@@ -12,16 +12,11 @@ const reloadCommand: Command = {
     .setName('reload_command')
     .setDescription('Reloads a command.')
     .addStringOption((option: SlashCommandStringOption) =>
-      option
-        .setName('command_name')
-        .setDescription('The command to reload.')
-        .setRequired(true),
+      option.setName('command_name').setDescription('The command to reload.').setRequired(true),
     )
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   async execute(interaction: ChatInputCommandInteraction) {
-    const commandName = interaction.options
-      .getString('command', true)
-      .toLowerCase();
+    const commandName = interaction.options.getString('command', true).toLowerCase();
     const command = interaction.client.commands.get(commandName) as Command;
 
     if (!command) {

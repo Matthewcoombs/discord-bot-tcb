@@ -7,11 +7,7 @@ import {
   MessageFlags,
   ModalSubmitInteraction,
 } from 'discord.js';
-import {
-  Command,
-  optInCommands,
-  singleInstanceCommandsEnum,
-} from '../shared/discord-js-types';
+import { Command, optInCommands, singleInstanceCommandsEnum } from '../shared/discord-js-types';
 import { config } from '../config';
 import usersDao from '../database/users/usersDao';
 import modalsService from '../modals/modals.service';
@@ -19,18 +15,14 @@ import modalsService from '../modals/modals.service';
 const createInteractionEvent: Command = {
   name: Events.InteractionCreate,
   async execute(interaction: ChatInputCommandInteraction) {
-    const { cooldowns, singleInstanceCommands, chatInstanceCollector } =
-      interaction.client;
+    const { cooldowns, singleInstanceCommands, chatInstanceCollector } = interaction.client;
     const { user, commandName, channel, channelId } = interaction;
     const command = interaction.client.commands.get(commandName) as Command;
 
-    const isOptInCommand = config.commands.optInCommands.includes(
-      commandName as optInCommands,
+    const isOptInCommand = config.commands.optInCommands.includes(commandName as optInCommands);
+    const isSingleInstanceCommand = config.commands.singleInstanceCommands.includes(
+      commandName as singleInstanceCommandsEnum,
     );
-    const isSingleInstanceCommand =
-      config.commands.singleInstanceCommands.includes(
-        commandName as singleInstanceCommandsEnum,
-      );
     const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
 
     if (!cooldowns.has(command?.data?.name && commandName)) {
@@ -72,14 +64,12 @@ const createInteractionEvent: Command = {
       }
 
       // Searching for an active command instance in the current channel
-      const channelSingleInstanceCommand = singleInstanceCommands.find(
-        (colCommand) => {
-          return (
-            colCommand.userId === interaction.user.id &&
-            colCommand.channelId === interaction.channelId
-          );
-        },
-      );
+      const channelSingleInstanceCommand = singleInstanceCommands.find(colCommand => {
+        return (
+          colCommand.userId === interaction.user.id &&
+          colCommand.channelId === interaction.channelId
+        );
+      });
 
       if (channelSingleInstanceCommand) {
         return interaction.reply({
@@ -90,9 +80,7 @@ const createInteractionEvent: Command = {
         singleInstanceCommands.set(interaction.id, {
           channelType: interaction.channel?.type,
           channelId: interaction.channel?.id,
-          channelName: isInteractionInDirectMessage
-            ? null
-            : (channel?.name as string),
+          channelName: isInteractionInDirectMessage ? null : (channel?.name as string),
           name: commandName,
           user: interaction.user.username,
           userId: interaction.user.id,
@@ -102,21 +90,17 @@ const createInteractionEvent: Command = {
 
     // handling modal interactions
     if (interaction.isModalSubmit() === true) {
-      const response = await modalsService.handleModalSubmit(
-        interaction as ModalSubmitInteraction,
-      );
+      const response = await modalsService.handleModalSubmit(interaction as ModalSubmitInteraction);
       return response;
     }
 
     const now = Date.now();
     const timestamps = cooldowns.get(command?.data?.name);
     const defaultCooldownDuration = 3;
-    const cooldownAmount =
-      (command?.cooldown ?? defaultCooldownDuration) * 1000;
+    const cooldownAmount = (command?.cooldown ?? defaultCooldownDuration) * 1000;
 
     if (timestamps.has(interaction.user.id) && commandName) {
-      const expirationTime =
-        timestamps.get(interaction.user.id) + cooldownAmount;
+      const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
 
       if (now < expirationTime) {
         const expiredTimestamp = Math.round(expirationTime / 1000);

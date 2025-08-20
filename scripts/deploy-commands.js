@@ -12,16 +12,13 @@ const ENVIRONMENT = env.ENVIRONMENT;
 
 const commands = [];
 // Grab all the command files from the commands directory you created earlier
-const foldersPath = join(
-  cwd(),
-  ENVIRONMENT === 'development' ? 'commands' : 'dist/commands',
-);
+const foldersPath = join(cwd(), ENVIRONMENT === 'development' ? 'commands' : 'dist/commands');
 const commandFolders = readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
   // Grab all the command files from the commands directory you created earlier
   const commandsPath = join(foldersPath, folder);
-  const commandFiles = readdirSync(commandsPath).filter((file) =>
+  const commandFiles = readdirSync(commandsPath).filter(file =>
     file.endsWith(ENVIRONMENT === 'development' ? '.ts' : '.js'),
   );
   // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
@@ -44,18 +41,14 @@ const rest = new REST().setToken(TOKEN);
 // and deploy your commands!
 (async () => {
   try {
-    console.log(
-      `Started refreshing ${commands.length} application (/) commands.`,
-    );
+    console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
     // The put method is used to fully refresh all commands in the guild with the current set
     const data = await rest.put(Routes.applicationCommands(CLIENT_ID), {
       body: commands,
     });
 
-    console.log(
-      `Successfully reloaded ${data.length} application (/) commands.`,
-    );
+    console.log(`Successfully reloaded ${data.length} application (/) commands.`);
     exit();
   } catch (error) {
     // And of course, make sure you catch and log any errors!

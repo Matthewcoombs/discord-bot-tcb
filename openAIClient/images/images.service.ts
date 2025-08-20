@@ -1,10 +1,4 @@
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  EmbedBuilder,
-  User,
-} from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, User } from 'discord.js';
 import { imageModelConfigOptions, imageModelEnums } from '../../config';
 import { ImageGenerateParams, ImagesResponse } from 'openai/resources';
 import { OpenAi } from '../..';
@@ -48,14 +42,10 @@ export interface EditImageOptions {
 
 export default {
   generateImageSizeSelection(imageModel: imageModelEnums) {
-    const imageSizesToDisplay =
-      imageModelConfigOptions[imageModel].imageGeneration.size;
+    const imageSizesToDisplay = imageModelConfigOptions[imageModel].imageGeneration.size;
 
-    const buttons = imageSizesToDisplay.map((size) => {
-      return new ButtonBuilder()
-        .setCustomId(size)
-        .setLabel(size)
-        .setStyle(ButtonStyle.Primary);
+    const buttons = imageSizesToDisplay.map(size => {
+      return new ButtonBuilder().setCustomId(size).setLabel(size).setStyle(ButtonStyle.Primary);
     });
 
     const row = new ActionRowBuilder().addComponents(buttons);
@@ -63,19 +53,14 @@ export default {
     return row;
   },
 
-  generateImageSelectionOptions(
-    imageModel: imageModelEnums,
-    action: 'generate' | 'edit',
-  ) {
+  generateImageSelectionOptions(imageModel: imageModelEnums, action: 'generate' | 'edit') {
     const imageSelectionOptions = [];
     const imageSettingOptions = imageModelConfigOptions[imageModel];
     for (const [key, value] of Object.entries(
-      action === 'generate'
-        ? imageSettingOptions.imageGeneration
-        : imageSettingOptions.imageEdit,
+      action === 'generate' ? imageSettingOptions.imageGeneration : imageSettingOptions.imageEdit,
     )) {
       if (Array.isArray(value)) {
-        const buttons = value.map((option) => {
+        const buttons = value.map(option => {
           return new ButtonBuilder()
             .setCustomId(option)
             .setLabel(option)
@@ -145,21 +130,14 @@ export default {
     };
   },
 
-  async generateImages(
-    user: User,
-    imageOptions: GenerateImageOptions,
-    interactionTag: number,
-  ) {
+  async generateImages(user: User, imageOptions: GenerateImageOptions, interactionTag: number) {
     const model = imageOptions.model;
     // Setting the response format for the image generation request
     // By default we use b64_json format for all models except GPT Image 1
-    model !== imageModelEnums.GPT_IMAGE_1
-      ? (imageOptions.response_format = 'b64_json')
-      : null;
+    model !== imageModelEnums.GPT_IMAGE_1 ? (imageOptions.response_format = 'b64_json') : null;
     // If the model is DALL-E 3, we need to perform multiple requests since it supports only one image per request
     // otherwise we can generate multiple images in a single request
-    const promisesToCreate =
-      model === imageModelEnums.DALLE3 ? imageOptions.n : 1;
+    const promisesToCreate = model === imageModelEnums.DALLE3 ? imageOptions.n : 1;
     const imagesToCreatePromises = Array(promisesToCreate)
       .fill(imageOptions)
       .map((imageOpt: GenerateImageOptions) => {
@@ -175,7 +153,7 @@ export default {
     const imageResponses = await Promise.all(imagesToCreatePromises);
     const imageData = imageResponses.reduce((acc, obj) => {
       if (obj.data) {
-        return acc.concat(obj.data.map((image) => image.b64_json as string));
+        return acc.concat(obj.data.map(image => image.b64_json as string));
       }
       return acc;
     }, [] as string[]);
@@ -184,9 +162,7 @@ export default {
       imageData,
       user.username,
       interactionTag,
-      model === imageModelEnums.GPT_IMAGE_1
-        ? (imageOptions.output_format ?? 'jpeg')
-        : 'jpeg',
+      model === imageModelEnums.GPT_IMAGE_1 ? (imageOptions.output_format ?? 'jpeg') : 'jpeg',
     );
 
     return imageFiles;
@@ -194,7 +170,7 @@ export default {
 
   generateImageEmbeds(generatedImages: ImagesResponse, username: string) {
     const data = generatedImages.data ?? [];
-    const embeds = data.map((image) => {
+    const embeds = data.map(image => {
       const imageUrl = image?.url as string;
       return new EmbedBuilder().setURL(imageUrl).setImage(imageUrl);
     });

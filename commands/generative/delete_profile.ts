@@ -23,8 +23,7 @@ const deleteGenerativeProfileCommand: Command = {
       });
     }
 
-    const actionRowComponent =
-      profilesService.generateUserProfileDisplay(userProfiles);
+    const actionRowComponent = profilesService.generateUserProfileDisplay(userProfiles);
 
     const response = await interaction.reply({
       content: `Select a profile to delete`,

@@ -1,7 +1,8 @@
 import { Client } from 'pg';
+import { config } from 'dotenv';
 
 // init env variables
-require('dotenv').config();
+config();
 
 function connectToPG() {
   const pgClient = new Client({

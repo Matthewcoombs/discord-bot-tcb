@@ -17,10 +17,7 @@ export interface Command {
   once?: boolean;
   cooldown?: number;
   category?: string;
-  data?: Omit<
-    SlashCommandOptionsOnlyBuilder,
-    'addSubcommandGroup' | 'addSubcommand'
-  >;
+  data?: Omit<SlashCommandOptionsOnlyBuilder, 'addSubcommandGroup' | 'addSubcommand'>;
   execute(
     args?:
       | ChatInputCommandInteraction

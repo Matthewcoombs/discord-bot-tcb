@@ -5,14 +5,9 @@ import {
   SlashCommandBuilder,
 } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
-import userProfilesDao, {
-  UserProfile,
-} from '../../database/user_profiles/userProfilesDao';
+import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
 import profilesService from '../../profiles/profiles.service';
-import {
-  InteractionTimeOutError,
-  USER_TIMEOUT_CODE,
-} from '../../shared/errors';
+import { InteractionTimeOutError, USER_TIMEOUT_CODE } from '../../shared/errors';
 
 const selectGenerativeProfileCommand: Command = {
   data: new SlashCommandBuilder()
@@ -28,8 +23,7 @@ const selectGenerativeProfileCommand: Command = {
       });
     }
 
-    const actionRowComponent =
-      profilesService.generateUserProfileDisplay(userProfiles);
+    const actionRowComponent = profilesService.generateUserProfileDisplay(userProfiles);
 
     const selectResponse = await interaction.reply({
       content: `Select a profile`,
@@ -54,7 +48,7 @@ const selectGenerativeProfileCommand: Command = {
         });
       const profileId = profileToSelect.customId;
       const selectedProfile = userProfiles.find(
-        (profile) => profile.id === parseInt(profileId),
+        profile => profile.id === parseInt(profileId),
       ) as UserProfile;
       await userProfilesDao.updateProfileSelection(selectedProfile);
 
@@ -64,10 +58,7 @@ const selectGenerativeProfileCommand: Command = {
       });
       await interaction?.deleteReply();
     } catch (err: any) {
-      if (
-        err?.code !== 'InteractionCollectorError' &&
-        err?.errorData?.code !== USER_TIMEOUT_CODE
-      ) {
+      if (err?.code !== 'InteractionCollectorError' && err?.errorData?.code !== USER_TIMEOUT_CODE) {
         console.error(err);
         await interaction.followUp({
           content: `There was an error selecting your profile.`,

@@ -1,24 +1,9 @@
-import {
-  Collection,
-  EmbedBuilder,
-  Message,
-  MessageCreateOptions,
-  User,
-} from 'discord.js';
+import { Collection, EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
 import { Anthropic } from '../..';
-import {
-  anthropicToolsEnum,
-  config,
-  ProfileSettingsArgs,
-  textBasedModelEnums,
-} from '../../config';
+import { anthropicToolsEnum, config, ProfileSettingsArgs, textBasedModelEnums } from '../../config';
 import { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources';
-import userProfilesDao, {
-  UserProfile,
-} from '../../database/user_profiles/userProfilesDao';
-import imagesService, {
-  GenerateImageOptions,
-} from '../../openAIClient/images/images.service';
+import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
+import imagesService, { GenerateImageOptions } from '../../openAIClient/images/images.service';
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
@@ -37,7 +22,7 @@ enum messageRoleEnums {
 export default {
   formatClaudeMessages(messages: Message[]): MessageParam[] {
     const formatClaudeMessages: MessageParam[] = [];
-    messages.forEach((msg) => {
+    messages.forEach(msg => {
       let role: messageRoleEnums = messageRoleEnums.ASSISTANT;
       if (!msg.author.bot) {
         role = messageRoleEnums.USER;
@@ -47,18 +32,13 @@ export default {
       if (
         msg.author.bot &&
         msg.embeds.length > 0 &&
-        Object.values(anthropicToolsEnum).includes(
-          msg.embeds[0].title as anthropicToolsEnum,
-        )
+        Object.values(anthropicToolsEnum).includes(msg.embeds[0].title as anthropicToolsEnum)
       ) {
         let toolResultContent = '';
         const toolName = msg.embeds[0].title as string;
-        const toolUseId = msg.embeds[0].fields.find(
-          (field) => field.name === 'id',
-        )?.value as string;
-        const input = msg.embeds[0].fields.find(
-          (field) => field.name === 'arguments',
-        )?.value as string;
+        const toolUseId = msg.embeds[0].fields.find(field => field.name === 'id')?.value as string;
+        const input = msg.embeds[0].fields.find(field => field.name === 'arguments')
+          ?.value as string;
 
         // Check if the message is a tool use
         switch (msg.embeds[0].title) {
@@ -144,8 +124,7 @@ export default {
 
         const condensedConversation =
           message.content[0].type === 'text' ? message.content[0].text : '';
-        latestSelectedProfile.optimizedAnthropicRetentionData =
-          condensedConversation;
+        latestSelectedProfile.optimizedAnthropicRetentionData = condensedConversation;
       } catch (_) {
         latestSelectedProfile.optimizedAnthropicRetentionData = '';
       }
@@ -158,10 +137,7 @@ export default {
     await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
 
-  async processClaudeResponse(
-    claudeMessages: Array<MessageParam>,
-    selectedProfile?: UserProfile,
-  ) {
+  async processClaudeResponse(claudeMessages: Array<MessageParam>, selectedProfile?: UserProfile) {
     let response = '';
     let toolUse;
     if (
@@ -169,10 +145,7 @@ export default {
       selectedProfile.anthropicRetentionData &&
       selectedProfile.anthropicRetentionData.length > 0
     ) {
-      claudeMessages = [
-        ...selectedProfile.anthropicRetentionData,
-        ...claudeMessages,
-      ];
+      claudeMessages = [...selectedProfile.anthropicRetentionData, ...claudeMessages];
     }
 
     const systemMessage =
@@ -181,9 +154,7 @@ export default {
         : selectedProfile?.profile || '';
 
     const message = await Anthropic.messages.create({
-      model: selectedProfile
-        ? selectedProfile.textModel
-        : config.anthropic.defaultMessageModel,
+      model: selectedProfile ? selectedProfile.textModel : config.anthropic.defaultMessageModel,
       messages: claudeMessages,
       tools: config.anthropic.tools as any,
       max_tokens: 1024,
@@ -192,14 +163,14 @@ export default {
     });
 
     if (message.stop_reason === 'end_turn') {
-      const content = message.content.filter((contentBlock) => {
+      const content = message.content.filter(contentBlock => {
         return contentBlock.type === 'text';
       })[0];
       response = content.text;
     }
 
     if (message.stop_reason === 'tool_use') {
-      toolUse = message.content.filter((contentBlock) => {
+      toolUse = message.content.filter(contentBlock => {
         return contentBlock.type === 'tool_use';
       })[0];
     }
@@ -232,14 +203,8 @@ export default {
           toolResponse.content = `Sorry it looks like the arguments provided for image generation are invalid. Please try again!`;
         }
         const imageOptions: GenerateImageOptions =
-          imagesService.translateToolCallImageOptionsToGenerateImageOptions(
-            toolCallImageOptions,
-          );
-        const imageFiles = await imagesService.generateImages(
-          user,
-          imageOptions,
-          interactionTag,
-        );
+          imagesService.translateToolCallImageOptionsToGenerateImageOptions(toolCallImageOptions);
+        const imageFiles = await imagesService.generateImages(user, imageOptions, interactionTag);
         toolResponse = {
           content:
             imageFiles.length > 1
@@ -251,14 +216,11 @@ export default {
         break;
       }
       case anthropicToolsEnum.PROFILE_SETTINGS: {
-        const selectedProfile = await userProfilesDao.getSelectedProfile(
-          user.id,
-        );
+        const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
         const profileSettings = input as ProfileSettingsArgs;
         for (const selectedSetting of profileSettings.selectedSettings) {
           if (selectedSetting === SELECT_TEXT_MODEL_ID) {
-            selectedProfile.textModel =
-              profileSettings.textModel as textBasedModelEnums;
+            selectedProfile.textModel = profileSettings.textModel as textBasedModelEnums;
           }
           if (selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
             selectedProfile.timeout = Number(profileSettings.timeout);
@@ -267,9 +229,7 @@ export default {
             selectedProfile.retention = profileSettings.retention === 'true';
           }
           if (selectedSetting === SELECT_RETENTION_SIZE_ID) {
-            selectedProfile.retentionSize = Number(
-              profileSettings.retentionSize,
-            );
+            selectedProfile.retentionSize = Number(profileSettings.retentionSize);
           }
           if (selectedSetting === CLEAR_RETENTION_DATA) {
             if (profileSettings.clearRetentionData === 'true') {

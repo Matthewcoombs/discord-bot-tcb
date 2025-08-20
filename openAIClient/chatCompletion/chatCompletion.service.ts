@@ -1,13 +1,5 @@
-import {
-  Collection,
-  EmbedBuilder,
-  Message,
-  MessageCreateOptions,
-  User,
-} from 'discord.js';
-import userProfilesDao, {
-  UserProfile,
-} from '../../database/user_profiles/userProfilesDao';
+import { Collection, EmbedBuilder, Message, MessageCreateOptions, User } from 'discord.js';
+import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
 import {
   openaiToolsEnum,
   IMAGE_PROCESSING_MODELS,
@@ -120,83 +112,73 @@ export default {
     messages: Message[],
     selectedProfile?: UserProfile,
   ): ChatCompletionMessage[] {
-    let chatCompletionMessages = messages.reduce(
-      (acc: ChatCompletionMessage[], message) => {
-        let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
-        if (!message.author.bot) {
-          role = chatCompletionRoles.USER;
-        }
-        if (
-          message.author.bot &&
-          message.embeds.length > 0 &&
-          Object.values(openaiToolsEnum).includes(
-            message.embeds[0].title as openaiToolsEnum,
-          )
-        ) {
-          role = chatCompletionRoles.TOOL;
-        }
+    let chatCompletionMessages = messages.reduce((acc: ChatCompletionMessage[], message) => {
+      let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
+      if (!message.author.bot) {
+        role = chatCompletionRoles.USER;
+      }
+      if (
+        message.author.bot &&
+        message.embeds.length > 0 &&
+        Object.values(openaiToolsEnum).includes(message.embeds[0].title as openaiToolsEnum)
+      ) {
+        role = chatCompletionRoles.TOOL;
+      }
 
-        const chatCompletion: ChatCompletionMessage = {
-          role,
-          content: [
+      const chatCompletion: ChatCompletionMessage = {
+        role,
+        content: [
+          {
+            type: chatCompletionTypes.TEXT,
+            text: message.content,
+          },
+        ],
+      };
+
+      if (role === chatCompletionRoles.TOOL) {
+        const functionName = message.embeds[0].title as string;
+        const toolCallId = message.embeds[0].fields[0].value;
+        const args = message.embeds[0].fields[2].value;
+        chatCompletion.tool_call_id = toolCallId;
+
+        // simulating the tool call response before the tool result
+        const toolCallResponse: ChatCompletionMessage = {
+          role: chatCompletionRoles.ASSISTANT,
+          tool_calls: [
             {
-              type: chatCompletionTypes.TEXT,
-              text: message.content,
+              id: toolCallId,
+              type: 'function',
+              function: { arguments: args, name: functionName },
             },
           ],
         };
 
-        if (role === chatCompletionRoles.TOOL) {
-          const functionName = message.embeds[0].title as string;
-          const toolCallId = message.embeds[0].fields[0].value;
-          const args = message.embeds[0].fields[2].value;
-          chatCompletion.tool_call_id = toolCallId;
+        acc.push(toolCallResponse);
+      }
 
-          // simulating the tool call response before the tool result
-          const toolCallResponse: ChatCompletionMessage = {
-            role: chatCompletionRoles.ASSISTANT,
-            tool_calls: [
-              {
-                id: toolCallId,
-                type: 'function',
-                function: { arguments: args, name: functionName },
-              },
-            ],
+      if (
+        message.attachments &&
+        IMAGE_PROCESSING_MODELS.includes(selectedProfile?.textModel as textBasedModelEnums) &&
+        !message.author.bot
+      ) {
+        const imageContents = message.attachments.map(attachment => {
+          return {
+            type: chatCompletionTypes.IMAGE_URL,
+            image_url: {
+              url: attachment.url,
+            },
           };
+        });
 
-          acc.push(toolCallResponse);
-        }
+        chatCompletion?.content?.push(...imageContents);
+      }
 
-        if (
-          message.attachments &&
-          IMAGE_PROCESSING_MODELS.includes(
-            selectedProfile?.textModel as textBasedModelEnums,
-          ) &&
-          !message.author.bot
-        ) {
-          const imageContents = message.attachments.map((attachment) => {
-            return {
-              type: chatCompletionTypes.IMAGE_URL,
-              image_url: {
-                url: attachment.url,
-              },
-            };
-          });
-
-          chatCompletion?.content?.push(...imageContents);
-        }
-
-        acc.push(chatCompletion);
-        return acc;
-      },
-      [],
-    );
+      acc.push(chatCompletion);
+      return acc;
+    }, []);
 
     if (selectedProfile?.retention && selectedProfile.openAiRetentionData) {
-      chatCompletionMessages = [
-        ...selectedProfile.openAiRetentionData,
-        ...chatCompletionMessages,
-      ];
+      chatCompletionMessages = [...selectedProfile.openAiRetentionData, ...chatCompletionMessages];
     }
 
     if (chatCompletionMessages[0].role !== chatCompletionRoles.DEVELOPER) {
@@ -263,8 +245,7 @@ export default {
             : {}),
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
-        latestSelectedProfile.optimizedOpenAiRetentionData =
-          condensedConversation as string;
+        latestSelectedProfile.optimizedOpenAiRetentionData = condensedConversation as string;
       } catch (_) {
         latestSelectedProfile.optimizedOpenAiRetentionData = '';
       }
@@ -280,14 +261,10 @@ export default {
     selectedProfile?: UserProfile,
   ) {
     const chatCompletion = await OpenAi.chat.completions.create({
-      model: selectedProfile
-        ? selectedProfile.textModel
-        : config.openAi.defaultChatCompletionModel,
+      model: selectedProfile ? selectedProfile.textModel : config.openAi.defaultChatCompletionModel,
       response_format: { type: 'text' },
       messages: chatCompletionMessages as any,
-      tools: selectedProfile
-        ? (config.openAi.tools as any)
-        : (DEFAULT_OPENAI_TOOLS as any),
+      tools: selectedProfile ? (config.openAi.tools as any) : (DEFAULT_OPENAI_TOOLS as any),
       // temperature variations are currently supported with gpt 4.1 and below.
       // newer models such as gpt 5 do not support temperature variations at this
       // time.
@@ -324,9 +301,7 @@ export default {
 
     switch (toolName) {
       case openaiToolsEnum.GENERATE_IMAGE: {
-        const toolCallImageOptions = JSON.parse(
-          toolArgs,
-        ) as ToolCallGenerateImageOptions;
+        const toolCallImageOptions = JSON.parse(toolArgs) as ToolCallGenerateImageOptions;
         // Validation is required as the model may sometimes hallucinate and
         // generate invalid arguments
         if (!imagesService.validateImageCreationOptions(toolCallImageOptions)) {
@@ -334,14 +309,8 @@ export default {
           break;
         }
         const imageOptions: GenerateImageOptions =
-          imagesService.translateToolCallImageOptionsToGenerateImageOptions(
-            toolCallImageOptions,
-          );
-        const imageFiles = await imagesService.generateImages(
-          user,
-          imageOptions,
-          interactionTag,
-        );
+          imagesService.translateToolCallImageOptionsToGenerateImageOptions(toolCallImageOptions);
+        const imageFiles = await imagesService.generateImages(user, imageOptions, interactionTag);
         toolResponse = {
           content:
             imageFiles.length > 1
@@ -353,16 +322,13 @@ export default {
         break;
       }
       case openaiToolsEnum.PROFILE_SETTINGS: {
-        const selectedProfile = await userProfilesDao.getSelectedProfile(
-          user.id,
-        );
+        const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
         const settingUpdateArgs = {
           ...(JSON.parse(toolArgs) as ProfileSettingsArgs),
         };
         for (const selectedSetting of settingUpdateArgs.selectedSettings) {
           if (selectedSetting === SELECT_TEXT_MODEL_ID) {
-            selectedProfile.textModel =
-              settingUpdateArgs.textModel as textBasedModelEnums;
+            selectedProfile.textModel = settingUpdateArgs.textModel as textBasedModelEnums;
           }
           if (selectedSetting === SELECT_CHAT_TIMEOUT_ID) {
             selectedProfile.timeout = Number(settingUpdateArgs.timeout);
@@ -371,9 +337,7 @@ export default {
             selectedProfile.retention = settingUpdateArgs.retention === 'true';
           }
           if (selectedSetting === SELECT_RETENTION_SIZE_ID) {
-            selectedProfile.retentionSize = Number(
-              settingUpdateArgs.retentionSize,
-            );
+            selectedProfile.retentionSize = Number(settingUpdateArgs.retentionSize);
           }
           if (selectedSetting === CLEAR_RETENTION_DATA) {
             if (settingUpdateArgs.clearRetentionData === 'true') {

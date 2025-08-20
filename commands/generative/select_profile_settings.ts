@@ -70,10 +70,7 @@ const selectProfileModelCommand: Command = {
       });
     }
 
-    const profileSetting = await interaction.options.getString(
-      'profile_setting',
-      true,
-    );
+    const profileSetting = await interaction.options.getString('profile_setting', true);
     const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
     if (!selectedProfile) {
       return interaction.reply({
@@ -82,10 +79,7 @@ const selectProfileModelCommand: Command = {
       });
     }
 
-    const settingsReply = profilesService.processSettingsDisplay(
-      profileSetting,
-      selectedProfile,
-    );
+    const settingsReply = profilesService.processSettingsDisplay(profileSetting, selectedProfile);
     const settingResponse = await interaction.reply({
       content: settingsReply?.displayMsg,
       components: [settingsReply?.row as any],
@@ -111,11 +105,7 @@ const selectProfileModelCommand: Command = {
     if (!settingVal) {
       return;
     }
-    await profilesService.processUpdateUserProfile(
-      profileSetting,
-      selectedProfile,
-      settingVal,
-    );
+    await profilesService.processUpdateUserProfile(profileSetting, selectedProfile, settingVal);
     return await settingResponse.edit({
       content: `Profile settings for **${selectedProfile.name}** were updated successfully!`,
       components: [],
