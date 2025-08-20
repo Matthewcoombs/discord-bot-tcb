@@ -1,143 +1,66 @@
 name: Deploy Discord Bot
-run-name: ${{ github.actor }} is updating the production discord bot
+
 on:
   push:
     branches: [master]
+
 env:
   REPO_NAME: ${{ github.event.repository.name }}
+  NODE_PATH: /root/.nvm/versions/node/v20.4.0/bin/node
+  PNPM_PATH: /root/.local/share/pnpm/pnpm
+
 jobs:
-  # Clearing the project from the root directory to copy fresh files
-  clear-project:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 10
     steps:
-      - id: clear-project
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clear existing project
         uses: fifsky/ssh-action@master
         with:
-          command: |
-            cd /root
-            rm -rf ${{ env.REPO_NAME }}
-            echo $?
           host: ${{ secrets.SSH_HOST }}
           user: root
           pass: ${{ secrets.SSH_PASSWORD }}
+          command: rm -rf /root/${{ env.REPO_NAME }}
 
-  # Copying the copy project via sftp into the remote server
-  deploy-via-sftp:
-    needs: [clear-project]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - id: SFTPDeploy
+      - name: Deploy via SFTP
         uses: Creepios/sftp-action@v1.0.3
         with:
-          username: root
           host: ${{ secrets.SSH_HOST }}
-          port: 22
+          username: root
           password: ${{ secrets.SSH_PASSWORD }}
           localPath: '.'
           remotePath: /root/${{ env.REPO_NAME }}
 
-  # Creating systemctl service to compile the project
-  build-step:
-    needs: [deploy-via-sftp]
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-    steps:
-      - id: build-step
+      - name: Build and deploy bot
         uses: fifsky/ssh-action@master
         with:
+          host: ${{ secrets.SSH_HOST }}
+          user: root
+          pass: ${{ secrets.SSH_PASSWORD }}
           command: |
-            export NVM_DIR=~/.nvm
-            source ~/.nvm/nvm.sh
             cd /root/${{ env.REPO_NAME }}
+            
+            # Build project
+            export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh
             rm -rf dist
-            /root/.local/share/pnpm/pnpm build-prod
-            echo $?
-          host: ${{ secrets.SSH_HOST }}
-          user: root
-          pass: ${{ secrets.SSH_PASSWORD }}
-
-  # Creating systemctl service to clear the current bot commands
-  create-systemctl-clear-command-service:
-    needs: [build-step]
-    runs-on: ubuntu-latest
-    steps:
-      - id: create-systemctl-command-service
-        uses: fifsky/ssh-action@master
-        with:
-          command: |
-            echo "[Unit]
-            Description=Production Discord Bot Clear Commands
-            After=multi.user.target
-            [Service]
-            Type=oneshot
-            Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
-            Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-            Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-            WorkingDirectory=/root/${{ env.REPO_NAME }}
-            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node scripts/delete-commands.js
-            User=root
-            Group=root
-            [Install]
-            WantedBy=multi-user.target" > /etc/systemd/system/clear-bot-commands.service
-            chmod +x /root/${{ env.REPO_NAME }}/scripts/delete-commands.js
-            sudo systemctl enable clear-bot-commands.service
-            sudo systemctl daemon-reload
-            sudo systemctl restart clear-bot-commands.service
-            echo $?
-          host: ${{ secrets.SSH_HOST }}
-          user: root
-          pass: ${{ secrets.SSH_PASSWORD }}
-
-  # Creating systemctl service to deploy the bot commands
-  create-systemctl-deploy-command-service:
-    needs: [create-systemctl-clear-command-service]
-    runs-on: ubuntu-latest
-    steps:
-      - id: create-systemctl-command-service
-        uses: fifsky/ssh-action@master
-        with:
-          command: |
-            echo "[Unit]
-            Description=Production Discord Bot Deploy Commands
-            After=multi.user.target
-            [Service]
-            Type=oneshot
-            Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
-            Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-            Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-            WorkingDirectory=/root/${{ env.REPO_NAME }}
-            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node scripts/deploy-commands.js
-            User=root
-            Group=root
-            [Install]
-            WantedBy=multi-user.target" > /etc/systemd/system/update-bot-commands.service
-            chmod +x /root/${{ env.REPO_NAME }}/scripts/deploy-commands.js
-            sudo systemctl enable update-bot-commands.service
-            sudo systemctl daemon-reload
-            sudo systemctl restart update-bot-commands.service
-            echo $?
-          host: ${{ secrets.SSH_HOST }}
-          user: root
-          pass: ${{ secrets.SSH_PASSWORD }}
-
-  # Creating systemctl service to start the bot
-  create-systemctl-service:
-    needs: [create-systemctl-deploy-command-service]
-    runs-on: ubuntu-latest
-    steps:
-      - id: create-systemctl-service
-        uses: fifsky/ssh-action@master
-        with:
-          command: |
-            echo "[Unit]
-            Description=Production Discord Bot
-            After=multi.user.target
+            ${{ env.PNPM_PATH }} build-prod
+            
+            # Create bot service
+            cat > /etc/systemd/system/discord-bot.service << EOF
+            [Unit]
+            Description=Discord Bot
+            After=network.target
+            
             [Service]
             Type=simple
+            User=root
+            WorkingDirectory=/root/${{ env.REPO_NAME }}
+            ExecStart=${{ env.NODE_PATH }} dist/index.js
+            Restart=on-failure
+            RestartSec=30
             Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
             Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
             Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
@@ -148,31 +71,27 @@ jobs:
             Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
             Environment=EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}
             Environment=EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-            WorkingDirectory=/root
-            ExecStart=/root/.nvm/versions/node/v20.4.0/bin/node ${{ env.REPO_NAME }}/dist/index.js
-            User=root
-            Group=root
-            Restart=on-failure
-            RestartSec=30
+            
             [Install]
-            WantedBy=multi-user.target" > /etc/systemd/system/start-bot.service
-            chmod +x /root/${{ env.REPO_NAME }}/dist/index.js
-            sudo systemctl enable start-bot.service
-            sudo systemctl daemon-reload
-            sudo systemctl restart start-bot.service
-            echo $?
-          host: ${{ secrets.SSH_HOST }}
-          user: root
-          pass: ${{ secrets.SSH_PASSWORD }}
+            WantedBy=multi-user.target
+            EOF
+            
+            # Update commands and start bot
+            ${{ env.NODE_PATH }} scripts/delete-commands.js
+            ${{ env.NODE_PATH }} scripts/deploy-commands.js
+            
+            systemctl daemon-reload
+            systemctl enable discord-bot
+            systemctl restart discord-bot
 
-  bumping-package-version:
-    needs: [create-systemctl-service]
+  version-bump:
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: ⏫ Bumping version
+      - name: Bump version
         uses: jpb06/bump-package@latest
         with:
           major-keywords: major
