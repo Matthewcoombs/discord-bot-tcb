@@ -16,6 +16,7 @@ export interface Command {
   description?: string;
   once?: boolean;
   cooldown?: number;
+  category?: string;
   data?: Omit<
     SlashCommandOptionsOnlyBuilder,
     'addSubcommandGroup' | 'addSubcommand'
