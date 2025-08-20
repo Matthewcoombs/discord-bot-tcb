@@ -3,9 +3,7 @@ import { Command } from '../../shared/discord-js-types';
 
 const pingCommand: Command = {
   cooldown: 5,
-  data: new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with Pong!'),
+  data: new SlashCommandBuilder().setName('ping').setDescription('Replies with Pong!'),
   async execute(interaction: CommandInteraction) {
     await interaction.reply('Pong!');
   },

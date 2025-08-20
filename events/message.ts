@@ -9,32 +9,18 @@ import {
   TextChannel,
   User,
 } from 'discord.js';
-import {
-  ChatInstance,
-  collectorEndReason,
-  Command,
-} from '../shared/discord-js-types';
+import { ChatInstance, collectorEndReason, Command } from '../shared/discord-js-types';
 import chatCompletionService, {
   CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES,
 } from '../openAIClient/chatCompletion/chatCompletion.service';
-import {
-  aiServiceEnums,
-  openaiToolsEnum,
-  config,
-  anthropicToolsEnum,
-} from '../config';
-import userProfilesDao, {
-  UserProfile,
-} from '../database/user_profiles/userProfilesDao';
+import { aiServiceEnums, openaiToolsEnum, config, anthropicToolsEnum } from '../config';
+import userProfilesDao, { UserProfile } from '../database/user_profiles/userProfilesDao';
 import {
   deleteTempFilesByTag,
   generateInteractionTag,
   processBotResponseLength,
 } from '../shared/utils';
-import {
-  INVALID_FILE_TYPE_CODE,
-  TOO_MANY_ATTACHMENTS_CODE,
-} from '../shared/errors';
+import { INVALID_FILE_TYPE_CODE, TOO_MANY_ATTACHMENTS_CODE } from '../shared/errors';
 import messageService from '../anthropicClient/messages/message.service';
 
 async function sendResponse(
@@ -46,9 +32,7 @@ async function sendResponse(
   const userTag = `<@${message.author.id}>`;
   messageCreateOptions?.content?.replace(/<@\d+>/g, '').trim();
 
-  const responses = processBotResponseLength(
-    messageCreateOptions?.content as string,
-  );
+  const responses = processBotResponseLength(messageCreateOptions?.content as string);
 
   for (let i = 0; i < responses.length; i++) {
     if (messageCreateOptions.files && i !== responses.length - 1) {
@@ -86,12 +70,10 @@ function processAttachedFiles(message: Message<boolean>) {
   }
 
   const unSupportedFileTypes = message.attachments
-    .filter((attachment) => {
-      return !CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(
-        attachment?.contentType as string,
-      );
+    .filter(attachment => {
+      return !CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES.includes(attachment?.contentType as string);
     })
-    .map((attachment) => attachment.contentType);
+    .map(attachment => attachment.contentType);
 
   if (unSupportedFileTypes.length > 0) {
     errorRestrictions.push({
@@ -112,17 +94,15 @@ async function processOpenAIMessageService(
   finalResponse: MessageCreateOptions,
   endChat: boolean,
 ) {
-  const chatCompletionMessages =
-    chatCompletionService.formatChatCompletionMessages(
-      collected,
-      userMessageInstance?.selectedProfile,
-    );
+  const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(
+    collected,
+    userMessageInstance?.selectedProfile,
+  );
 
-  const { content, toolCalls } =
-    await chatCompletionService.processGenerativeResponse(
-      chatCompletionMessages,
-      userMessageInstance?.selectedProfile,
-    );
+  const { content, toolCalls } = await chatCompletionService.processGenerativeResponse(
+    chatCompletionMessages,
+    userMessageInstance?.selectedProfile,
+  );
 
   // This logic handles instances of tool calls during the message instance
   if (toolCalls && toolCalls.length > 0) {
@@ -179,8 +159,7 @@ const directMessageEvent: Command = {
     const { bot: isBot, id: userId } = user;
     const userChatInstance = chatInstanceCollector.get(userId);
     const isDirectMessage = channel.type === ChannelType.DM;
-    const isBotMentioned =
-      message.mentions.users.filter((usr) => usr.id === config.botId).size > 0;
+    const isBotMentioned = message.mentions.users.filter(usr => usr.id === config.botId).size > 0;
 
     // If the message is not a direct message and the bot is not mentioned we return
     if (!isBotMentioned && !isDirectMessage) {
@@ -200,7 +179,7 @@ const directMessageEvent: Command = {
     }
 
     // if a single instance command has been initiated in the current channel we return
-    const setUserSingleInstanceCommand = singleInstanceCommands.find((cmd) => {
+    const setUserSingleInstanceCommand = singleInstanceCommands.find(cmd => {
       return cmd.userId === userId && cmd.channelId === channelId;
     });
     if (setUserSingleInstanceCommand) {
@@ -227,8 +206,7 @@ const directMessageEvent: Command = {
         // collect message if the message is coming from the user who initiated
         colMsg.author.id === userId ||
         // collect message if its a response to a user from the bot from an initiated chat
-        (colMsg.author.bot &&
-          colMsg.mentions.users.filter((usr) => usr.id === userId).size > 0) ||
+        (colMsg.author.bot && colMsg.mentions.users.filter(usr => usr.id === userId).size > 0) ||
         // collect message if its a response to a user from the bot in a DM channel
         (isDirectMessage && colMsg.author.bot);
       const timeout =
@@ -240,7 +218,7 @@ const directMessageEvent: Command = {
         idle: timeout,
       }) as MessageCollector;
 
-      collector.on('collect', async (lastMsg) => {
+      collector.on('collect', async lastMsg => {
         const collected = Array.from(collector.collected.values());
         // If the message is coming from the bot we return
         if (lastMsg.author.bot) {
@@ -269,11 +247,8 @@ const directMessageEvent: Command = {
         if (errorRestrictions.length > 0) {
           // clearing all invalid attachments from the previous message to avoid
           // errors with invalid file types being passed.
-          collected[collected.length - 1].attachments = new Collection<
-            string,
-            Attachment
-          >();
-          errorRestrictions.forEach((errRes) => {
+          collected[collected.length - 1].attachments = new Collection<string, Attachment>();
+          errorRestrictions.forEach(errRes => {
             sendResponse(isDirectMessage, message, {
               content: errRes.reason,
             });
@@ -326,7 +301,7 @@ const directMessageEvent: Command = {
           collector.stop();
         }
       });
-      collector.on('end', async (collected) => {
+      collector.on('end', async collected => {
         if (collector.endReason === collectorEndReason.IDLE) {
           await sendResponse(isDirectMessage, message, {
             content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
@@ -346,11 +321,10 @@ const directMessageEvent: Command = {
           const collectedMsgs = Array.from(collected.values());
           switch (selectedProfile.service) {
             case aiServiceEnums.OPENAI: {
-              const retentionMsgs =
-                chatCompletionService.formatChatCompletionMessages(
-                  collectedMsgs,
-                  selectedProfile,
-                );
+              const retentionMsgs = chatCompletionService.formatChatCompletionMessages(
+                collectedMsgs,
+                selectedProfile,
+              );
               await chatCompletionService.processOpenAiRetentionData(
                 retentionMsgs,
                 selectedProfile,
@@ -358,12 +332,8 @@ const directMessageEvent: Command = {
               break;
             }
             case aiServiceEnums.ANTHROPIC: {
-              const claudeMessages =
-                messageService.formatClaudeMessages(collectedMsgs);
-              await messageService.processAnthropicRetentionData(
-                claudeMessages,
-                selectedProfile,
-              );
+              const claudeMessages = messageService.formatClaudeMessages(collectedMsgs);
+              await messageService.processAnthropicRetentionData(claudeMessages, selectedProfile);
               break;
             }
           }

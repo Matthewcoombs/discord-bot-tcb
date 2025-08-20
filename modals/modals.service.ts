@@ -8,13 +8,11 @@ export default {
   async handleModalSubmit(modalInteraction: ModalSubmitInteraction) {
     const { customId } = modalInteraction;
     if (customId === NEW_PROFILE_MODAL_ID) {
-      const response =
-        await profileModal.handleNewProfileInput(modalInteraction);
+      const response = await profileModal.handleNewProfileInput(modalInteraction);
       return response;
     }
     if (customId === UPDATE_PROFILE_MODAL_ID) {
-      const response =
-        await profileModal.handleUpdateModalInput(modalInteraction);
+      const response = await profileModal.handleUpdateModalInput(modalInteraction);
       return response;
     }
   },

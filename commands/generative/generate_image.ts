@@ -1,30 +1,21 @@
-import {
-  ChatInputCommandInteraction,
-  MessageFlags,
-  SlashCommandBuilder,
-} from 'discord.js';
+import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder } from 'discord.js';
 import { Command } from '../../shared/discord-js-types';
 import { imageModelEnums } from '../../config';
-import {
-  deleteTempFilesByTag,
-  generateInteractionTag,
-} from '../../shared/utils';
-import imagesService, {
-  GenerateImageOptions,
-} from '../../openAIClient/images/images.service';
+import { deleteTempFilesByTag, generateInteractionTag } from '../../shared/utils';
+import imagesService, { GenerateImageOptions } from '../../openAIClient/images/images.service';
 import { InteractionTimeOutError } from '../../shared/errors';
 
 const aiImageGenerateCommand: Command = {
   data: new SlashCommandBuilder()
     .setName('generate_image')
     .setDescription('Generate images')
-    .addStringOption((strOption) =>
+    .addStringOption(strOption =>
       strOption
         .setName('description')
         .setDescription('Describe the image you want generated')
         .setRequired(true),
     )
-    .addStringOption((strOption) =>
+    .addStringOption(strOption =>
       strOption
         .setName('model')
         .setDescription('The AI model to generate the image')
@@ -44,7 +35,7 @@ const aiImageGenerateCommand: Command = {
           },
         ),
     )
-    .addIntegerOption((intOption) =>
+    .addIntegerOption(intOption =>
       intOption
         .setName('image_count')
         .setRequired(true)
@@ -61,13 +52,8 @@ const aiImageGenerateCommand: Command = {
     const user = interaction.user;
     const { username } = user;
     const n = interaction.options.getInteger('image_count', true);
-    const prompt = interaction.options
-      .getString('description', true)
-      .toLowerCase();
-    const model = interaction.options.getString(
-      'model',
-      true,
-    ) as imageModelEnums;
+    const prompt = interaction.options.getString('description', true).toLowerCase();
+    const model = interaction.options.getString('model', true) as imageModelEnums;
     const imageGenerationOptions: GenerateImageOptions = {
       prompt,
       model,

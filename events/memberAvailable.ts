@@ -85,14 +85,8 @@ const memberAvailableEvent: Command = {
           })) as ButtonInteraction;
           const isOptIn = optInResponse.customId === CONFIRM_ID;
           await usersDao.insertUserOptIn(userId, isOptIn);
-          await user.send(
-            `Thank you for responding to the user data tracking questionnaire.`,
-          );
-          await user.send(
-            `You are now opted ${
-              isOptIn ? 'in :white_check_mark:' : 'out :x:'
-            }.`,
-          );
+          await user.send(`Thank you for responding to the user data tracking questionnaire.`);
+          await user.send(`You are now opted ${isOptIn ? 'in :white_check_mark:' : 'out :x:'}.`);
           await userResponse?.delete();
         } catch (err) {
           console.error(err);

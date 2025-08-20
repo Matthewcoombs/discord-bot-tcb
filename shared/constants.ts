@@ -18,10 +18,7 @@ For clarity your data will be used in the following way should you consent:\n
 If you would like to not have you data tracked and saved by me, you are free to opt out.`;
 }
 
-export function generateAssistantIntroCopy(
-  profileName: string,
-  username: string,
-) {
+export function generateAssistantIntroCopy(profileName: string, username: string) {
   return `Hello ${username}\n
 You have initiated the assistant service with your profile **${profileName}**.
 To end this session simply say **goodbye**`;

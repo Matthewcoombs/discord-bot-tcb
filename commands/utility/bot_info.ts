@@ -11,7 +11,7 @@ const userInfoCommand: Command = {
     .setName('bot_info')
     .setDescription('Provides information about the server bot'),
   async execute(interaction: ChatInputCommandInteraction) {
-    const filteredCommands = interaction.client.commands.filter((command) => {
+    const filteredCommands = interaction.client.commands.filter(command => {
       return command.data.default_member_permissions !== '8';
     });
 
@@ -47,10 +47,7 @@ const userInfoCommand: Command = {
       .addFields(
         {
           name: '🎉 Fun Commands',
-          value:
-            funCommands.length > 0
-              ? funCommands.join('\n')
-              : 'No fun commands available',
+          value: funCommands.length > 0 ? funCommands.join('\n') : 'No fun commands available',
           inline: false,
         },
         {

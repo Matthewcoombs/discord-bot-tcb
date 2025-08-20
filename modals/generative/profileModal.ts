@@ -7,9 +7,7 @@ import {
   TextInputBuilder,
   TextInputStyle,
 } from 'discord.js';
-import userProfilesDao, {
-  UserProfile,
-} from '../../database/user_profiles/userProfilesDao';
+import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
 import { pg } from '../..';
 import { aiServiceEnums, config } from '../../config';
 
@@ -27,9 +25,7 @@ export default {
   generateProfileModal(profileData?: UserProfile) {
     const modal = new ModalBuilder()
       .setCustomId(profileData ? UPDATE_PROFILE_MODAL_ID : NEW_PROFILE_MODAL_ID)
-      .setTitle(
-        profileData ? `Update Profile: ${profileData.name}` : 'New Profile',
-      );
+      .setTitle(profileData ? `Update Profile: ${profileData.name}` : 'New Profile');
 
     const profileNameInput = new TextInputBuilder()
       .setCustomId(PROFILE_NAME_ID)
@@ -49,14 +45,12 @@ export default {
       profileInput.setValue(profileData.profile);
     }
 
-    const firstActionRow =
-      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        profileNameInput,
-      );
-    const secondActionRow =
-      new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-        profileInput,
-      );
+    const firstActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+      profileNameInput,
+    );
+    const secondActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+      profileInput,
+    );
     modal.addComponents(firstActionRow, secondActionRow);
 
     // Only add the service input if the profileData is not provided.
@@ -68,10 +62,9 @@ export default {
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
-      const thirdActionRow =
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-          serviceInput,
-        );
+      const thirdActionRow = new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+        serviceInput,
+      );
       modal.addComponents(thirdActionRow);
     }
 
@@ -126,15 +119,11 @@ export default {
 
   async handleUpdateModalInput(modalInteraction: ModalSubmitInteraction) {
     const { user } = modalInteraction;
-    const updatedName =
-      modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
-    const updatedProfile =
-      modalInteraction.fields.getTextInputValue(PROFILE_ID);
+    const updatedName = modalInteraction.fields.getTextInputValue(PROFILE_NAME_ID);
+    const updatedProfile = modalInteraction.fields.getTextInputValue(PROFILE_ID);
 
     // Handling transaction logic for updating a profile.
-    const originalSelectedProfile = await userProfilesDao.getSelectedProfile(
-      user.id,
-    );
+    const originalSelectedProfile = await userProfilesDao.getSelectedProfile(user.id);
     try {
       await pg.query('BEGIN');
       const selectedProfileUpdateCopy: UserProfile = JSON.parse(

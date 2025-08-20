@@ -84,20 +84,13 @@ export function deleteTempFilesByTag(interactionTag: number) {
   }
 }
 
-export function validateImage(
-  imageAttachment: Attachment,
-  model: imageModelEnums,
-) {
+export function validateImage(imageAttachment: Attachment, model: imageModelEnums) {
   const supportedImageTypes =
     model === imageModelEnums.DALLE2
       ? ['image/png']
       : ['image/png', 'image/jpg', 'image/webp', 'image/jpeg'];
-  const supportedImageSize =
-    model === imageModelEnums.DALLE2 ? 4000000 : 25000000;
-  if (
-    !imageAttachment.contentType ||
-    !supportedImageTypes.includes(imageAttachment.contentType)
-  ) {
+  const supportedImageSize = model === imageModelEnums.DALLE2 ? 4000000 : 25000000;
+  if (!imageAttachment.contentType || !supportedImageTypes.includes(imageAttachment.contentType)) {
     throw new InvalidFileTypeError({
       error: `The image provided must be of type(s) '${supportedImageTypes.join(', ')}'`,
       metaData: imageAttachment,

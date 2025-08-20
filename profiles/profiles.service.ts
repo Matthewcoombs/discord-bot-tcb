@@ -6,9 +6,7 @@ import {
   OPEN_AI_TEXT_MODELS,
   textBasedModelEnums,
 } from '../config';
-import userProfilesDao, {
-  UserProfile,
-} from '../database/user_profiles/userProfilesDao';
+import userProfilesDao, { UserProfile } from '../database/user_profiles/userProfilesDao';
 
 export const SELECT_AI_SERVICE_ID = 'service';
 export const SELECT_TEXT_MODEL_ID = 'textModel';
@@ -31,8 +29,7 @@ function convertAIServiceTemperature(selectedProfile: UserProfile) {
   const temperatureOptions: number[] = [];
   for (let i = 0; i <= 4; i++) {
     const t = i / 4;
-    const interpolatedValue =
-      temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
+    const interpolatedValue = temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
     temperatureOptions.push(Number(interpolatedValue.toFixed(2)));
   }
 
@@ -53,11 +50,7 @@ export default {
         new ButtonBuilder()
           .setCustomId(service)
           .setLabel(service)
-          .setStyle(
-            selectedService === service
-              ? ButtonStyle.Success
-              : ButtonStyle.Primary,
-          ),
+          .setStyle(selectedService === service ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -70,18 +63,14 @@ export default {
   generateTextModelSelectionDisplay(service: string, selectedModel?: string) {
     const modelButtons: ButtonBuilder[] = [];
     const textBasedModelOptions =
-      service === aiServiceEnums.OPENAI
-        ? OPEN_AI_TEXT_MODELS
-        : CLAUDE_TEXT_MODELS;
+      service === aiServiceEnums.OPENAI ? OPEN_AI_TEXT_MODELS : CLAUDE_TEXT_MODELS;
     for (let i = 0; i <= textBasedModelOptions.length - 1; i++) {
       const model = textBasedModelOptions[i];
       modelButtons.push(
         new ButtonBuilder()
           .setCustomId(model)
           .setLabel(model)
-          .setStyle(
-            selectedModel === model ? ButtonStyle.Success : ButtonStyle.Primary,
-          ),
+          .setStyle(selectedModel === model ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -104,11 +93,7 @@ export default {
         new ButtonBuilder()
           .setCustomId(timeoutVal.toString())
           .setLabel(`${timeoutVal / 60000} minutes`)
-          .setStyle(
-            timeoutVal === numSelectedTimeout
-              ? ButtonStyle.Success
-              : ButtonStyle.Primary,
-          ),
+          .setStyle(timeoutVal === numSelectedTimeout ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -129,9 +114,7 @@ export default {
         new ButtonBuilder()
           .setCustomId(optVal.toString())
           .setLabel(optVal.toString())
-          .setStyle(
-            optVal === retention ? ButtonStyle.Success : ButtonStyle.Primary,
-          ),
+          .setStyle(optVal === retention ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -155,11 +138,7 @@ export default {
         new ButtonBuilder()
           .setCustomId(optVal.toString())
           .setLabel(optVal === 0 ? 'optimized' : optVal.toString())
-          .setStyle(
-            optVal === retentionSize
-              ? ButtonStyle.Success
-              : ButtonStyle.Primary,
-          ),
+          .setStyle(optVal === retentionSize ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -181,10 +160,7 @@ export default {
       .setLabel('Cancel')
       .setStyle(ButtonStyle.Primary);
 
-    const row = new ActionRowBuilder().addComponents([
-      clearRetentionDataButton,
-      cancelButton,
-    ]);
+    const row = new ActionRowBuilder().addComponents([clearRetentionDataButton, cancelButton]);
     return {
       displayMsg: `Clear Retention Data :broom:`,
       row,
@@ -242,11 +218,7 @@ export default {
           .setCustomId(tempOption.toString())
           .setLabel(tempLabel)
           .setEmoji(tempEmoji)
-          .setStyle(
-            Number(temperature) === tempOption
-              ? ButtonStyle.Success
-              : ButtonStyle.Primary,
-          ),
+          .setStyle(Number(temperature) === tempOption ? ButtonStyle.Success : ButtonStyle.Primary),
       );
     }
 
@@ -267,15 +239,11 @@ export default {
           selectedProfile.textModel,
         );
       case SELECT_CHAT_TIMEOUT_ID:
-        return this.generateTextModelChatTimeout(
-          selectedProfile.timeout as string,
-        );
+        return this.generateTextModelChatTimeout(selectedProfile.timeout as string);
       case SELECT_RETENTION_ID:
         return this.generateRetentionProfileSetting(selectedProfile.retention);
       case SELECT_RETENTION_SIZE_ID:
-        return this.generateRetentionSizeProfileSetting(
-          selectedProfile.retentionSize as number,
-        );
+        return this.generateRetentionSizeProfileSetting(selectedProfile.retentionSize as number);
       case CLEAR_RETENTION_DATA:
         return this.generateClearRetentionDataSetting();
       case SELECT_PROFILE_TEMPERATURE:
@@ -345,7 +313,7 @@ export default {
   },
 
   generateUserProfileDisplay(userProfiles: UserProfile[]) {
-    const buttons = userProfiles.map((profile) => {
+    const buttons = userProfiles.map(profile => {
       return new ButtonBuilder()
         .setCustomId(profile.id.toString())
         .setLabel(profile.name)

@@ -1,8 +1,4 @@
-import {
-  CommandInteraction,
-  MessageFlags,
-  SlashCommandBuilder,
-} from 'discord.js';
+import { CommandInteraction, MessageFlags, SlashCommandBuilder } from 'discord.js';
 import { Command, optInCommands } from '../../shared/discord-js-types';
 import userProfilesDao, {
   validateUserProfileCount,
