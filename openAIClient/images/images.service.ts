@@ -29,6 +29,16 @@ export interface ToolCallGenerateImageOptions {
   style?: string;
 }
 
+export interface ToolCallEditImageOptions {
+  prompt: string;
+  model: imageModelEnums;
+  n?: number;
+  dalle2Size?: string;
+  gptImage1Size?: string;
+  gptImage1Quality?: string;
+  gptImage1Background?: string;
+}
+
 export interface EditImageOptions {
   prompt: string;
   image?: string;
@@ -109,6 +119,39 @@ export default {
     return true;
   },
 
+  validateImageEditOptions(imageOptions: ToolCallEditImageOptions) {
+    if (!imageOptions?.model || typeof imageOptions.model !== 'string') {
+      return false;
+    }
+    if (!imageOptions?.prompt || typeof imageOptions.prompt !== 'string') {
+      return false;
+    }
+    if (!imageOptions?.n && typeof imageOptions.n !== 'string') {
+      return false;
+    }
+    if (
+      !imageOptions?.dalle2Size &&
+      !imageOptions?.gptImage1Size &&
+      typeof imageOptions.dalle2Size !== 'string' &&
+      typeof imageOptions.gptImage1Size !== 'string'
+    ) {
+      return false;
+    }
+    if (
+      imageOptions.model === imageModelEnums.GPT_IMAGE_1 &&
+      (!imageOptions?.gptImage1Quality || typeof imageOptions.gptImage1Quality !== 'string')
+    ) {
+      return false;
+    }
+    if (
+      imageOptions.model === imageModelEnums.GPT_IMAGE_1 &&
+      (!imageOptions?.gptImage1Background || typeof imageOptions.gptImage1Background !== 'string')
+    ) {
+      return false;
+    }
+    return true;
+  },
+
   translateToolCallImageOptionsToGenerateImageOptions(
     toolCallImageOptions: ToolCallGenerateImageOptions,
   ) {
@@ -126,6 +169,22 @@ export default {
           : toolCallImageOptions.gptImage1Quality,
       ...(toolCallImageOptions.model === imageModelEnums.DALLE3 && {
         style: toolCallImageOptions.style,
+      }),
+    };
+  },
+
+  translateToolCallImageOptionsToEditImageOptions(toolCallImageOptions: ToolCallEditImageOptions) {
+    return {
+      model: toolCallImageOptions.model,
+      prompt: toolCallImageOptions.prompt,
+      n: Number(toolCallImageOptions.n),
+      size:
+        toolCallImageOptions.model === imageModelEnums.DALLE2
+          ? toolCallImageOptions.dalle2Size
+          : toolCallImageOptions.gptImage1Size,
+      ...(toolCallImageOptions.model === imageModelEnums.GPT_IMAGE_1 && {
+        quality: toolCallImageOptions.gptImage1Quality,
+        background: toolCallImageOptions.gptImage1Background,
       }),
     };
   },
@@ -163,6 +222,34 @@ export default {
       user.username,
       interactionTag,
       model === imageModelEnums.GPT_IMAGE_1 ? (imageOptions.output_format ?? 'jpeg') : 'jpeg',
+    );
+
+    return imageFiles;
+  },
+
+  async editImages(
+    user: User,
+    imageOptions: EditImageOptions,
+    imageBuffer: Buffer,
+    interactionTag: number,
+  ) {
+    const model = imageOptions.model;
+    model !== imageModelEnums.GPT_IMAGE_1 ? (imageOptions.response_format = 'b64_json') : null;
+
+    const { toFile } = await import('openai');
+    const imageFile = await toFile(imageBuffer, 'image.png', { type: 'image/png' });
+
+    const imageResponse = await OpenAi.images.edit({
+      ...imageOptions,
+      image: imageFile,
+    } as any);
+
+    const imageData = (imageResponse.data?.map(image => image.b64_json) as string[]) || [];
+    const imageFiles = this.convertImageDataToFiles(
+      imageData,
+      user.username,
+      interactionTag,
+      'jpeg',
     );
 
     return imageFiles;

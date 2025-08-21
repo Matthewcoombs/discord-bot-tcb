@@ -3,7 +3,10 @@ import { Anthropic } from '../..';
 import { anthropicToolsEnum, config, ProfileSettingsArgs, textBasedModelEnums } from '../../config';
 import { MessageParam, ToolUseBlock } from '@anthropic-ai/sdk/resources';
 import userProfilesDao, { UserProfile } from '../../database/user_profiles/userProfilesDao';
-import imagesService, { GenerateImageOptions } from '../../openAIClient/images/images.service';
+import imagesService, {
+  GenerateImageOptions,
+  EditImageOptions,
+} from '../../openAIClient/images/images.service';
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
@@ -13,6 +16,7 @@ import {
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
 import { ChatInstance } from '../../shared/discord-js-types';
+import { getRemoteFileBufferData } from '../../shared/utils';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -46,6 +50,10 @@ export default {
             toolResultContent = `Successfully generated image(s)`;
             break;
           }
+          case anthropicToolsEnum.IMAGE_EDIT: {
+            toolResultContent = `Successfully edited image(s)`;
+            break;
+          }
         }
 
         // pushing tool usage
@@ -73,14 +81,31 @@ export default {
           ],
         });
       } else {
+        const messageContent: any[] = [
+          {
+            type: 'text',
+            text: msg.content,
+          },
+        ];
+
+        // Add image attachments for user messages
+        if (!msg.author.bot && msg.attachments.size > 0) {
+          msg.attachments.forEach(attachment => {
+            if (attachment.contentType?.startsWith('image/')) {
+              messageContent.push({
+                type: 'image',
+                source: {
+                  type: 'url',
+                  url: attachment.url,
+                },
+              });
+            }
+          });
+        }
+
         formatClaudeMessages.push({
           role,
-          content: [
-            {
-              type: 'text',
-              text: msg.content,
-            },
-          ],
+          content: messageContent,
         });
       }
     });
@@ -182,6 +207,7 @@ export default {
     toolCalls: ToolUseBlock,
     ChatInstanceCollector: Collection<string, ChatInstance>,
     userChatInstance: ChatInstance,
+    messages?: Message[],
   ): Promise<MessageCreateOptions> {
     let toolResponse: MessageCreateOptions = {};
     const { interactionTag } = userChatInstance;
@@ -213,6 +239,55 @@ export default {
           files: imageFiles,
           embeds: [toolEmbed],
         };
+        break;
+      }
+      case anthropicToolsEnum.IMAGE_EDIT: {
+        const toolCallEditOptions = input as any;
+        if (!imagesService.validateImageEditOptions(toolCallEditOptions)) {
+          toolResponse.content = `Sorry it looks like the arguments provided for image editing are invalid. Please try again!`;
+          break;
+        }
+
+        // Find the most recent user message with an image attachment
+        const lastUserMessage = messages
+          ?.slice()
+          .reverse()
+          .find(msg => !msg.author.bot && msg.attachments.size > 0);
+
+        if (!lastUserMessage || lastUserMessage.attachments.size === 0) {
+          toolResponse.content = `Sorry, I couldn't find an image to edit. Please upload an image and try again.`;
+          break;
+        }
+
+        const imageAttachment = lastUserMessage.attachments.first();
+        if (!imageAttachment) {
+          toolResponse.content = `Sorry, I couldn't access the image attachment. Please try again.`;
+          break;
+        }
+
+        try {
+          const imageBuffer = await getRemoteFileBufferData(imageAttachment.url);
+          const editOptions: EditImageOptions =
+            imagesService.translateToolCallImageOptionsToEditImageOptions(toolCallEditOptions);
+          const imageFiles = await imagesService.editImages(
+            user,
+            editOptions,
+            imageBuffer,
+            interactionTag,
+          );
+
+          toolResponse = {
+            content:
+              imageFiles.length > 1
+                ? `Here are your edited images ${user.username} :blush:`
+                : `Here is your edited image ${user.username} :blush:`,
+            files: imageFiles,
+            embeds: [toolEmbed],
+          };
+        } catch (error) {
+          console.error('Error editing image:', error);
+          toolResponse.content = `Sorry, I encountered an error while editing your image. Please try again.`;
+        }
         break;
       }
       case anthropicToolsEnum.PROFILE_SETTINGS: {

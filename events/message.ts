@@ -112,6 +112,7 @@ async function processOpenAIMessageService(
       toolCalls,
       chatInstanceCollector,
       userMessageInstance,
+      collected,
     );
   } else {
     finalResponse.content = content as string;
@@ -145,6 +146,7 @@ async function processAnthropicMessageService(
       toolUse,
       chatInstanceCollector,
       userMessageInstance,
+      collected,
     );
   }
   return { finalResponse, endChat };

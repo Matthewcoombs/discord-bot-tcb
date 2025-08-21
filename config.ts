@@ -31,12 +31,14 @@ export enum textBasedModelEnums {
 
 export enum openaiToolsEnum {
   GENERATE_IMAGE = 'generate_image',
+  IMAGE_EDIT = 'image_edit',
   END_CHAT = 'end_chat',
   PROFILE_SETTINGS = 'profile_settings',
 }
 
 export enum anthropicToolsEnum {
   GENERATE_IMAGE = 'generate_image',
+  IMAGE_EDIT = 'image_edit',
   END_CHAT = 'end_chat',
   PROFILE_SETTINGS = 'profile_settings',
 }
@@ -169,6 +171,64 @@ export const DEFAULT_OPENAI_TOOLS = [
           'n',
           'dalle3Size',
           'gptImage1Size',
+        ],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: openaiToolsEnum.IMAGE_EDIT,
+      strict: true,
+      description:
+        'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it',
+      parameters: {
+        type: 'object',
+        properties: {
+          model: {
+            type: 'string',
+            description: 'the model used to edit the image',
+            enum: [imageModelEnums.DALLE2, imageModelEnums.GPT_IMAGE_1],
+          },
+          prompt: {
+            type: 'string',
+            description: 'the description of the edits to make to the image',
+          },
+          n: {
+            type: 'string',
+            description: 'the number of edited images to create',
+            enum: ['1', '2', '3', '4'],
+          },
+          dalle2Size: {
+            type: 'string',
+            description: 'the size of image to create. This is only used for dalle2',
+            enum: ['256x256', '512x512', '1024x1024'],
+          },
+          gptImage1Size: {
+            type: 'string',
+            description: 'the size of image to create. This is only used for gpt-image-1',
+            enum: ['1024x1024', '1536x1024', '1024x1536'],
+          },
+          gptImage1Quality: {
+            type: 'string',
+            description: 'the quality of the image to create. This is only used for gpt-image-1',
+            enum: ['high', 'medium', 'low'],
+          },
+          gptImage1Background: {
+            type: 'string',
+            description: 'the background setting for the image. This is only used for gpt-image-1',
+            enum: ['transparent', 'opaque', 'auto'],
+          },
+        },
+        required: [
+          'model',
+          'prompt',
+          'n',
+          'dalle2Size',
+          'gptImage1Size',
+          'gptImage1Quality',
+          'gptImage1Background',
         ],
         additionalProperties: false,
       },
@@ -358,6 +418,59 @@ export const config = {
             'n',
             'dalle3Size',
             'gptImage1Size',
+          ],
+        },
+      },
+      {
+        name: anthropicToolsEnum.IMAGE_EDIT,
+        description:
+          'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it, modify it, change it, or make alterations to it. Always use this tool when you can see an image in the conversation and the user wants to modify that image.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            model: {
+              type: 'string',
+              description: 'the model used to edit the image',
+              enum: [imageModelEnums.DALLE2, imageModelEnums.GPT_IMAGE_1],
+            },
+            prompt: {
+              type: 'string',
+              description: 'the description of the edits to make to the image',
+            },
+            n: {
+              type: 'string',
+              description: 'the number of edited images to create',
+              enum: ['1', '2', '3', '4'],
+            },
+            dalle2Size: {
+              type: 'string',
+              description: 'the size of image to create this is only used for dalle2',
+              enum: ['256x256', '512x512', '1024x1024'],
+            },
+            gptImage1Size: {
+              type: 'string',
+              description: 'the size of image to create this is only used for gpt-image-1',
+              enum: ['1024x1024', '1536x1024', '1024x1536'],
+            },
+            gptImage1Quality: {
+              type: 'string',
+              description: 'the quality of the image to create this is only used for gpt-image-1',
+              enum: ['high', 'medium', 'low'],
+            },
+            gptImage1Background: {
+              type: 'string',
+              description: 'the background setting for the image this is only used for gpt-image-1',
+              enum: ['transparent', 'opaque', 'auto'],
+            },
+          },
+          required: [
+            'model',
+            'prompt',
+            'n',
+            'dalle2Size',
+            'gptImage1Size',
+            'gptImage1Quality',
+            'gptImage1Background',
           ],
         },
       },
