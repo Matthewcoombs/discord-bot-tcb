@@ -13,6 +13,8 @@ import { OpenAi } from '../..';
 import imagesService, {
   GenerateImageOptions,
   ToolCallGenerateImageOptions,
+  ToolCallEditImageOptions,
+  EditImageOptions,
 } from '../images/images.service';
 import {
   CLEAR_RETENTION_DATA,
@@ -24,6 +26,7 @@ import {
 } from '../../profiles/profiles.service';
 import { ChatCompletionMessageToolCall } from 'openai/resources';
 import { ChatInstance } from '../../shared/discord-js-types';
+import { getRemoteFileBufferData } from '../../shared/utils';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -286,6 +289,7 @@ export default {
     toolCalls: ChatCompletionMessageToolCall[],
     ChatInstanceCollector: Collection<string, ChatInstance>,
     userChatInstance: ChatInstance,
+    messages?: Message[],
   ): Promise<MessageCreateOptions> {
     let toolResponse: MessageCreateOptions = {};
     const { interactionTag } = userChatInstance;
@@ -319,6 +323,56 @@ export default {
           files: imageFiles,
           embeds: [toolEmbed],
         };
+        break;
+      }
+      case openaiToolsEnum.IMAGE_EDIT: {
+        const toolCallEditOptions = JSON.parse(toolArgs) as ToolCallEditImageOptions;
+        if (!imagesService.validateImageEditOptions(toolCallEditOptions)) {
+          toolResponse.content = `Sorry it looks like the arguments provided for image editing are invalid. Please try again!`;
+          break;
+        }
+
+        // Find the most recent user message with an image attachment
+        const lastUserMessage = messages
+          ?.slice()
+          .reverse()
+          .find(msg => !msg.author.bot && msg.attachments.size > 0);
+
+        if (!lastUserMessage || lastUserMessage.attachments.size === 0) {
+          toolResponse.content = `Sorry, I couldn't find an image to edit. Please upload an image and try again.`;
+          break;
+        }
+
+        const imageAttachment = lastUserMessage.attachments.first();
+        if (!imageAttachment) {
+          toolResponse.content = `Sorry, I couldn't access the image attachment. Please try again.`;
+          break;
+        }
+
+        try {
+          // const { getRemoteFileBufferData } = await import('../../shared/utils');
+          const imageBuffer = await getRemoteFileBufferData(imageAttachment.url);
+          const editOptions: EditImageOptions =
+            imagesService.translateToolCallImageOptionsToEditImageOptions(toolCallEditOptions);
+          const imageFiles = await imagesService.editImages(
+            user,
+            editOptions,
+            imageBuffer,
+            interactionTag,
+          );
+
+          toolResponse = {
+            content:
+              imageFiles.length > 1
+                ? `Here are your edited images ${user.username} :blush:`
+                : `Here is your edited image ${user.username} :blush:`,
+            files: imageFiles,
+            embeds: [toolEmbed],
+          };
+        } catch (error) {
+          console.error('Error editing image:', error);
+          toolResponse.content = `Sorry, I encountered an error while editing your image. Please try again.`;
+        }
         break;
       }
       case openaiToolsEnum.PROFILE_SETTINGS: {
