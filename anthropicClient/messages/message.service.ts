@@ -16,6 +16,7 @@ import {
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
 import { ChatInstance } from '../../shared/discord-js-types';
+import { getRemoteFileBufferData } from '../../shared/utils';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -265,7 +266,6 @@ export default {
         }
 
         try {
-          const { getRemoteFileBufferData } = await import('../../shared/utils');
           const imageBuffer = await getRemoteFileBufferData(imageAttachment.url);
           const editOptions: EditImageOptions =
             imagesService.translateToolCallImageOptionsToEditImageOptions(toolCallEditOptions);

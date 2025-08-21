@@ -350,7 +350,6 @@ export default {
         }
 
         try {
-          // const { getRemoteFileBufferData } = await import('../../shared/utils');
           const imageBuffer = await getRemoteFileBufferData(imageAttachment.url);
           const editOptions: EditImageOptions =
             imagesService.translateToolCallImageOptionsToEditImageOptions(toolCallEditOptions);
