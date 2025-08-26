@@ -23,6 +23,43 @@ import {
 import { INVALID_FILE_TYPE_CODE, TOO_MANY_ATTACHMENTS_CODE } from '../shared/errors';
 import messageService from '../anthropicClient/messages/message.service';
 
+const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+function createSpinner(message: Message, isDM: boolean) {
+  let frameIndex = 0;
+  let spinnerMessage: Message;
+  let interval: NodeJS.Timeout;
+
+  const startSpinner = async () => {
+    const content = isDM
+      ? spinnerFrames[frameIndex]
+      : `<@${message.author.id}> ${spinnerFrames[frameIndex]}`;
+
+    spinnerMessage = isDM ? await message.author.send(content) : await message.reply(content);
+
+    interval = setInterval(async () => {
+      frameIndex = (frameIndex + 1) % spinnerFrames.length;
+      const newContent = isDM
+        ? spinnerFrames[frameIndex]
+        : `<@${message.author.id}> ${spinnerFrames[frameIndex]}`;
+
+      try {
+        await spinnerMessage.edit(newContent);
+      } catch (error) {
+        clearInterval(interval);
+      }
+    }, 1000);
+  };
+
+  return {
+    start: startSpinner,
+    stop: () => {
+      if (interval) clearInterval(interval);
+      return spinnerMessage;
+    },
+  };
+}
+
 async function sendResponse(
   isDM: boolean,
   message: Message,
@@ -266,6 +303,10 @@ const directMessageEvent: Command = {
         let finalResponse: MessageCreateOptions = {};
         let endChat: boolean = false;
         userMessageInstance.isProcessing = true;
+
+        const spinner = createSpinner(message, isDirectMessage);
+        await spinner.start();
+
         switch (userMessageInstance.selectedProfile?.service) {
           case aiServiceEnums.ANTHROPIC: {
             const anthropicServiceResp = await processAnthropicMessageService(
@@ -296,8 +337,17 @@ const directMessageEvent: Command = {
           }
         }
 
+        const spinnerMessage = spinner.stop();
         userMessageInstance.isProcessing = false;
         chatInstanceCollector.set(userId, userMessageInstance);
+
+        if (spinnerMessage) {
+          try {
+            await spinnerMessage.delete();
+          } catch (error) {
+            console.error('[Error] deleting spinner message:', error);
+          }
+        }
         await sendResponse(isDirectMessage, message, finalResponse);
         if (endChat) {
           collector.stop();
