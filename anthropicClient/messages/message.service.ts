@@ -212,11 +212,20 @@ export default {
     let toolResponse: MessageCreateOptions = {};
     const { interactionTag } = userChatInstance;
     const { name: toolName, input, id, type } = toolCalls;
-    const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
-      { name: 'id', value: id as string, inline: true },
-      { name: 'type', value: type as string, inline: true },
-      { name: 'arguments', value: JSON.stringify(input), inline: true },
-    ]);
+    const toolEmbed = new EmbedBuilder()
+      .setTitle(`🔧 ${toolName}`)
+      .setColor(0xff6b35)
+      .setTimestamp()
+      .addFields(
+        { name: '🆔 ID', value: `\`${id}\``, inline: true },
+        { name: '⚙️ Type', value: `\`${type}\``, inline: true },
+        {
+          name: '📋 Arguments',
+          value: `\`\`\`json\n${JSON.stringify(input, null, 2)}\`\`\``,
+          inline: false,
+        },
+      )
+      .setFooter({ text: 'Anthropic Tool Call' });
 
     switch (toolName) {
       case anthropicToolsEnum.GENERATE_IMAGE: {
