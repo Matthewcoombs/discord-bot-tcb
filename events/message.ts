@@ -65,26 +65,41 @@ async function sendResponse(
   message: Message,
   messageCreateOptions: MessageCreateOptions,
 ) {
-  // Cleaning potentially injected user tags by openai
-  const userTag = `<@${message.author.id}>`;
-  messageCreateOptions?.content?.replace(/<@\d+>/g, '').trim();
+  try {
+    // Cleaning potentially injected user tags by openai
+    const userTag = `<@${message.author.id}>`;
+    messageCreateOptions?.content?.replace(/<@\d+>/g, '').trim();
 
-  const responses = processBotResponseLength(messageCreateOptions?.content as string);
+    const responses = processBotResponseLength(messageCreateOptions?.content as string);
 
-  for (let i = 0; i < responses.length; i++) {
-    if (messageCreateOptions.files && i !== responses.length - 1) {
-      messageCreateOptions.files = [];
+    for (let i = 0; i < responses.length; i++) {
+      if (messageCreateOptions.files && i !== responses.length - 1) {
+        messageCreateOptions.files = [];
+      }
+      if (messageCreateOptions.embeds && i !== responses.length - 1) {
+        messageCreateOptions.embeds = [];
+      }
+
+      if (isDM) {
+        messageCreateOptions.content = responses[i];
+        await message.author.send(messageCreateOptions);
+      } else {
+        messageCreateOptions.content = `${userTag} ${responses[i]}`;
+        await message.reply(messageCreateOptions);
+      }
     }
-    if (messageCreateOptions.embeds && i !== responses.length - 1) {
-      messageCreateOptions.embeds = [];
-    }
-
-    if (isDM) {
-      messageCreateOptions.content = responses[i];
-      await message.author.send(messageCreateOptions);
-    } else {
-      messageCreateOptions.content = `${userTag} ${responses[i]}`;
-      await message.reply(messageCreateOptions);
+  } catch (error) {
+    console.error('[Error] Failed to send response:', error);
+    // Fallback: try to send a simple error message
+    try {
+      const fallbackMessage = 'Sorry, I encountered an error while responding.';
+      if (isDM) {
+        await message.author.send(fallbackMessage);
+      } else {
+        await message.reply(fallbackMessage);
+      }
+    } catch (fallbackError) {
+      console.error('[Error] Failed to send fallback message:', fallbackError);
     }
   }
 }
@@ -131,33 +146,43 @@ async function processOpenAIMessageService(
   finalResponse: MessageCreateOptions,
   endChat: boolean,
 ) {
-  const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(
-    collected,
-    userMessageInstance?.selectedProfile,
-  );
-
-  const { content, toolCalls } = await chatCompletionService.processGenerativeResponse(
-    chatCompletionMessages,
-    userMessageInstance?.selectedProfile,
-  );
-
-  // This logic handles instances of tool calls during the message instance
-  if (toolCalls && toolCalls.length > 0) {
-    endChat = toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
-    finalResponse = await chatCompletionService.processOpenAIToolCalls(
-      user,
-      toolCalls,
-      chatInstanceCollector,
-      userMessageInstance,
+  try {
+    const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(
       collected,
+      userMessageInstance?.selectedProfile,
     );
-  } else {
-    finalResponse.content = content as string;
+
+    const { content, toolCalls } = await chatCompletionService.processGenerativeResponse(
+      chatCompletionMessages,
+      userMessageInstance?.selectedProfile,
+    );
+
+    // This logic handles instances of tool calls during the message instance
+    if (toolCalls && toolCalls.length > 0) {
+      endChat = toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
+      finalResponse = await chatCompletionService.processOpenAIToolCalls(
+        user,
+        toolCalls,
+        chatInstanceCollector,
+        userMessageInstance,
+        collected,
+      );
+    } else {
+      finalResponse.content = content as string;
+    }
+    return {
+      finalResponse,
+      endChat,
+    };
+  } catch (error) {
+    console.error('[Error] OpenAI service processing failed:', error);
+    return {
+      finalResponse: {
+        content: 'Sorry, I encountered an error processing your request with OpenAI.',
+      },
+      endChat: false,
+    };
   }
-  return {
-    finalResponse,
-    endChat,
-  };
 }
 
 async function processAnthropicMessageService(
@@ -168,25 +193,35 @@ async function processAnthropicMessageService(
   finalResponse: MessageCreateOptions,
   endChat: boolean,
 ) {
-  const claudeMessages = messageService.formatClaudeMessages(collected);
-  const { response, toolUse } = await messageService.processClaudeResponse(
-    claudeMessages,
-    userMessageInstance.selectedProfile,
-  );
-
-  if (!toolUse) {
-    finalResponse.content = response;
-  } else {
-    endChat = toolUse.name === anthropicToolsEnum.END_CHAT;
-    finalResponse = await messageService.processAnthropicToolCalls(
-      user,
-      toolUse,
-      chatInstanceCollector,
-      userMessageInstance,
-      collected,
+  try {
+    const claudeMessages = messageService.formatClaudeMessages(collected);
+    const { response, toolUse } = await messageService.processClaudeResponse(
+      claudeMessages,
+      userMessageInstance.selectedProfile,
     );
+
+    if (!toolUse) {
+      finalResponse.content = response;
+    } else {
+      endChat = toolUse.name === anthropicToolsEnum.END_CHAT;
+      finalResponse = await messageService.processAnthropicToolCalls(
+        user,
+        toolUse,
+        chatInstanceCollector,
+        userMessageInstance,
+        collected,
+      );
+    }
+    return { finalResponse, endChat };
+  } catch (error) {
+    console.error('[Error] Anthropic service processing failed:', error);
+    return {
+      finalResponse: {
+        content: 'Sorry, I encountered an error processing your request with Anthropic.',
+      },
+      endChat: false,
+    };
   }
-  return { finalResponse, endChat };
 }
 
 const directMessageEvent: Command = {
@@ -287,11 +322,11 @@ const directMessageEvent: Command = {
           // clearing all invalid attachments from the previous message to avoid
           // errors with invalid file types being passed.
           collected[collected.length - 1].attachments = new Collection<string, Attachment>();
-          errorRestrictions.forEach(errRes => {
-            sendResponse(isDirectMessage, message, {
+          for (const errRes of errorRestrictions) {
+            await sendResponse(isDirectMessage, message, {
               content: errRes.reason,
             });
-          });
+          }
           return;
         }
 
@@ -307,34 +342,42 @@ const directMessageEvent: Command = {
         const spinner = createSpinner(message, isDirectMessage);
         await spinner.start();
 
-        switch (userMessageInstance.selectedProfile?.service) {
-          case aiServiceEnums.ANTHROPIC: {
-            const anthropicServiceResp = await processAnthropicMessageService(
-              chatInstanceCollector,
-              userMessageInstance,
-              collected,
-              user,
-              finalResponse,
-              endChat,
-            );
-            finalResponse = anthropicServiceResp.finalResponse;
-            endChat = anthropicServiceResp.endChat;
-            break;
+        try {
+          switch (userMessageInstance.selectedProfile?.service) {
+            case aiServiceEnums.ANTHROPIC: {
+              const anthropicServiceResp = await processAnthropicMessageService(
+                chatInstanceCollector,
+                userMessageInstance,
+                collected,
+                user,
+                finalResponse,
+                endChat,
+              );
+              finalResponse = anthropicServiceResp.finalResponse;
+              endChat = anthropicServiceResp.endChat;
+              break;
+            }
+            default: {
+              // adding default logic for users with no profile set.
+              const openAIServiceResp = await processOpenAIMessageService(
+                chatInstanceCollector,
+                userMessageInstance,
+                collected,
+                user,
+                finalResponse,
+                endChat,
+              );
+              finalResponse = openAIServiceResp.finalResponse;
+              endChat = openAIServiceResp.endChat;
+              break;
+            }
           }
-          default: {
-            // adding default logic for users with no profile set.
-            const openAIServiceResp = await processOpenAIMessageService(
-              chatInstanceCollector,
-              userMessageInstance,
-              collected,
-              user,
-              finalResponse,
-              endChat,
-            );
-            finalResponse = openAIServiceResp.finalResponse;
-            endChat = openAIServiceResp.endChat;
-            break;
-          }
+        } catch (error) {
+          console.error('[Error] AI service processing failed:', error);
+          finalResponse = {
+            content: 'Sorry, I encountered an unexpected error. Please try again.',
+          };
+          endChat = false;
         }
 
         const spinnerMessage = spinner.stop();
@@ -354,50 +397,72 @@ const directMessageEvent: Command = {
         }
       });
       collector.on('end', async collected => {
-        if (collector.endReason === collectorEndReason.IDLE) {
-          await sendResponse(isDirectMessage, message, {
-            content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
-          });
-        }
-        if (collector.endReason === collectorEndReason.USER) {
-          await sendResponse(isDirectMessage, message, {
-            content: `The chat session has ended :wave:`,
-          });
-        }
+        try {
+          if (collector.endReason === collectorEndReason.IDLE) {
+            await sendResponse(isDirectMessage, message, {
+              content: `Looks like you're no longer there ${user.username}. Our chat has ended.`,
+            });
+          }
+          if (collector.endReason === collectorEndReason.USER) {
+            await sendResponse(isDirectMessage, message, {
+              content: `The chat session has ended :wave:`,
+            });
+          }
 
-        const userMessageInstance = chatInstanceCollector.get(userId);
-        if (userMessageInstance) {
-          deleteTempFilesByTag(userMessageInstance?.interactionTag);
-        }
-        if (selectedProfile && selectedProfile.retention) {
-          const collectedMsgs = Array.from(collected.values());
-          switch (selectedProfile.service) {
-            case aiServiceEnums.OPENAI: {
-              const retentionMsgs = chatCompletionService.formatChatCompletionMessages(
-                collectedMsgs,
-                selectedProfile,
-              );
-              await chatCompletionService.processOpenAiRetentionData(
-                retentionMsgs,
-                selectedProfile,
-              );
-              break;
-            }
-            case aiServiceEnums.ANTHROPIC: {
-              const claudeMessages = messageService.formatClaudeMessages(collectedMsgs);
-              await messageService.processAnthropicRetentionData(claudeMessages, selectedProfile);
-              break;
+          const userMessageInstance = chatInstanceCollector.get(userId);
+          if (userMessageInstance) {
+            deleteTempFilesByTag(userMessageInstance?.interactionTag);
+          }
+
+          if (selectedProfile && selectedProfile.retention) {
+            try {
+              const collectedMsgs = Array.from(collected.values());
+              switch (selectedProfile.service) {
+                case aiServiceEnums.OPENAI: {
+                  const retentionMsgs = chatCompletionService.formatChatCompletionMessages(
+                    collectedMsgs,
+                    selectedProfile,
+                  );
+                  await chatCompletionService.processOpenAiRetentionData(
+                    retentionMsgs,
+                    selectedProfile,
+                  );
+                  break;
+                }
+                case aiServiceEnums.ANTHROPIC: {
+                  const claudeMessages = messageService.formatClaudeMessages(collectedMsgs);
+                  await messageService.processAnthropicRetentionData(
+                    claudeMessages,
+                    selectedProfile,
+                  );
+                  break;
+                }
+              }
+            } catch (error) {
+              console.error('[Error] Processing retention data failed:', error);
             }
           }
-        }
 
-        const terminationMsg = isDirectMessage
-          ? `The DM chat has been terminated with ${user.username}`
-          : `The channel chat has been terminated with ${user.username}`;
-        const time = new Date();
-        console.log(`${terminationMsg} - [time]: ${time.toLocaleString()}`);
-        collected.clear();
-        message.client.chatInstanceCollector.delete(user.id);
+          const terminationMsg = isDirectMessage
+            ? `The DM chat has been terminated with ${user.username}`
+            : `The channel chat has been terminated with ${user.username}`;
+          const time = new Date();
+          console.log(`${terminationMsg} - [time]: ${time.toLocaleString()}`);
+          collected.clear();
+          message.client.chatInstanceCollector.delete(user.id);
+        } catch (error) {
+          console.error('[Error] Collector end handler failed:', error);
+          // Ensure cleanup even if other operations fail
+          try {
+            const userMessageInstance = chatInstanceCollector.get(userId);
+            if (userMessageInstance) {
+              deleteTempFilesByTag(userMessageInstance?.interactionTag);
+            }
+            message.client.chatInstanceCollector.delete(user.id);
+          } catch (cleanupError) {
+            console.error('[Error] Cleanup failed:', cleanupError);
+          }
+        }
       });
 
       // Programmatically triggering the message collector to fire on the initial message or mention to the bot.
@@ -406,15 +471,19 @@ const directMessageEvent: Command = {
         : message.content;
       collector.handleCollect(message);
     } catch (err) {
+      console.error('[Error] Message event handler failed:', err);
       const userMessageInstance = chatInstanceCollector.get(userId);
       if (userMessageInstance) {
-        deleteTempFilesByTag(userMessageInstance?.interactionTag);
+        try {
+          deleteTempFilesByTag(userMessageInstance?.interactionTag);
+        } catch (cleanupError) {
+          console.error('[Error] Failed to delete temp files:', cleanupError);
+        }
       }
       message.client.chatInstanceCollector.delete(user.id);
       await sendResponse(isDirectMessage, message, {
         content: 'Sorry looks like there was an issue. Our chat has ended.',
       });
-      console.error(err);
     }
   },
 };
