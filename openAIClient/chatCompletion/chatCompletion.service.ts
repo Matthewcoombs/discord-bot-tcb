@@ -297,11 +297,20 @@ export default {
     const { id, type } = toolCall;
     const { name: toolName, arguments: toolArgs } = toolCall.function;
 
-    const toolEmbed = new EmbedBuilder().setTitle(toolName).setFields([
-      { name: 'id', value: id, inline: true },
-      { name: 'type', value: type, inline: true },
-      { name: 'arguments', value: toolCall.function.arguments, inline: true },
-    ]);
+    const toolEmbed = new EmbedBuilder()
+      .setTitle(`🔧 ${toolName}`)
+      .setColor(0x00ae86)
+      .setTimestamp()
+      .addFields(
+        { name: '🆔 ID', value: `\`${id}\``, inline: true },
+        { name: '⚙️ Type', value: `\`${type}\``, inline: true },
+        {
+          name: '📋 Arguments',
+          value: `\`\`\`json\n${JSON.stringify(JSON.parse(toolCall.function.arguments), null, 2)}\`\`\``,
+          inline: false,
+        },
+      )
+      .setFooter({ text: 'OpenAI Tool Call' });
 
     switch (toolName) {
       case openaiToolsEnum.GENERATE_IMAGE: {
