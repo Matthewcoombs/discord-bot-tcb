@@ -43,6 +43,21 @@ jobs:
           command: |
             cd /root/${{ env.REPO_NAME }}
             
+            # Create .env file
+            cat > .env << EOF
+            DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+            CLIENT_ID=${{ secrets.CLIENT_ID }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
+            POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
+            POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
+            EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}
+            EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+            ENVIRONMENT=production
+            EOF
+            
             # Build project
             export NVM_DIR=~/.nvm && source ~/.nvm/nvm.sh
             rm -rf dist
@@ -61,22 +76,14 @@ jobs:
             ExecStart=${{ env.NODE_PATH }} dist/index.js
             Restart=on-failure
             RestartSec=30
-            Environment=DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-            Environment=CLIENT_ID=${{ secrets.CLIENT_ID }}
-            Environment=OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            Environment=CLAUDE_API_KEY=${{ secrets.CLAUDE_API_KEY }}
-            Environment=POSTGRES_HOSTNAME=${{ secrets.POSTGRES_HOSTNAME }}
-            Environment=POSTGRES_USERNAME=${{ secrets.POSTGRES_USERNAME }}
-            Environment=POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            Environment=POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}
-            Environment=EMAIL_ADDRESS=${{ secrets.EMAIL_ADDRESS }}
-            Environment=EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+            EnvironmentFile=/root/${{ env.REPO_NAME }}/.env
             
             [Install]
             WantedBy=multi-user.target
             EOF
             
             # Update commands and start bot
+            source .env
             ${{ env.NODE_PATH }} scripts/delete-commands.js
             ${{ env.NODE_PATH }} scripts/deploy-commands.js
             
