@@ -1,6 +1,6 @@
 {
   "name": "discord-bot",
-  "version": "13.10.0",
+  "version": "13.11.0",
   "description": "discord bot",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
