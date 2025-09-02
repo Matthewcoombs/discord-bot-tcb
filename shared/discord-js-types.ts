@@ -64,4 +64,5 @@ export enum optInCommands {
   UPDATE_PROFILE = 'update_profile',
   SELECT_PROFILE = 'select_profile',
   SELECT_PROFILE_SETTINGS = 'select_profile_settings',
+  VIEW_PROFILE_SETTINGS = 'view_profile_settings',
 }

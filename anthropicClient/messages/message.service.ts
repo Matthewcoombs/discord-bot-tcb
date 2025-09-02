@@ -336,6 +336,31 @@ export default {
         };
         break;
       }
+      case anthropicToolsEnum.VIEW_PROFILE_SETTINGS: {
+        const selectedProfile = await userProfilesDao.getSelectedProfile(user.id);
+        if (!selectedProfile) {
+          toolResponse.content = 'You do not have any profile selected.';
+          break;
+        }
+
+        const settingsText =
+          `**Profile: ${selectedProfile.name}**\n` +
+          `• AI Service: ${selectedProfile.service}\n` +
+          `• Text Model: ${selectedProfile.textModel}\n` +
+          `• Temperature: ${selectedProfile.temperature}\n` +
+          `• Chat Timeout: ${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes\n` +
+          `• Retention: ${selectedProfile.retention ? 'Enabled' : 'Disabled'}\n` +
+          `• Retention Size: ${selectedProfile.retentionSize}\n` +
+          `• Created: ${new Date(selectedProfile.createdAt).toLocaleDateString()}\n` +
+          `• Updated: ${new Date(selectedProfile.updatedAt).toLocaleDateString()}`;
+
+        toolEmbed.setDescription(settingsText);
+        toolResponse = {
+          content: 'Here are your current profile settings',
+          embeds: [toolEmbed],
+        };
+        break;
+      }
       case anthropicToolsEnum.END_CHAT: {
         const endChatParams = input as {
           finalResponse: string;

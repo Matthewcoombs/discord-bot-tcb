@@ -34,6 +34,7 @@ export enum openaiToolsEnum {
   IMAGE_EDIT = 'image_edit',
   END_CHAT = 'end_chat',
   PROFILE_SETTINGS = 'profile_settings',
+  VIEW_PROFILE_SETTINGS = 'view_profile_settings',
 }
 
 export enum anthropicToolsEnum {
@@ -41,6 +42,7 @@ export enum anthropicToolsEnum {
   IMAGE_EDIT = 'image_edit',
   END_CHAT = 'end_chat',
   PROFILE_SETTINGS = 'profile_settings',
+  VIEW_PROFILE_SETTINGS = 'view_profile_settings',
 }
 
 export const IMAGE_PROCESSING_MODELS = [
@@ -354,6 +356,20 @@ export const config = {
           },
         },
       },
+      {
+        type: 'function',
+        function: {
+          name: openaiToolsEnum.VIEW_PROFILE_SETTINGS,
+          strict: true,
+          description:
+            "Shows all current settings for the user's selected profile. Call this when the user asks to view, see, or check their profile settings",
+          parameters: {
+            type: 'object',
+            properties: {},
+            additionalProperties: false,
+          },
+        },
+      },
     ],
   },
   anthropic: {
@@ -555,11 +571,24 @@ export const config = {
           required: ['finalResponse'],
         },
       },
+      {
+        name: anthropicToolsEnum.VIEW_PROFILE_SETTINGS,
+        description:
+          "Shows all current settings for the user's selected profile. Call this when the user asks to view, see, or check their profile settings",
+        input_schema: {
+          type: 'object',
+          properties: {},
+        },
+      },
     ],
   },
   commands: {
     singleInstanceCommands: [singleInstanceCommandsEnum.ASSISTANT],
-    optInCommands: [optInCommands.CREATE_PROFILE, optInCommands.SELECT_PROFILE_SETTINGS],
+    optInCommands: [
+      optInCommands.CREATE_PROFILE,
+      optInCommands.SELECT_PROFILE_SETTINGS,
+      optInCommands.VIEW_PROFILE_SETTINGS,
+    ],
   },
   chatTimeoutOptions: TIMEOUT_OPTIONS,
   retentionSizeOptions: RETENTION_SIZE_OPTIONS,
