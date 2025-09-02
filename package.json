@@ -17,7 +17,8 @@
     "update-commands": "node ./scripts/deploy-commands.js",
     "delete-commands": "node ./scripts/delete-commands.js",
     "update-commands-dev": "ts-node ./scripts/deploy-commands.js",
-    "delete-commands-dev": "ts-node ./scripts/delete-commands.js"
+    "delete-commands-dev": "ts-node ./scripts/delete-commands.js",
+    "reload": "pnpm delete-commands-dev && pnpm update-commands-dev"
   },
   "author": "matthew c",
   "license": "ISC",
