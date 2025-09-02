@@ -22,32 +22,53 @@ const viewProfileSettingsCommand: Command = {
       });
     }
 
+    let retentionValue: string;
+    if (selectedProfile.retention === null) {
+      retentionValue = 'Not set';
+    } else {
+      retentionValue = selectedProfile.retention ? 'Yes' : 'No';
+    }
+
     const embed = new EmbedBuilder()
-      .setTitle(`Profile Settings: ${selectedProfile.name}`)
+      .setTitle(`Profile Settings: ${selectedProfile.name || 'Unknown'}`)
       .setColor(0x0099ff)
       .addFields(
-        { name: 'AI Service', value: selectedProfile.service, inline: true },
-        { name: 'Text Model', value: selectedProfile.textModel, inline: true },
-        { name: 'Temperature', value: selectedProfile.temperature.toString(), inline: true },
+        { name: 'AI Service', value: selectedProfile.service || 'Not set', inline: true },
+        { name: 'Text Model', value: selectedProfile.textModel || 'Not set', inline: true },
+        {
+          name: 'Temperature',
+          value: selectedProfile.temperature?.toString() || 'Not set',
+          inline: true,
+        },
         {
           name: 'Chat Timeout',
-          value: `${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes`,
+          value: selectedProfile.timeout
+            ? `${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes`
+            : 'Not set',
           inline: true,
         },
         {
           name: 'Retention Enabled',
-          value: selectedProfile.retention ? 'Yes' : 'No',
+          value: retentionValue,
           inline: true,
         },
-        { name: 'Retention Size', value: selectedProfile.retentionSize.toString(), inline: true },
+        {
+          name: 'Retention Size',
+          value: selectedProfile.retentionSize?.toString() || 'Not set',
+          inline: true,
+        },
         {
           name: 'Created',
-          value: new Date(selectedProfile.createdAt).toLocaleDateString(),
+          value: selectedProfile.createdAt
+            ? new Date(selectedProfile.createdAt).toLocaleDateString()
+            : 'Unknown',
           inline: true,
         },
         {
           name: 'Last Updated',
-          value: new Date(selectedProfile.updatedAt).toLocaleDateString(),
+          value: selectedProfile.updatedAt
+            ? new Date(selectedProfile.updatedAt).toLocaleDateString()
+            : 'Unknown',
           inline: true,
         },
       );
