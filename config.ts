@@ -269,7 +269,7 @@ function generateTemperatureOptions(tempRange: number[]): number[] {
 }
 
 const TIMEOUT_OPTIONS = [180000, 300000, 480000, 600000];
-const RETENTION_SIZE_OPTIONS = [100, 75, 50, 25, 0];
+const RETENTION_SIZE_OPTIONS = [20, 15, 10, 5, 0];
 const OPEN_AI_TEMP_RANGE = [0, 2];
 const OPEN_AI_TEMP_OPTIONS = generateTemperatureOptions(OPEN_AI_TEMP_RANGE);
 const ANTHROPIC_TEMP_RANGE = [0, 1];
