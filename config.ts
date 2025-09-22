@@ -25,7 +25,7 @@ export enum textBasedModelEnums {
   GPT5 = 'gpt-5-2025-08-07',
   GPT5_NANO = 'gpt-5-nano-2025-08-07',
   GPT5_MINI = 'gpt-5-mini-2025-08-07',
-  CLAUDE_3_5_SONNET = 'claude-3-5-sonnet-20241022',
+  CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-20250219',
   CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
 }
 
@@ -63,7 +63,7 @@ export const OPEN_AI_TEXT_MODELS = [
 
 export const CLAUDE_TEXT_MODELS = [
   textBasedModelEnums.CLAUDE_3_5_HAIKU,
-  textBasedModelEnums.CLAUDE_3_5_SONNET,
+  textBasedModelEnums.CLAUDE_3_7_SONNET,
 ];
 
 export interface FinalResponse {
