@@ -47,7 +47,7 @@ const reloadCommand: Command = {
 
     try {
       interaction.client.commands.delete(commandName);
-      const newCommand = await require(commandFilePath);
+      const newCommand = await import(commandFilePath);
       interaction.client.commands.set(commandName, newCommand);
       await interaction.reply({
         content: `Command \`${commandName}\` was reloaded!`,

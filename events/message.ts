@@ -46,6 +46,7 @@ function createSpinner(message: Message, isDM: boolean) {
       try {
         await spinnerMessage.edit(newContent);
       } catch (error) {
+        console.error('[ERROR] - There was an error handling the loading spinner', error);
         clearInterval(interval);
       }
     }, 1000);

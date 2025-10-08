@@ -150,7 +150,8 @@ export default {
         const condensedConversation =
           message.content[0].type === 'text' ? message.content[0].text : '';
         latestSelectedProfile.optimizedAnthropicRetentionData = condensedConversation;
-      } catch (_) {
+      } catch (err) {
+        console.error('[ERROR] - There was an error processing the anthropic retention data', err);
         latestSelectedProfile.optimizedAnthropicRetentionData = '';
       }
     } else {

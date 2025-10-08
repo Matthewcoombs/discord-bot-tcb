@@ -249,7 +249,8 @@ export default {
         });
         const condensedConversation = chatCompletion.choices[0].message.content;
         latestSelectedProfile.optimizedOpenAiRetentionData = condensedConversation as string;
-      } catch (_) {
+      } catch (err) {
+        console.error('[ERROR] - There was an error processing the openai retention data', err);
         latestSelectedProfile.optimizedOpenAiRetentionData = '';
       }
     } else {

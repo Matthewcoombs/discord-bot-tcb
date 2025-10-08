@@ -30,6 +30,7 @@
     "no-nested-ternary": "error",
     "no-undef": "off",
     "no-console": "warn",
-    "eqeqeq": ["error", "always"]
+    "eqeqeq": ["error", "always"],
+    "@typescript-eslint/no-unused-expressions": "off"
   }
 }
