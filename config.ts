@@ -16,7 +16,7 @@ export enum aiServiceEnums {
 export enum imageModelEnums {
   DALLE2 = 'dall-e-2',
   DALLE3 = 'dall-e-3',
-  GPT_IMAGE_1 = 'gpt-image-1',
+  GPT_IMAGE_1 = 'gpt-image-1-mini',
 }
 
 export enum textBasedModelEnums {
@@ -140,7 +140,8 @@ export const DEFAULT_OPENAI_TOOLS = [
           },
           gptImage1Quality: {
             type: 'string',
-            description: 'the quality of the image to create. This is only used for gpt-image-1',
+            description:
+              'the quality of the image to create. This is only used for gpt-image-1-mini',
             enum: ['high', 'medium', 'low'],
           },
           style: {
@@ -160,7 +161,7 @@ export const DEFAULT_OPENAI_TOOLS = [
           },
           gptImage1Size: {
             type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1',
+            description: 'the size of image to create. This is only used for gpt-image-1-mini',
             enum: ['1024x1024', '1536x1024', '1024x1536'],
           },
         },
@@ -209,17 +210,19 @@ export const DEFAULT_OPENAI_TOOLS = [
           },
           gptImage1Size: {
             type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1',
+            description: 'the size of image to create. This is only used for gpt-image-1-mini',
             enum: ['1024x1024', '1536x1024', '1024x1536'],
           },
           gptImage1Quality: {
             type: 'string',
-            description: 'the quality of the image to create. This is only used for gpt-image-1',
+            description:
+              'the quality of the image to create. This is only used for gpt-image-1-mini',
             enum: ['high', 'medium', 'low'],
           },
           gptImage1Background: {
             type: 'string',
-            description: 'the background setting for the image. This is only used for gpt-image-1',
+            description:
+              'the background setting for the image. This is only used for gpt-image-1-mini',
             enum: ['transparent', 'opaque', 'auto'],
           },
         },
@@ -401,7 +404,8 @@ export const config = {
             },
             gptImage1Quality: {
               type: 'string',
-              description: 'the quality of the image to create this is only used for gpt-image-1',
+              description:
+                'the quality of the image to create this is only used for gpt-image-1-mini',
               enum: ['high', 'medium', 'low'],
             },
             style: {
@@ -421,7 +425,7 @@ export const config = {
             },
             gptImage1Size: {
               type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1',
+              description: 'the size of image to create this is only used for gpt-image-1-mini',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
           },
@@ -465,17 +469,19 @@ export const config = {
             },
             gptImage1Size: {
               type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1',
+              description: 'the size of image to create this is only used for gpt-image-1-mini',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
             gptImage1Quality: {
               type: 'string',
-              description: 'the quality of the image to create this is only used for gpt-image-1',
+              description:
+                'the quality of the image to create this is only used for gpt-image-1-mini',
               enum: ['high', 'medium', 'low'],
             },
             gptImage1Background: {
               type: 'string',
-              description: 'the background setting for the image this is only used for gpt-image-1',
+              description:
+                'the background setting for the image this is only used for gpt-image-1-mini',
               enum: ['transparent', 'opaque', 'auto'],
             },
           },
