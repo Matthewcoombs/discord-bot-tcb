@@ -296,7 +296,8 @@ export default {
     const { interactionTag } = userChatInstance;
     const toolCall = toolCalls[0];
     const { id, type } = toolCall;
-    const { name: toolName, arguments: toolArgs } = toolCall.function;
+    const { name: toolName, arguments: toolArgs } =
+      toolCall.type === 'function' ? toolCall.function : { name: '', arguments: '' };
 
     const toolEmbed = new EmbedBuilder()
       .setTitle(`🔧 ${toolName}`)
@@ -307,7 +308,7 @@ export default {
         { name: '⚙️ Type', value: `\`${type}\``, inline: true },
         {
           name: '📋 Arguments',
-          value: `\`\`\`json\n${JSON.stringify(JSON.parse(toolCall.function.arguments), null, 2)}\`\`\``,
+          value: `\`\`\`json\n${JSON.stringify(JSON.parse(toolArgs), null, 2)}\`\`\``,
           inline: false,
         },
       )
