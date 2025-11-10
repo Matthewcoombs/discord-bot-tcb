@@ -160,7 +160,8 @@ async function processOpenAIMessageService(
 
     // This logic handles instances of tool calls during the message instance
     if (toolCalls && toolCalls.length > 0) {
-      endChat = toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
+      endChat =
+        toolCalls[0].type === 'function' && toolCalls[0].function.name === openaiToolsEnum.END_CHAT;
       finalResponse = await chatCompletionService.processOpenAIToolCalls(
         user,
         toolCalls,

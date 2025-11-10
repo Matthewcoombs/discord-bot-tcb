@@ -1,6 +1,9 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, User } from 'discord.js';
 import { imageModelConfigOptions, imageModelEnums } from '../../config';
-import { ImageGenerateParams, ImagesResponse } from 'openai/resources';
+import {
+  ImageGenerateParamsNonStreaming,
+  ImagesResponse,
+} from 'openai/resources';
 import { OpenAi } from '../..';
 import { TEMP_FOLDER_PATH } from '../../shared/constants';
 import * as fs from 'fs';
@@ -206,7 +209,7 @@ export default {
         if (model === imageModelEnums.GPT_IMAGE_1) {
           imageOpt.moderation = 'low';
         }
-        return OpenAi.images.generate(imageOpt as ImageGenerateParams);
+        return OpenAi.images.generate(imageOpt as ImageGenerateParamsNonStreaming);
       });
 
     const imageResponses = await Promise.all(imagesToCreatePromises);
