@@ -34,6 +34,10 @@ A feature-rich Discord bot built with TypeScript and Discord.js, designed for sm
 - [Anthropic API Account](https://docs.anthropic.com/en/docs/intro-to-claude)
 - Node.js 18+ and pnpm
 
+## Installation
+
+This project uses pnpm as the package manager. If you don't have pnpm installed, you can install it by following the instructions at [https://pnpm.io/installation](https://pnpm.io/installation).
+
 ## 🛠️ Local Development Setup
 
 1. Clone the repository and install dependencies:
