@@ -10,7 +10,7 @@ A feature-rich Discord bot built with TypeScript and Discord.js, designed for sm
 
 ### 🤖 AI-Powered Commands
 
-- **Image Generation** - Create images using OpenAI's DALL-E
+- **Image Generation** - Create images using OpenAI's gpt-image
 - **Image Editing** - Edit existing images with AI
 - **Image Variations** - Generate variations of uploaded images
 - **Profile Management** - Create and manage AI conversation profiles

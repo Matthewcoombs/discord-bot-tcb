@@ -52,7 +52,9 @@ const aiImageVariationCommand: Command = {
     const tempImageName = `${interaction.id}-${imageAttachment.name}`;
 
     // prompting the user for their desired image size(s) based on the image model selected
-    const actionRowComponent = imagesService.generateImageSizeSelection(imageModelEnums.DALLE2);
+    const actionRowComponent = imagesService.generateImageSizeSelection(
+      imageModelEnums.GPT_IMAGE_1_MINI,
+    );
     const sizeResponse = await interaction.reply({
       content: `Select a size for your image(s)`,
       components: [actionRowComponent as any],
@@ -82,7 +84,7 @@ const aiImageVariationCommand: Command = {
     });
 
     try {
-      validateImage(imageAttachment, imageModelEnums.DALLE2);
+      validateImage(imageAttachment);
       const imageBufferData = await getRemoteFileBufferData(imageAttachment.url);
       const tempImagePath = createTempFile(imageBufferData, tempImageName);
 
@@ -125,4 +127,4 @@ const aiImageVariationCommand: Command = {
   },
 };
 
-export = aiImageVariationCommand;
+// export = aiImageVariationCommand;
