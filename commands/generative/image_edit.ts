@@ -33,12 +33,12 @@ const aiImageEditCommand: Command = {
         .setRequired(true)
         .addChoices(
           {
-            name: imageModelEnums.DALLE2,
-            value: imageModelEnums.DALLE2,
+            name: imageModelEnums.GPT_IMAGE_1_MINI,
+            value: imageModelEnums.GPT_IMAGE_1_MINI,
           },
           {
-            name: imageModelEnums.GPT_IMAGE_1,
-            value: imageModelEnums.GPT_IMAGE_1,
+            name: imageModelEnums.GPT_IMAGE_1_5,
+            value: imageModelEnums.GPT_IMAGE_1_5,
           },
         ),
     )
@@ -124,10 +124,9 @@ const aiImageEditCommand: Command = {
     });
 
     try {
-      validateImage(imageAttachment, model);
+      validateImage(imageAttachment);
       const imageBufferData = await getRemoteFileBufferData(imageAttachment.url);
       const tempImagePath = createTempFile(imageBufferData, tempImageName);
-      model === imageModelEnums.DALLE2 ? (imageEditOptions.response_format = 'b64_json') : null;
       await OpenAi.images
         .edit({
           ...(imageEditOptions as any),

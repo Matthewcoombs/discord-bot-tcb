@@ -22,16 +22,12 @@ const aiImageGenerateCommand: Command = {
         .setRequired(true)
         .addChoices(
           {
-            name: imageModelEnums.DALLE2,
-            value: imageModelEnums.DALLE2,
+            name: imageModelEnums.GPT_IMAGE_1_MINI,
+            value: imageModelEnums.GPT_IMAGE_1_MINI,
           },
           {
-            name: imageModelEnums.DALLE3,
-            value: imageModelEnums.DALLE3,
-          },
-          {
-            name: imageModelEnums.GPT_IMAGE_1,
-            value: imageModelEnums.GPT_IMAGE_1,
+            name: imageModelEnums.GPT_IMAGE_1_5,
+            value: imageModelEnums.GPT_IMAGE_1_5,
           },
         ),
     )

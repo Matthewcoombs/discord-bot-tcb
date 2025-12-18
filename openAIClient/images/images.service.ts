@@ -13,7 +13,6 @@ export interface GenerateImageOptions {
   output_format?: string;
   quality?: string;
   size?: string;
-  style?: string;
   moderation?: string;
   response_format?: string;
 }
@@ -22,18 +21,14 @@ export interface ToolCallGenerateImageOptions {
   prompt: string;
   model: imageModelEnums;
   n?: number;
-  dalle3Size?: string;
   gptImage1Size?: string;
-  dalle3Quality?: string;
   gptImage1Quality?: string;
-  style?: string;
 }
 
 export interface ToolCallEditImageOptions {
   prompt: string;
   model: imageModelEnums;
   n?: number;
-  dalle2Size?: string;
   gptImage1Size?: string;
   gptImage1Quality?: string;
   gptImage1Background?: string;
@@ -96,22 +91,13 @@ export default {
     if (!imageOptions?.n && typeof imageOptions.n !== 'string') {
       return false;
     }
-    if (!imageOptions?.style && typeof imageOptions.style !== 'string') {
-      return false;
-    }
     if (
-      !imageOptions?.dalle3Size &&
-      !imageOptions?.gptImage1Size &&
-      typeof imageOptions.dalle3Size !== 'string' &&
-      typeof imageOptions.gptImage1Size !== 'string'
+      !imageOptions?.gptImage1Size && typeof imageOptions.gptImage1Size !== 'string'
     ) {
       return false;
     }
     if (
-      !imageOptions?.dalle3Quality &&
-      !imageOptions?.gptImage1Quality &&
-      typeof imageOptions.dalle3Quality !== 'string' &&
-      typeof imageOptions.gptImage1Quality !== 'string'
+      !imageOptions?.gptImage1Quality && typeof imageOptions.gptImage1Quality !== 'string'
     ) {
       return false;
     }
@@ -130,21 +116,18 @@ export default {
       return false;
     }
     if (
-      !imageOptions?.dalle2Size &&
-      !imageOptions?.gptImage1Size &&
-      typeof imageOptions.dalle2Size !== 'string' &&
-      typeof imageOptions.gptImage1Size !== 'string'
+      !imageOptions?.gptImage1Size && typeof imageOptions.gptImage1Size !== 'string'
     ) {
       return false;
     }
     if (
-      imageOptions.model === imageModelEnums.GPT_IMAGE_1 &&
+      (imageOptions.model === imageModelEnums.GPT_IMAGE_1_MINI || imageOptions.model === imageModelEnums.GPT_IMAGE_1_5) &&
       (!imageOptions?.gptImage1Quality || typeof imageOptions.gptImage1Quality !== 'string')
     ) {
       return false;
     }
     if (
-      imageOptions.model === imageModelEnums.GPT_IMAGE_1 &&
+      (imageOptions.model === imageModelEnums.GPT_IMAGE_1_MINI || imageOptions.model === imageModelEnums.GPT_IMAGE_1_5) &&
       (!imageOptions?.gptImage1Background || typeof imageOptions.gptImage1Background !== 'string')
     ) {
       return false;
@@ -159,17 +142,8 @@ export default {
       model: toolCallImageOptions.model,
       prompt: toolCallImageOptions.prompt,
       n: Number(toolCallImageOptions.n),
-      size:
-        toolCallImageOptions.model === imageModelEnums.DALLE3
-          ? toolCallImageOptions.dalle3Size
-          : toolCallImageOptions.gptImage1Size,
-      quality:
-        toolCallImageOptions.model === imageModelEnums.DALLE3
-          ? toolCallImageOptions.dalle3Quality
-          : toolCallImageOptions.gptImage1Quality,
-      ...(toolCallImageOptions.model === imageModelEnums.DALLE3 && {
-        style: toolCallImageOptions.style,
-      }),
+      size: toolCallImageOptions.gptImage1Size,
+      quality: toolCallImageOptions.gptImage1Quality,
     };
   },
 
@@ -178,50 +152,30 @@ export default {
       model: toolCallImageOptions.model,
       prompt: toolCallImageOptions.prompt,
       n: Number(toolCallImageOptions.n),
-      size:
-        toolCallImageOptions.model === imageModelEnums.DALLE2
-          ? toolCallImageOptions.dalle2Size
-          : toolCallImageOptions.gptImage1Size,
-      ...(toolCallImageOptions.model === imageModelEnums.GPT_IMAGE_1 && {
-        quality: toolCallImageOptions.gptImage1Quality,
-        background: toolCallImageOptions.gptImage1Background,
-      }),
+      size: toolCallImageOptions.gptImage1Size,
+      quality: toolCallImageOptions.gptImage1Quality,
+      background: toolCallImageOptions.gptImage1Background,
     };
   },
 
   async generateImages(user: User, imageOptions: GenerateImageOptions, interactionTag: number) {
     const model = imageOptions.model;
-    // Setting the response format for the image generation request
-    // By default we use b64_json format for all models except GPT Image 1
-    model !== imageModelEnums.GPT_IMAGE_1 ? (imageOptions.response_format = 'b64_json') : null;
-    // If the model is DALL-E 3, we need to perform multiple requests since it supports only one image per request
-    // otherwise we can generate multiple images in a single request
-    const promisesToCreate = model === imageModelEnums.DALLE3 ? imageOptions.n : 1;
-    const imagesToCreatePromises = Array(promisesToCreate)
-      .fill(imageOptions)
-      .map((imageOpt: GenerateImageOptions) => {
-        if (model === imageModelEnums.DALLE3) {
-          imageOpt.n = 1;
-        }
-        if (model === imageModelEnums.GPT_IMAGE_1) {
-          imageOpt.moderation = 'low';
-        }
-        return OpenAi.images.generate(imageOpt as ImageGenerateParamsNonStreaming);
-      });
+    
+    // Set moderation for GPT Image 1 Mini and 1.5
+    if (model === imageModelEnums.GPT_IMAGE_1_MINI || model === imageModelEnums.GPT_IMAGE_1_5) {
+      imageOptions.moderation = 'low';
+    }
 
-    const imageResponses = await Promise.all(imagesToCreatePromises);
-    const imageData = imageResponses.reduce((acc, obj) => {
-      if (obj.data) {
-        return acc.concat(obj.data.map(image => image.b64_json as string));
-      }
-      return acc;
-    }, [] as string[]);
+    // Generate images in a single request
+    const imageResponse = await OpenAi.images.generate(imageOptions as ImageGenerateParamsNonStreaming);
+    
+    const imageData = imageResponse.data?.map(image => image.b64_json as string) || [];
 
     const imageFiles = this.convertImageDataToFiles(
       imageData,
       user.username,
       interactionTag,
-      model === imageModelEnums.GPT_IMAGE_1 ? (imageOptions.output_format ?? 'jpeg') : 'jpeg',
+      model === imageModelEnums.GPT_IMAGE_1_MINI || model === imageModelEnums.GPT_IMAGE_1_5 ? (imageOptions.output_format ?? 'jpeg') : 'jpeg',
     );
 
     return imageFiles;
@@ -234,7 +188,7 @@ export default {
     interactionTag: number,
   ) {
     const model = imageOptions.model;
-    model !== imageModelEnums.GPT_IMAGE_1 ? (imageOptions.response_format = 'b64_json') : null;
+    model !== imageModelEnums.GPT_IMAGE_1_MINI && model !== imageModelEnums.GPT_IMAGE_1_5 ? (imageOptions.response_format = 'b64_json') : null;
 
     const { toFile } = await import('openai');
     const imageFile = await toFile(imageBuffer, 'image.png', { type: 'image/png' });
