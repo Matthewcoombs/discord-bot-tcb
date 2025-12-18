@@ -52,7 +52,9 @@ const aiImageVariationCommand: Command = {
     const tempImageName = `${interaction.id}-${imageAttachment.name}`;
 
     // prompting the user for their desired image size(s) based on the image model selected
-    const actionRowComponent = imagesService.generateImageSizeSelection(imageModelEnums.GPT_IMAGE_1_MINI);
+    const actionRowComponent = imagesService.generateImageSizeSelection(
+      imageModelEnums.GPT_IMAGE_1_MINI,
+    );
     const sizeResponse = await interaction.reply({
       content: `Select a size for your image(s)`,
       components: [actionRowComponent as any],
