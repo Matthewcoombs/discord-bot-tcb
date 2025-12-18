@@ -79,29 +79,22 @@ export interface ProfileSettingsArgs {
   temperature: string;
 }
 
+// Base configuration that applies to all GPT image models
+const baseImageConfig = {
+  imageGeneration: {
+    size: ['1024x1024', '1536x1024', '1024x1536'],
+    quality: ['high', 'medium', 'low'],
+  },
+  imageEdit: {
+    size: ['1024x1024', '1536x1024', '1024x1536'],
+    quality: ['high', 'medium', 'low'],
+    background: ['transparent', 'opaque', 'auto'],
+  },
+};
+
 export const imageModelConfigOptions = {
-  [imageModelEnums.GPT_IMAGE_1_5]: {
-    imageGeneration: {
-      size: ['1024x1024', '1536x1024', '1024x1536'],
-      quality: ['high', 'medium', 'low'],
-    },
-    imageEdit: {
-      size: ['1024x1024', '1536x1024', '1024x1536'],
-      quality: ['high', 'medium', 'low'],
-      background: ['transparent', 'opaque', 'auto'],
-    },
-  },
-  [imageModelEnums.GPT_IMAGE_1_MINI]: {
-    imageGeneration: {
-      size: ['1024x1024', '1536x1024', '1024x1536'],
-      quality: ['high', 'medium', 'low'],
-    },
-    imageEdit: {
-      size: ['1024x1024', '1536x1024', '1024x1536'],
-      quality: ['high', 'medium', 'low'],
-      background: ['transparent', 'opaque', 'auto'],
-    },
-  },
+  [imageModelEnums.GPT_IMAGE_1_5]: baseImageConfig,
+  [imageModelEnums.GPT_IMAGE_1_MINI]: baseImageConfig,
 };
 
 // These are the default tools available to users who have not set up their profile(s).
