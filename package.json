@@ -12,7 +12,7 @@
     "start": "tsc && node dist/index.js",
     "start-dev": "tsc && ts-node index.ts",
     "build": "pnpm install && tsc",
-    "build-prod": "/root/.local/share/pnpm/pnpm install --prod --ignore-scripts && tsc --skipLibCheck",
+    "build-prod": "/root/.local/share/pnpm/pnpm install --prod --ignore-scripts && /root/.local/share/pnpm/tsc",
     "dev": "./node_modules/nodemon/bin/nodemon.js -e ts  --exec \"pnpm start-dev\"",
     "update-commands": "node ./scripts/deploy-commands.js",
     "delete-commands": "node ./scripts/delete-commands.js",
