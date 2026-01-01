@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@anthropic-ai/sdk':
-        specifier: ^0.68.0
-        version: 0.68.0
+        specifier: ^0.71.2
+        version: 0.71.2
       axios:
         specifier: ^1.12.2
         version: 1.13.2
@@ -66,8 +66,8 @@ importers:
 
 packages:
 
-  '@anthropic-ai/sdk@0.68.0':
-    resolution: {integrity: sha512-SMYAmbbiprG8k1EjEPMTwaTqssDT7Ae+jxcR5kWXiqTlbwMR2AthXtscEVWOHkRfyAV5+y3PFYTJRNa3OJWIEw==}
+  '@anthropic-ai/sdk@0.71.2':
+    resolution: {integrity: sha512-TGNDEUuEstk/DKu0/TflXAEt+p+p/WhTlFzEnoosvbaDU2LTjm42igSdlL0VijrKpWejtOKxX0b8A7uc+XiSAQ==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -977,7 +977,7 @@ packages:
 
 snapshots:
 
-  '@anthropic-ai/sdk@0.68.0':
+  '@anthropic-ai/sdk@0.71.2':
     dependencies:
       json-schema-to-ts: 3.1.1
 
