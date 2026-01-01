@@ -21,8 +21,8 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
       openai:
-        specifier: ^6.7.0
-        version: 6.13.0(ws@8.18.3)
+        specifier: ^6.15.0
+        version: 6.15.0(ws@8.18.3)
       pg:
         specifier: ^8.16.3
         version: 8.16.3
@@ -714,8 +714,8 @@ packages:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
 
-  openai@6.13.0:
-    resolution: {integrity: sha512-yHbMo+EpNGPG3sRrXvmo0LhUPFN4bAURJw3G17bE+ax1G4tcTFCa9ZjvCWh3cvni0aHY0uWlk2IxcsPH4NR9Ow==}
+  openai@6.15.0:
+    resolution: {integrity: sha512-F1Lvs5BoVvmZtzkUEVyh8mDQPPFolq4F+xdsx/DO8Hee8YF3IGAlZqUIsF+DVGhqf4aU0a3bTghsxB6OIsRy1g==}
     hasBin: true
     peerDependencies:
       ws: ^8.18.0
@@ -1663,7 +1663,7 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  openai@6.13.0(ws@8.18.3):
+  openai@6.15.0(ws@8.18.3):
     optionalDependencies:
       ws: 8.18.3
 
