@@ -182,12 +182,33 @@ export default {
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedAnthropicRetentionData}`
         : selectedProfile?.profile || '';
 
+    /**
+     * Prompt caching. Anthropic caches the static prefix of a request (tools,
+     * then system) so it is not re-tokenized on every turn. We place one cache
+     * breakpoint on the last tool — this caches the entire tools block, which is
+     * identical for every user/session and therefore gets a very high hit rate —
+     * and one on the system prompt, which is stable across turns within a
+     * session. Cached input reads cost a fraction of normal input tokens.
+     */
+    const anthropicTools = config.anthropic.tools as any[];
+    const cachedTools = anthropicTools.map((tool, index) =>
+      index === anthropicTools.length - 1
+        ? { ...tool, cache_control: { type: 'ephemeral' } }
+        : tool,
+    );
+
+    // Only mark the system block when it has content. Anthropic rejects empty
+    // text blocks, and the no-profile path produces an empty system string.
+    const system = systemMessage
+      ? [{ type: 'text' as const, text: systemMessage, cache_control: { type: 'ephemeral' as const } }]
+      : systemMessage;
+
     const message = await Anthropic.messages.create({
       model: selectedProfile ? selectedProfile.textModel : config.anthropic.defaultMessageModel,
       messages: claudeMessages,
-      tools: config.anthropic.tools as any,
+      tools: cachedTools,
       max_tokens: 1024,
-      system: systemMessage,
+      system,
       temperature: Number(selectedProfile?.temperature),
     });
 
