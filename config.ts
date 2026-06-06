@@ -145,7 +145,8 @@ export const DEFAULT_OPENAI_TOOLS = [
     function: {
       name: openaiToolsEnum.IMAGE_EDIT,
       strict: true,
-      description: 'Edits an uploaded image. Call when the user uploads an image and asks to edit it.',
+      description:
+        'Edits an uploaded image. Call when the user uploads an image and asks to edit it.',
       parameters: {
         type: 'object',
         properties: {
