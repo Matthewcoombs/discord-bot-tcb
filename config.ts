@@ -106,34 +106,32 @@ export const DEFAULT_OPENAI_TOOLS = [
     function: {
       name: openaiToolsEnum.GENERATE_IMAGE,
       strict: true,
-      description:
-        'Creates an image for the user. Call this when the user explicitly asks to create an image',
+      description: 'Creates an image. Call when the user asks to create an image.',
       parameters: {
         type: 'object',
         properties: {
           model: {
             type: 'string',
-            description: 'the model used to generate the image',
+            description: 'image model',
             enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
           },
           prompt: {
             type: 'string',
-            description: 'the description of the image to create',
+            description: 'description of the image to create',
           },
           gptImage1Quality: {
             type: 'string',
-            description:
-              'the quality of the image to create. This is only used for gpt-image-1 models',
+            description: 'image quality',
             enum: ['high', 'medium', 'low'],
           },
           n: {
             type: 'string',
-            description: 'the number of images to create',
+            description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
           gptImage1Size: {
             type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1 models',
+            description: 'image size',
             enum: ['1024x1024', '1536x1024', '1024x1536'],
           },
         },
@@ -147,40 +145,37 @@ export const DEFAULT_OPENAI_TOOLS = [
     function: {
       name: openaiToolsEnum.IMAGE_EDIT,
       strict: true,
-      description:
-        'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it',
+      description: 'Edits an uploaded image. Call when the user uploads an image and asks to edit it.',
       parameters: {
         type: 'object',
         properties: {
           model: {
             type: 'string',
-            description: 'the model used to edit the image',
+            description: 'image model',
             enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
           },
           prompt: {
             type: 'string',
-            description: 'the description of the edits to make to the image',
+            description: 'description of the edits to make',
           },
           n: {
             type: 'string',
-            description: 'the number of edited images to create',
+            description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
           gptImage1Size: {
             type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1 models',
+            description: 'image size',
             enum: ['1024x1024', '1536x1024', '1024x1536'],
           },
           gptImage1Quality: {
             type: 'string',
-            description:
-              'the quality of the image to create. This is only used for gpt-image-1 models',
+            description: 'image quality',
             enum: ['high', 'medium', 'low'],
           },
           gptImage1Background: {
             type: 'string',
-            description:
-              'the background setting for the image. This is only used for gpt-image-1 models',
+            description: 'image background',
             enum: ['transparent', 'opaque', 'auto'],
           },
         },
@@ -202,13 +197,13 @@ export const DEFAULT_OPENAI_TOOLS = [
       name: openaiToolsEnum.END_CHAT,
       strict: true,
       description:
-        'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
+        'Call when the user ends the chat (e.g. "I am done", "end the chat") or context indicates the session is over.',
       parameters: {
         type: 'object',
         properties: {
           finalResponse: {
             type: 'string',
-            description: 'the final response to the user. This will be sent to the user',
+            description: 'the final message sent to the user',
           },
         },
         required: ['finalResponse'],
@@ -340,34 +335,32 @@ export const config = {
     tools: [
       {
         name: anthropicToolsEnum.GENERATE_IMAGE,
-        description:
-          'Creates an image for the user call this when the user explicitly asks to create an image',
+        description: 'Creates an image. Call when the user explicitly asks to create an image.',
         input_schema: {
           type: 'object',
           properties: {
             model: {
               type: 'string',
-              description: 'the model used to generate the image',
+              description: 'image model',
               enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
             },
             prompt: {
               type: 'string',
-              description: 'the description of the image to create',
+              description: 'description of the image to create',
             },
             gptImage1Quality: {
               type: 'string',
-              description:
-                'the quality of the image to create this is only used for gpt-image-1 models',
+              description: 'image quality',
               enum: ['high', 'medium', 'low'],
             },
             n: {
               type: 'string',
-              description: 'the number of images to create',
+              description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
             gptImage1Size: {
               type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1 models',
+              description: 'image size',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
           },
@@ -377,39 +370,37 @@ export const config = {
       {
         name: anthropicToolsEnum.IMAGE_EDIT,
         description:
-          'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it, modify it, change it, or make alterations to it. Always use this tool when you can see an image in the conversation and the user wants to modify that image.',
+          'Edits an uploaded image. Call when an image is present in the conversation and the user wants to modify, change, or alter it.',
         input_schema: {
           type: 'object',
           properties: {
             model: {
               type: 'string',
-              description: 'the model used to edit the image',
+              description: 'image model',
               enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
             },
             prompt: {
               type: 'string',
-              description: 'the description of the edits to make to the image',
+              description: 'description of the edits to make',
             },
             n: {
               type: 'string',
-              description: 'the number of edited images to create',
+              description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
             gptImage1Size: {
               type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1 models',
+              description: 'image size',
               enum: ['1024x1024', '1536x1024', '1024x1536'],
             },
             gptImage1Quality: {
               type: 'string',
-              description:
-                'the quality of the image to create this is only used for gpt-image-1 models',
+              description: 'image quality',
               enum: ['high', 'medium', 'low'],
             },
             gptImage1Background: {
               type: 'string',
-              description:
-                'the background setting for the image this is only used for gpt-image-1 models',
+              description: 'image background',
               enum: ['transparent', 'opaque', 'auto'],
             },
           },
@@ -535,5 +526,9 @@ export const config = {
   singleInstanceCommandsLimit: 4,
   messageCollectorsLimit: 100,
   discordReplyLengthLimit: 2000,
+  // Maximum number of recent transcript messages sent to the model per turn.
+  // Caps within-session prompt growth; cross-session memory is handled
+  // separately by retention data (which has its own size cap).
+  messageContextWindowSize: 20,
   generativeConstraints: `\nNOTE keep your responses as short, clear, and concise as possible. Your messages should not exceed 2000 characters unless absolutely necessary.`,
 };
