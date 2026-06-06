@@ -14,8 +14,7 @@ export enum aiServiceEnums {
 }
 
 export enum imageModelEnums {
-  GPT_IMAGE_1_MINI = 'gpt-image-1-mini',
-  GPT_IMAGE_1_5 = 'gpt-image-1.5',
+  GPT_IMAGE_2 = 'gpt-image-2-2026-04-21',
 }
 
 export enum textBasedModelEnums {
@@ -93,8 +92,7 @@ const baseImageConfig = {
 };
 
 export const imageModelConfigOptions = {
-  [imageModelEnums.GPT_IMAGE_1_5]: baseImageConfig,
-  [imageModelEnums.GPT_IMAGE_1_MINI]: baseImageConfig,
+  [imageModelEnums.GPT_IMAGE_2]: baseImageConfig,
 };
 
 // These are the default tools available to users who have not set up their profile(s).
@@ -113,13 +111,13 @@ export const DEFAULT_OPENAI_TOOLS = [
           model: {
             type: 'string',
             description: 'image model',
-            enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+            enum: [imageModelEnums.GPT_IMAGE_2],
           },
           prompt: {
             type: 'string',
             description: 'description of the image to create',
           },
-          gptImage1Quality: {
+          gptImageQuality: {
             type: 'string',
             description: 'image quality',
             enum: ['high', 'medium', 'low'],
@@ -129,13 +127,13 @@ export const DEFAULT_OPENAI_TOOLS = [
             description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
-          gptImage1Size: {
+          gptImageSize: {
             type: 'string',
-            description: 'image size',
-            enum: ['1024x1024', '1536x1024', '1024x1536'],
+            description:
+              'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
           },
         },
-        required: ['model', 'gptImage1Quality', 'prompt', 'n', 'gptImage1Size'],
+        required: ['model', 'gptImageQuality', 'prompt', 'n', 'gptImageSize'],
         additionalProperties: false,
       },
     },
@@ -153,7 +151,7 @@ export const DEFAULT_OPENAI_TOOLS = [
           model: {
             type: 'string',
             description: 'image model',
-            enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+            enum: [imageModelEnums.GPT_IMAGE_2],
           },
           prompt: {
             type: 'string',
@@ -164,17 +162,17 @@ export const DEFAULT_OPENAI_TOOLS = [
             description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
-          gptImage1Size: {
+          gptImageSize: {
             type: 'string',
-            description: 'image size',
-            enum: ['1024x1024', '1536x1024', '1024x1536'],
+            description:
+              'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
           },
-          gptImage1Quality: {
+          gptImageQuality: {
             type: 'string',
             description: 'image quality',
             enum: ['high', 'medium', 'low'],
           },
-          gptImage1Background: {
+          gptImageBackground: {
             type: 'string',
             description: 'image background',
             enum: ['transparent', 'opaque', 'auto'],
@@ -184,9 +182,9 @@ export const DEFAULT_OPENAI_TOOLS = [
           'model',
           'prompt',
           'n',
-          'gptImage1Size',
-          'gptImage1Quality',
-          'gptImage1Background',
+          'gptImageSize',
+          'gptImageQuality',
+          'gptImageBackground',
         ],
         additionalProperties: false,
       },
@@ -235,7 +233,7 @@ export const config = {
   botId: '',
   openAi: {
     defaultChatCompletionModel: textBasedModelEnums.GPT41_MINI,
-    defaultImageModel: imageModelEnums.GPT_IMAGE_1_MINI,
+    defaultImageModel: imageModelEnums.GPT_IMAGE_2,
     // temperature ranges - [min, max]
     temperatureRange: OPEN_AI_TEMP_RANGE,
     temperatureOptions: OPEN_AI_TEMP_OPTIONS,
@@ -343,13 +341,13 @@ export const config = {
             model: {
               type: 'string',
               description: 'image model',
-              enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+              enum: [imageModelEnums.GPT_IMAGE_2],
             },
             prompt: {
               type: 'string',
               description: 'description of the image to create',
             },
-            gptImage1Quality: {
+            gptImageQuality: {
               type: 'string',
               description: 'image quality',
               enum: ['high', 'medium', 'low'],
@@ -359,13 +357,13 @@ export const config = {
               description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
-            gptImage1Size: {
+            gptImageSize: {
               type: 'string',
-              description: 'image size',
-              enum: ['1024x1024', '1536x1024', '1024x1536'],
+              description:
+                'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
             },
           },
-          required: ['model', 'prompt', 'gptImage1Quality', 'n', 'gptImage1Size'],
+          required: ['model', 'prompt', 'gptImageQuality', 'n', 'gptImageSize'],
         },
       },
       {
@@ -378,7 +376,7 @@ export const config = {
             model: {
               type: 'string',
               description: 'image model',
-              enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+              enum: [imageModelEnums.GPT_IMAGE_2],
             },
             prompt: {
               type: 'string',
@@ -389,17 +387,17 @@ export const config = {
               description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
-            gptImage1Size: {
+            gptImageSize: {
               type: 'string',
-              description: 'image size',
-              enum: ['1024x1024', '1536x1024', '1024x1536'],
+              description:
+                'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
             },
-            gptImage1Quality: {
+            gptImageQuality: {
               type: 'string',
               description: 'image quality',
               enum: ['high', 'medium', 'low'],
             },
-            gptImage1Background: {
+            gptImageBackground: {
               type: 'string',
               description: 'image background',
               enum: ['transparent', 'opaque', 'auto'],
@@ -409,9 +407,9 @@ export const config = {
             'model',
             'prompt',
             'n',
-            'gptImage1Size',
-            'gptImage1Quality',
-            'gptImage1Background',
+            'gptImageSize',
+            'gptImageQuality',
+            'gptImageBackground',
           ],
         },
       },

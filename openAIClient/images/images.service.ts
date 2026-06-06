@@ -21,17 +21,17 @@ export interface ToolCallGenerateImageOptions {
   prompt: string;
   model: imageModelEnums;
   n?: number;
-  gptImage1Size?: string;
-  gptImage1Quality?: string;
+  gptImageSize?: string;
+  gptImageQuality?: string;
 }
 
 export interface ToolCallEditImageOptions {
   prompt: string;
   model: imageModelEnums;
   n?: number;
-  gptImage1Size?: string;
-  gptImage1Quality?: string;
-  gptImage1Background?: string;
+  gptImageSize?: string;
+  gptImageQuality?: string;
+  gptImageBackground?: string;
 }
 
 export interface EditImageOptions {
@@ -81,6 +81,44 @@ export default {
     return imageSelectionOptions;
   },
 
+  /**
+   * Validates a gpt-image-2 size string ("WIDTHxHEIGHT"). gpt-image-2 accepts
+   * arbitrary resolutions provided all of the following constraints hold:
+   *   - maximum edge length is less than 3840px
+   *   - both edges are a multiple of 16
+   *   - the long:short edge ratio is not greater than 3:1
+   *   - total pixels are between 655,360 and 8,294,400 (inclusive)
+   * Sizes above 2560x1440 (2K) are valid but treated as experimental by the API.
+   */
+  validateImageSize(size?: string): boolean {
+    if (!size || typeof size !== 'string') {
+      return false;
+    }
+    const match = /^(\d+)x(\d+)$/.exec(size.trim());
+    if (!match) {
+      return false;
+    }
+    const width = Number(match[1]);
+    const height = Number(match[2]);
+    const longEdge = Math.max(width, height);
+    const shortEdge = Math.min(width, height);
+    const totalPixels = width * height;
+
+    if (longEdge >= 3840) {
+      return false;
+    }
+    if (width % 16 !== 0 || height % 16 !== 0) {
+      return false;
+    }
+    if (shortEdge === 0 || longEdge / shortEdge > 3) {
+      return false;
+    }
+    if (totalPixels < 655360 || totalPixels > 8294400) {
+      return false;
+    }
+    return true;
+  },
+
   validateImageCreationOptions(imageOptions: ToolCallGenerateImageOptions) {
     if (!imageOptions?.model || typeof imageOptions.model !== 'string') {
       return false;
@@ -91,10 +129,10 @@ export default {
     if (!imageOptions?.n && typeof imageOptions.n !== 'string') {
       return false;
     }
-    if (!imageOptions?.gptImage1Size && typeof imageOptions.gptImage1Size !== 'string') {
+    if (!this.validateImageSize(imageOptions.gptImageSize)) {
       return false;
     }
-    if (!imageOptions?.gptImage1Quality && typeof imageOptions.gptImage1Quality !== 'string') {
+    if (!imageOptions?.gptImageQuality && typeof imageOptions.gptImageQuality !== 'string') {
       return false;
     }
     // If all checks pass, return true
@@ -111,20 +149,18 @@ export default {
     if (!imageOptions?.n && typeof imageOptions.n !== 'string') {
       return false;
     }
-    if (!imageOptions?.gptImage1Size && typeof imageOptions.gptImage1Size !== 'string') {
+    if (!this.validateImageSize(imageOptions.gptImageSize)) {
       return false;
     }
     if (
-      (imageOptions.model === imageModelEnums.GPT_IMAGE_1_MINI ||
-        imageOptions.model === imageModelEnums.GPT_IMAGE_1_5) &&
-      (!imageOptions?.gptImage1Quality || typeof imageOptions.gptImage1Quality !== 'string')
+      imageOptions.model === imageModelEnums.GPT_IMAGE_2 &&
+      (!imageOptions?.gptImageQuality || typeof imageOptions.gptImageQuality !== 'string')
     ) {
       return false;
     }
     if (
-      (imageOptions.model === imageModelEnums.GPT_IMAGE_1_MINI ||
-        imageOptions.model === imageModelEnums.GPT_IMAGE_1_5) &&
-      (!imageOptions?.gptImage1Background || typeof imageOptions.gptImage1Background !== 'string')
+      imageOptions.model === imageModelEnums.GPT_IMAGE_2 &&
+      (!imageOptions?.gptImageBackground || typeof imageOptions.gptImageBackground !== 'string')
     ) {
       return false;
     }
@@ -138,8 +174,8 @@ export default {
       model: toolCallImageOptions.model,
       prompt: toolCallImageOptions.prompt,
       n: Number(toolCallImageOptions.n),
-      size: toolCallImageOptions.gptImage1Size,
-      quality: toolCallImageOptions.gptImage1Quality,
+      size: toolCallImageOptions.gptImageSize,
+      quality: toolCallImageOptions.gptImageQuality,
     };
   },
 
@@ -148,17 +184,17 @@ export default {
       model: toolCallImageOptions.model,
       prompt: toolCallImageOptions.prompt,
       n: Number(toolCallImageOptions.n),
-      size: toolCallImageOptions.gptImage1Size,
-      quality: toolCallImageOptions.gptImage1Quality,
-      background: toolCallImageOptions.gptImage1Background,
+      size: toolCallImageOptions.gptImageSize,
+      quality: toolCallImageOptions.gptImageQuality,
+      background: toolCallImageOptions.gptImageBackground,
     };
   },
 
   async generateImages(user: User, imageOptions: GenerateImageOptions, interactionTag: number) {
     const model = imageOptions.model;
 
-    // Set moderation for GPT Image 1 Mini and 1.5
-    if (model === imageModelEnums.GPT_IMAGE_1_MINI || model === imageModelEnums.GPT_IMAGE_1_5) {
+    // gpt-image models support content moderation tuning
+    if (model === imageModelEnums.GPT_IMAGE_2) {
       imageOptions.moderation = 'low';
     }
 
@@ -173,9 +209,7 @@ export default {
       imageData,
       user.username,
       interactionTag,
-      model === imageModelEnums.GPT_IMAGE_1_MINI || model === imageModelEnums.GPT_IMAGE_1_5
-        ? (imageOptions.output_format ?? 'jpeg')
-        : 'jpeg',
+      model === imageModelEnums.GPT_IMAGE_2 ? (imageOptions.output_format ?? 'jpeg') : 'jpeg',
     );
 
     return imageFiles;
@@ -188,7 +222,9 @@ export default {
     interactionTag: number,
   ) {
     const model = imageOptions.model;
-    model !== imageModelEnums.GPT_IMAGE_1_MINI && model !== imageModelEnums.GPT_IMAGE_1_5
+    // gpt-image models return b64_json natively and do not accept response_format.
+    // Only legacy (non gpt-image) models need it set explicitly.
+    model !== imageModelEnums.GPT_IMAGE_2
       ? (imageOptions.response_format = 'b64_json')
       : null;
 
