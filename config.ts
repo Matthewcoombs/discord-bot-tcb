@@ -14,8 +14,7 @@ export enum aiServiceEnums {
 }
 
 export enum imageModelEnums {
-  GPT_IMAGE_1_MINI = 'gpt-image-1-mini',
-  GPT_IMAGE_1_5 = 'gpt-image-1.5',
+  GPT_IMAGE_2 = 'gpt-image-2-2026-04-21',
 }
 
 export enum textBasedModelEnums {
@@ -24,8 +23,8 @@ export enum textBasedModelEnums {
   GPT5 = 'gpt-5-2025-08-07',
   GPT5_NANO = 'gpt-5-nano-2025-08-07',
   GPT5_MINI = 'gpt-5-mini-2025-08-07',
-  CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-20250219',
-  CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
+  CLAUDE_SONNET_4_6 = 'claude-sonnet-4-6',
+  CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5',
 }
 
 export enum openaiToolsEnum {
@@ -61,8 +60,8 @@ export const OPEN_AI_TEXT_MODELS = [
 ];
 
 export const CLAUDE_TEXT_MODELS = [
-  textBasedModelEnums.CLAUDE_3_5_HAIKU,
-  textBasedModelEnums.CLAUDE_3_7_SONNET,
+  textBasedModelEnums.CLAUDE_HAIKU_4_5,
+  textBasedModelEnums.CLAUDE_SONNET_4_6,
 ];
 
 export interface FinalResponse {
@@ -93,8 +92,7 @@ const baseImageConfig = {
 };
 
 export const imageModelConfigOptions = {
-  [imageModelEnums.GPT_IMAGE_1_5]: baseImageConfig,
-  [imageModelEnums.GPT_IMAGE_1_MINI]: baseImageConfig,
+  [imageModelEnums.GPT_IMAGE_2]: baseImageConfig,
 };
 
 // These are the default tools available to users who have not set up their profile(s).
@@ -106,38 +104,36 @@ export const DEFAULT_OPENAI_TOOLS = [
     function: {
       name: openaiToolsEnum.GENERATE_IMAGE,
       strict: true,
-      description:
-        'Creates an image for the user. Call this when the user explicitly asks to create an image',
+      description: 'Creates an image. Call when the user asks to create an image.',
       parameters: {
         type: 'object',
         properties: {
           model: {
             type: 'string',
-            description: 'the model used to generate the image',
-            enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+            description: 'image model',
+            enum: [imageModelEnums.GPT_IMAGE_2],
           },
           prompt: {
             type: 'string',
-            description: 'the description of the image to create',
+            description: 'description of the image to create',
           },
-          gptImage1Quality: {
+          gptImageQuality: {
             type: 'string',
-            description:
-              'the quality of the image to create. This is only used for gpt-image-1 models',
+            description: 'image quality',
             enum: ['high', 'medium', 'low'],
           },
           n: {
             type: 'string',
-            description: 'the number of images to create',
+            description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
-          gptImage1Size: {
+          gptImageSize: {
             type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1 models',
-            enum: ['1024x1024', '1536x1024', '1024x1536'],
+            description:
+              'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
           },
         },
-        required: ['model', 'gptImage1Quality', 'prompt', 'n', 'gptImage1Size'],
+        required: ['model', 'gptImageQuality', 'prompt', 'n', 'gptImageSize'],
         additionalProperties: false,
       },
     },
@@ -148,50 +144,41 @@ export const DEFAULT_OPENAI_TOOLS = [
       name: openaiToolsEnum.IMAGE_EDIT,
       strict: true,
       description:
-        'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it',
+        'Edits an uploaded image. Call when the user uploads an image and asks to edit it.',
       parameters: {
         type: 'object',
         properties: {
           model: {
             type: 'string',
-            description: 'the model used to edit the image',
-            enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+            description: 'image model',
+            enum: [imageModelEnums.GPT_IMAGE_2],
           },
           prompt: {
             type: 'string',
-            description: 'the description of the edits to make to the image',
+            description: 'description of the edits to make',
           },
           n: {
             type: 'string',
-            description: 'the number of edited images to create',
+            description: 'number of images',
             enum: ['1', '2', '3', '4'],
           },
-          gptImage1Size: {
-            type: 'string',
-            description: 'the size of image to create. This is only used for gpt-image-1 models',
-            enum: ['1024x1024', '1536x1024', '1024x1536'],
-          },
-          gptImage1Quality: {
+          gptImageSize: {
             type: 'string',
             description:
-              'the quality of the image to create. This is only used for gpt-image-1 models',
+              'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
+          },
+          gptImageQuality: {
+            type: 'string',
+            description: 'image quality',
             enum: ['high', 'medium', 'low'],
           },
-          gptImage1Background: {
+          gptImageBackground: {
             type: 'string',
-            description:
-              'the background setting for the image. This is only used for gpt-image-1 models',
+            description: 'image background',
             enum: ['transparent', 'opaque', 'auto'],
           },
         },
-        required: [
-          'model',
-          'prompt',
-          'n',
-          'gptImage1Size',
-          'gptImage1Quality',
-          'gptImage1Background',
-        ],
+        required: ['model', 'prompt', 'n', 'gptImageSize', 'gptImageQuality', 'gptImageBackground'],
         additionalProperties: false,
       },
     },
@@ -202,13 +189,13 @@ export const DEFAULT_OPENAI_TOOLS = [
       name: openaiToolsEnum.END_CHAT,
       strict: true,
       description:
-        'This function should be called whenever the user decides the current chat session is over. The user might say something like "I am done" or "I want to end the chat" or just based on the context of the conversation the assistant can decide to end the chat',
+        'Call when the user ends the chat (e.g. "I am done", "end the chat") or context indicates the session is over.',
       parameters: {
         type: 'object',
         properties: {
           finalResponse: {
             type: 'string',
-            description: 'the final response to the user. This will be sent to the user',
+            description: 'the final message sent to the user',
           },
         },
         required: ['finalResponse'],
@@ -229,7 +216,7 @@ function generateTemperatureOptions(tempRange: number[]): number[] {
 }
 
 const TIMEOUT_OPTIONS = [180000, 300000, 480000, 600000];
-const RETENTION_SIZE_OPTIONS = [100, 75, 50, 25, 0];
+const RETENTION_SIZE_OPTIONS = [20, 15, 10, 5, 0];
 const OPEN_AI_TEMP_RANGE = [0, 2];
 const OPEN_AI_TEMP_OPTIONS = generateTemperatureOptions(OPEN_AI_TEMP_RANGE);
 const ANTHROPIC_TEMP_RANGE = [0, 1];
@@ -239,7 +226,7 @@ export const config = {
   botId: '',
   openAi: {
     defaultChatCompletionModel: textBasedModelEnums.GPT41_MINI,
-    defaultImageModel: imageModelEnums.GPT_IMAGE_1_MINI,
+    defaultImageModel: imageModelEnums.GPT_IMAGE_2,
     // temperature ranges - [min, max]
     temperatureRange: OPEN_AI_TEMP_RANGE,
     temperatureOptions: OPEN_AI_TEMP_OPTIONS,
@@ -333,83 +320,79 @@ export const config = {
     ],
   },
   anthropic: {
-    defaultMessageModel: textBasedModelEnums.CLAUDE_3_5_HAIKU,
+    defaultMessageModel: textBasedModelEnums.CLAUDE_HAIKU_4_5,
     //temperature ranges - [min, max]
     temperatureRange: [0, 1],
     temperatureOptions: ANTHROPIC_TEMP_OPTIONS,
     tools: [
       {
         name: anthropicToolsEnum.GENERATE_IMAGE,
-        description:
-          'Creates an image for the user call this when the user explicitly asks to create an image',
+        description: 'Creates an image. Call when the user explicitly asks to create an image.',
         input_schema: {
           type: 'object',
           properties: {
             model: {
               type: 'string',
-              description: 'the model used to generate the image',
-              enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+              description: 'image model',
+              enum: [imageModelEnums.GPT_IMAGE_2],
             },
             prompt: {
               type: 'string',
-              description: 'the description of the image to create',
+              description: 'description of the image to create',
             },
-            gptImage1Quality: {
+            gptImageQuality: {
               type: 'string',
-              description:
-                'the quality of the image to create this is only used for gpt-image-1 models',
+              description: 'image quality',
               enum: ['high', 'medium', 'low'],
             },
             n: {
               type: 'string',
-              description: 'the number of images to create',
+              description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
-            gptImage1Size: {
+            gptImageSize: {
               type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1 models',
-              enum: ['1024x1024', '1536x1024', '1024x1536'],
+              description:
+                'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
             },
           },
-          required: ['model', 'prompt', 'gptImage1Quality', 'n', 'gptImage1Size'],
+          required: ['model', 'prompt', 'gptImageQuality', 'n', 'gptImageSize'],
         },
       },
       {
         name: anthropicToolsEnum.IMAGE_EDIT,
         description:
-          'Edits an uploaded image based on user instructions. Call this when the user uploads an image and asks to edit it, modify it, change it, or make alterations to it. Always use this tool when you can see an image in the conversation and the user wants to modify that image.',
+          'Edits an uploaded image. Call when an image is present in the conversation and the user wants to modify, change, or alter it.',
         input_schema: {
           type: 'object',
           properties: {
             model: {
               type: 'string',
-              description: 'the model used to edit the image',
-              enum: [imageModelEnums.GPT_IMAGE_1_MINI, imageModelEnums.GPT_IMAGE_1_5],
+              description: 'image model',
+              enum: [imageModelEnums.GPT_IMAGE_2],
             },
             prompt: {
               type: 'string',
-              description: 'the description of the edits to make to the image',
+              description: 'description of the edits to make',
             },
             n: {
               type: 'string',
-              description: 'the number of edited images to create',
+              description: 'number of images',
               enum: ['1', '2', '3', '4'],
             },
-            gptImage1Size: {
-              type: 'string',
-              description: 'the size of image to create this is only used for gpt-image-1 models',
-              enum: ['1024x1024', '1536x1024', '1024x1536'],
-            },
-            gptImage1Quality: {
+            gptImageSize: {
               type: 'string',
               description:
-                'the quality of the image to create this is only used for gpt-image-1 models',
+                'image size as WIDTHxHEIGHT in pixels. Both edges must be multiples of 16, longest edge under 3840, long:short ratio at most 3:1, total pixels between 655360 and 8294400. Examples: 1024x1024, 1536x1024, 1024x1536, 1920x1088.',
+            },
+            gptImageQuality: {
+              type: 'string',
+              description: 'image quality',
               enum: ['high', 'medium', 'low'],
             },
-            gptImage1Background: {
+            gptImageBackground: {
               type: 'string',
-              description:
-                'the background setting for the image this is only used for gpt-image-1 models',
+              description: 'image background',
               enum: ['transparent', 'opaque', 'auto'],
             },
           },
@@ -417,9 +400,9 @@ export const config = {
             'model',
             'prompt',
             'n',
-            'gptImage1Size',
-            'gptImage1Quality',
-            'gptImage1Background',
+            'gptImageSize',
+            'gptImageQuality',
+            'gptImageBackground',
           ],
         },
       },
@@ -535,5 +518,9 @@ export const config = {
   singleInstanceCommandsLimit: 4,
   messageCollectorsLimit: 100,
   discordReplyLengthLimit: 2000,
+  // Maximum number of recent transcript messages sent to the model per turn.
+  // Caps within-session prompt growth; cross-session memory is handled
+  // separately by retention data (which has its own size cap).
+  messageContextWindowSize: 20,
   generativeConstraints: `\nNOTE keep your responses as short, clear, and concise as possible. Your messages should not exceed 2000 characters unless absolutely necessary.`,
 };
