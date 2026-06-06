@@ -200,7 +200,13 @@ export default {
     // Only mark the system block when it has content. Anthropic rejects empty
     // text blocks, and the no-profile path produces an empty system string.
     const system = systemMessage
-      ? [{ type: 'text' as const, text: systemMessage, cache_control: { type: 'ephemeral' as const } }]
+      ? [
+          {
+            type: 'text' as const,
+            text: systemMessage,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ]
       : systemMessage;
 
     const message = await Anthropic.messages.create({
