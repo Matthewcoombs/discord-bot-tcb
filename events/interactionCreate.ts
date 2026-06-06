@@ -1,5 +1,4 @@
 import {
-  ChannelType,
   ChatInputCommandInteraction,
   Collection,
   Events,
@@ -23,7 +22,7 @@ const createInteractionEvent: Command = {
     const isSingleInstanceCommand = config.commands.singleInstanceCommands.includes(
       commandName as singleInstanceCommandsEnum,
     );
-    const isInteractionInDirectMessage = channel?.type === ChannelType.DM;
+    const isInteractionInDirectMessage = channel?.isDMBased() ?? false;
 
     if (!cooldowns.has(command?.data?.name && commandName)) {
       cooldowns.set(command?.data?.name, new Collection());

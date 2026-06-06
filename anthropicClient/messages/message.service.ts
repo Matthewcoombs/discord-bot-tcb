@@ -16,7 +16,7 @@ import {
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
 import { ChatInstance } from '../../shared/discord-js-types';
-import { getRemoteFileBufferData } from '../../shared/utils';
+import { getRemoteFileBufferData, getLatestImageMessageId } from '../../shared/utils';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -26,6 +26,9 @@ enum messageRoleEnums {
 export default {
   formatClaudeMessages(messages: Message[]): MessageParam[] {
     const formatClaudeMessages: MessageParam[] = [];
+    // Only the latest image-bearing user message keeps its image content. Older
+    // images are dropped to avoid re-tokenizing vision content on every turn.
+    const latestImageMessageId = getLatestImageMessageId(messages);
     messages.forEach(msg => {
       let role: messageRoleEnums = messageRoleEnums.ASSISTANT;
       if (!msg.author.bot) {
@@ -88,8 +91,8 @@ export default {
           },
         ];
 
-        // Add image attachments for user messages
-        if (!msg.author.bot && msg.attachments.size > 0) {
+        // Add image attachments only for the latest image-bearing user message
+        if (!msg.author.bot && msg.id === latestImageMessageId && msg.attachments.size > 0) {
           msg.attachments.forEach(attachment => {
             if (attachment.contentType?.startsWith('image/')) {
               messageContent.push({

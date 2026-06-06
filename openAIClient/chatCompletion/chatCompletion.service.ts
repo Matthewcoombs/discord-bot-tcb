@@ -26,7 +26,7 @@ import {
 } from '../../profiles/profiles.service';
 import { ChatCompletionMessageToolCall } from 'openai/resources';
 import { ChatInstance } from '../../shared/discord-js-types';
-import { getRemoteFileBufferData } from '../../shared/utils';
+import { getRemoteFileBufferData, getLatestImageMessageId } from '../../shared/utils';
 
 export const CHAT_COMPLETION_SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -115,6 +115,9 @@ export default {
     messages: Message[],
     selectedProfile?: UserProfile,
   ): ChatCompletionMessage[] {
+    // Only the latest image-bearing user message keeps its image content. Older
+    // images are dropped to avoid re-tokenizing vision content on every turn.
+    const latestImageMessageId = getLatestImageMessageId(messages);
     let chatCompletionMessages = messages.reduce((acc: ChatCompletionMessage[], message) => {
       let role: chatCompletionRoles = chatCompletionRoles.ASSISTANT;
       if (!message.author.bot) {
@@ -161,6 +164,7 @@ export default {
 
       if (
         message.attachments &&
+        message.id === latestImageMessageId &&
         IMAGE_PROCESSING_MODELS.includes(selectedProfile?.textModel as textBasedModelEnums) &&
         !message.author.bot
       ) {

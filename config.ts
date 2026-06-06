@@ -24,8 +24,8 @@ export enum textBasedModelEnums {
   GPT5 = 'gpt-5-2025-08-07',
   GPT5_NANO = 'gpt-5-nano-2025-08-07',
   GPT5_MINI = 'gpt-5-mini-2025-08-07',
-  CLAUDE_3_7_SONNET = 'claude-3-7-sonnet-20250219',
-  CLAUDE_3_5_HAIKU = 'claude-3-5-haiku-20241022',
+  CLAUDE_SONNET_4_6 = 'claude-sonnet-4-6',
+  CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5',
 }
 
 export enum openaiToolsEnum {
@@ -61,8 +61,8 @@ export const OPEN_AI_TEXT_MODELS = [
 ];
 
 export const CLAUDE_TEXT_MODELS = [
-  textBasedModelEnums.CLAUDE_3_5_HAIKU,
-  textBasedModelEnums.CLAUDE_3_7_SONNET,
+  textBasedModelEnums.CLAUDE_HAIKU_4_5,
+  textBasedModelEnums.CLAUDE_SONNET_4_6,
 ];
 
 export interface FinalResponse {
@@ -333,7 +333,7 @@ export const config = {
     ],
   },
   anthropic: {
-    defaultMessageModel: textBasedModelEnums.CLAUDE_3_5_HAIKU,
+    defaultMessageModel: textBasedModelEnums.CLAUDE_HAIKU_4_5,
     //temperature ranges - [min, max]
     temperatureRange: [0, 1],
     temperatureOptions: ANTHROPIC_TEMP_OPTIONS,

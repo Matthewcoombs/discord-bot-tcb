@@ -7,12 +7,33 @@ import {
   InvalidFileTypeError,
 } from './errors';
 import axios from 'axios';
-import { Attachment } from 'discord.js';
+import { Attachment, Message } from 'discord.js';
 import { JsonContent } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { config } from '../config';
 
 export function generateInteractionTag() {
   return Math.floor(10000 + Math.random() * 90000);
+}
+
+/**
+ * Returns the id of the most recent (latest) non-bot message that carries an
+ * image attachment, or undefined if none exists.
+ *
+ * This is used to avoid re-sending vision content for every message in a
+ * conversation. Images are expensive to tokenize, and the whole transcript is
+ * reformatted and re-sent on every turn, so only the latest image-bearing
+ * message should retain its image content. Older images are dropped from the
+ * model payload (their text is preserved). Image editing is unaffected because
+ * the edit handlers read attachments directly from the raw collected messages.
+ */
+export function getLatestImageMessageId(messages: Message[]): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (!msg.author.bot && msg.attachments.some(att => att.contentType?.startsWith('image/'))) {
+      return msg.id;
+    }
+  }
+  return undefined;
 }
 
 export function processBotResponseLength(response: string) {
