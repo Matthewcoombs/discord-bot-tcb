@@ -224,9 +224,7 @@ export default {
     const model = imageOptions.model;
     // gpt-image models return b64_json natively and do not accept response_format.
     // Only legacy (non gpt-image) models need it set explicitly.
-    model !== imageModelEnums.GPT_IMAGE_2
-      ? (imageOptions.response_format = 'b64_json')
-      : null;
+    model !== imageModelEnums.GPT_IMAGE_2 ? (imageOptions.response_format = 'b64_json') : null;
 
     const { toFile } = await import('openai');
     const imageFile = await toFile(imageBuffer, 'image.png', { type: 'image/png' });

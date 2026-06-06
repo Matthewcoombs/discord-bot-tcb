@@ -31,12 +31,10 @@ const aiImageEditCommand: Command = {
         .setName('model')
         .setDescription('The AI model to generate the image')
         .setRequired(true)
-        .addChoices(
-          {
-            name: imageModelEnums.GPT_IMAGE_2,
-            value: imageModelEnums.GPT_IMAGE_2,
-          },
-        ),
+        .addChoices({
+          name: imageModelEnums.GPT_IMAGE_2,
+          value: imageModelEnums.GPT_IMAGE_2,
+        }),
     )
     .addStringOption(strOption =>
       strOption
