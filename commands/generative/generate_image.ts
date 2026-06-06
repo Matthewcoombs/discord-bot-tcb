@@ -20,16 +20,10 @@ const aiImageGenerateCommand: Command = {
         .setName('model')
         .setDescription('The AI model to generate the image')
         .setRequired(true)
-        .addChoices(
-          {
-            name: imageModelEnums.GPT_IMAGE_1_MINI,
-            value: imageModelEnums.GPT_IMAGE_1_MINI,
-          },
-          {
-            name: imageModelEnums.GPT_IMAGE_1_5,
-            value: imageModelEnums.GPT_IMAGE_1_5,
-          },
-        ),
+        .addChoices({
+          name: imageModelEnums.GPT_IMAGE_2,
+          value: imageModelEnums.GPT_IMAGE_2,
+        }),
     )
     .addIntegerOption(intOption =>
       intOption
