@@ -16,6 +16,7 @@ import chatCompletionService, {
 import { aiServiceEnums, openaiToolsEnum, config, anthropicToolsEnum } from '../config';
 import userProfilesDao, { UserProfile } from '../database/user_profiles/userProfilesDao';
 import {
+  applyContextWindow,
   deleteTempFilesByTag,
   generateInteractionTag,
   processBotResponseLength,
@@ -149,7 +150,7 @@ async function processOpenAIMessageService(
 ) {
   try {
     const chatCompletionMessages = chatCompletionService.formatChatCompletionMessages(
-      collected,
+      applyContextWindow(collected),
       userMessageInstance?.selectedProfile,
     );
 
@@ -196,7 +197,7 @@ async function processAnthropicMessageService(
   endChat: boolean,
 ) {
   try {
-    const claudeMessages = messageService.formatClaudeMessages(collected);
+    const claudeMessages = messageService.formatClaudeMessages(applyContextWindow(collected));
     const { response, toolUse } = await messageService.processClaudeResponse(
       claudeMessages,
       userMessageInstance.selectedProfile,
