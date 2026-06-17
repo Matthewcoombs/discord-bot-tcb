@@ -10,7 +10,6 @@ import imagesService, {
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
-  SELECT_PROFILE_TEMPERATURE,
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
@@ -147,7 +146,6 @@ export default {
           messages: claudeMessages,
           max_tokens: 1024,
           system: selectedProfile.profile,
-          temperature: Number(selectedProfile.temperature),
         });
 
         const condensedConversation =
@@ -215,7 +213,6 @@ export default {
       tools: cachedTools,
       max_tokens: 1024,
       system,
-      temperature: Number(selectedProfile?.temperature),
     });
 
     if (message.stop_reason === 'end_turn') {
@@ -354,9 +351,6 @@ export default {
               selectedProfile.anthropicRetentionData = [];
             }
           }
-          if (selectedSetting === SELECT_PROFILE_TEMPERATURE) {
-            selectedProfile.temperature = Number(profileSettings.temperature);
-          }
         }
         userChatInstance.selectedProfile = selectedProfile;
         ChatInstanceCollector.set(user.id, userChatInstance);
@@ -378,7 +372,6 @@ export default {
           `**Profile: ${selectedProfile.name}**\n` +
           `• AI Service: ${selectedProfile.service}\n` +
           `• Text Model: ${selectedProfile.textModel}\n` +
-          `• Temperature: ${selectedProfile.temperature}\n` +
           `• Chat Timeout: ${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes\n` +
           `• Retention: ${selectedProfile.retention ? 'Enabled' : 'Disabled'}\n` +
           `• Retention Size: ${selectedProfile.retentionSize}\n` +

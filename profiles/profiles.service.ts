@@ -14,31 +14,6 @@ export const SELECT_CHAT_TIMEOUT_ID = 'timeout';
 export const SELECT_RETENTION_ID = 'retention';
 export const SELECT_RETENTION_SIZE_ID = 'retentionSize';
 export const CLEAR_RETENTION_DATA = 'clearRetentionData';
-export const SELECT_PROFILE_TEMPERATURE = 'temperature';
-
-function convertAIServiceTemperature(selectedProfile: UserProfile) {
-  if (!selectedProfile.temperature) {
-    return;
-  }
-  const selectedService = selectedProfile.service;
-  const temperatureRange =
-    selectedService === aiServiceEnums.OPENAI
-      ? config.openAi.temperatureRange
-      : config.anthropic.temperatureRange;
-
-  const temperatureOptions: number[] = [];
-  for (let i = 0; i <= 4; i++) {
-    const t = i / 4;
-    const interpolatedValue = temperatureRange[0] + t * (temperatureRange[1] - temperatureRange[0]);
-    temperatureOptions.push(Number(interpolatedValue.toFixed(2)));
-  }
-
-  selectedProfile.temperature =
-    selectedService === aiServiceEnums.OPENAI
-      ? selectedProfile.temperature * 2
-      : selectedProfile.temperature / 2;
-}
-
 export default {
   generateAIServiceSelectionDisplay(selectedService?: string) {
     const serviceOptions = [aiServiceEnums.ANTHROPIC, aiServiceEnums.OPENAI];
@@ -167,68 +142,6 @@ export default {
     };
   },
 
-  generateProfileTemperatureSetting(
-    service: aiServiceEnums,
-    temperatureSetting?: string | number | undefined,
-  ) {
-    // Openai and Anthropic have the same default temperature value of 1, so if
-    // the temperature is not set, we default to 1
-    const temperature = temperatureSetting ? temperatureSetting : 1;
-    const profileTemperatureButtons: ButtonBuilder[] = [];
-    const temperatureOptions =
-      service === aiServiceEnums.OPENAI
-        ? config.openAi.temperatureOptions
-        : config.anthropic.temperatureOptions;
-
-    // temperatureOptions is an array of numbers from 0 to 4 (or 1-5).
-    for (const tempOption of temperatureOptions) {
-      const index = temperatureOptions.indexOf(tempOption);
-      let tempLabel: string = '';
-      let tempEmoji: string = '';
-      switch (index) {
-        case 0: {
-          tempLabel = 'precise';
-          tempEmoji = '🎯';
-          break;
-        }
-        case 1: {
-          tempLabel = 'structured';
-          tempEmoji = '📋';
-          break;
-        }
-        case 2: {
-          tempLabel = 'balanced';
-          tempEmoji = '⚖️';
-          break;
-        }
-        case 3: {
-          tempLabel = 'explorative';
-          tempEmoji = '🔍';
-          break;
-        }
-        case 4: {
-          tempLabel = 'creative';
-          tempEmoji = '🎨';
-          break;
-        }
-      }
-
-      profileTemperatureButtons.push(
-        new ButtonBuilder()
-          .setCustomId(tempOption.toString())
-          .setLabel(tempLabel)
-          .setEmoji(tempEmoji)
-          .setStyle(Number(temperature) === tempOption ? ButtonStyle.Success : ButtonStyle.Primary),
-      );
-    }
-
-    const row = new ActionRowBuilder().addComponents(profileTemperatureButtons);
-    return {
-      displayMsg: `Profile Temperature :thermometer:`,
-      row,
-    };
-  },
-
   processSettingsDisplay(setting: string, selectedProfile: UserProfile) {
     switch (setting) {
       case SELECT_AI_SERVICE_ID:
@@ -246,11 +159,6 @@ export default {
         return this.generateRetentionSizeProfileSetting(selectedProfile.retentionSize as number);
       case CLEAR_RETENTION_DATA:
         return this.generateClearRetentionDataSetting();
-      case SELECT_PROFILE_TEMPERATURE:
-        return this.generateProfileTemperatureSetting(
-          selectedProfile.service,
-          selectedProfile.temperature,
-        );
       default:
         break;
     }
@@ -273,7 +181,6 @@ export default {
               ? config.openAi.defaultChatCompletionModel
               : config.anthropic.defaultMessageModel;
           selectedProfile;
-          convertAIServiceTemperature(selectedProfile);
         }
         break;
       }
@@ -300,10 +207,6 @@ export default {
           selectedProfile.openAiRetentionData = [];
           selectedProfile.anthropicRetentionData = [];
         }
-        break;
-      }
-      case SELECT_PROFILE_TEMPERATURE: {
-        selectedProfile.temperature = Number(updateValue);
         break;
       }
       default:

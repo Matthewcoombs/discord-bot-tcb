@@ -36,11 +36,6 @@ const viewProfileSettingsCommand: Command = {
         { name: 'AI Service', value: selectedProfile.service || 'Not set', inline: true },
         { name: 'Text Model', value: selectedProfile.textModel || 'Not set', inline: true },
         {
-          name: 'Temperature',
-          value: selectedProfile.temperature?.toString() || 'Not set',
-          inline: true,
-        },
-        {
           name: 'Chat Timeout',
           value: selectedProfile.timeout
             ? `${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes`

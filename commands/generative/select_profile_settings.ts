@@ -12,7 +12,6 @@ import profilesService, {
   CLEAR_RETENTION_DATA,
   SELECT_AI_SERVICE_ID,
   SELECT_CHAT_TIMEOUT_ID,
-  SELECT_PROFILE_TEMPERATURE,
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
@@ -39,10 +38,6 @@ const selectProfileModelCommand: Command = {
           {
             name: 'chat timeout',
             value: SELECT_CHAT_TIMEOUT_ID,
-          },
-          {
-            name: 'profile temperature',
-            value: SELECT_PROFILE_TEMPERATURE,
           },
           {
             name: 'profile retention',
