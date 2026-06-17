@@ -1,7 +1,6 @@
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
-  SELECT_PROFILE_TEMPERATURE,
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
@@ -18,11 +17,8 @@ export enum imageModelEnums {
 }
 
 export enum textBasedModelEnums {
-  GPT41 = 'gpt-4.1-2025-04-14',
-  GPT41_MINI = 'gpt-4.1-mini-2025-04-14',
-  GPT5 = 'gpt-5-2025-08-07',
-  GPT5_NANO = 'gpt-5-nano-2025-08-07',
-  GPT5_MINI = 'gpt-5-mini-2025-08-07',
+  GPT54_MINI = 'gpt-5.4-mini',
+  GPT54 = 'gpt-5.4',
   CLAUDE_SONNET_4_6 = 'claude-sonnet-4-6',
   CLAUDE_HAIKU_4_5 = 'claude-haiku-4-5',
 }
@@ -43,21 +39,9 @@ export enum anthropicToolsEnum {
   VIEW_PROFILE_SETTINGS = 'view_profile_settings',
 }
 
-export const IMAGE_PROCESSING_MODELS = [
-  textBasedModelEnums.GPT41_MINI,
-  textBasedModelEnums.GPT41,
-  textBasedModelEnums.GPT5,
-  textBasedModelEnums.GPT5_NANO,
-  textBasedModelEnums.GPT5_MINI,
-];
+export const IMAGE_PROCESSING_MODELS = [textBasedModelEnums.GPT54_MINI, textBasedModelEnums.GPT54];
 
-export const OPEN_AI_TEXT_MODELS = [
-  textBasedModelEnums.GPT41,
-  textBasedModelEnums.GPT41_MINI,
-  textBasedModelEnums.GPT5,
-  textBasedModelEnums.GPT5_NANO,
-  textBasedModelEnums.GPT5_MINI,
-];
+export const OPEN_AI_TEXT_MODELS = [textBasedModelEnums.GPT54_MINI, textBasedModelEnums.GPT54];
 
 export const CLAUDE_TEXT_MODELS = [
   textBasedModelEnums.CLAUDE_HAIKU_4_5,
@@ -75,7 +59,6 @@ export interface ProfileSettingsArgs {
   retention: string;
   retentionSize: string;
   clearRetentionData: string;
-  temperature: string;
 }
 
 // Base configuration that applies to all GPT image models
@@ -205,31 +188,14 @@ export const DEFAULT_OPENAI_TOOLS = [
   },
 ];
 
-function generateTemperatureOptions(tempRange: number[]): number[] {
-  const tempOptions: number[] = [];
-  for (let i = 0; i <= 4; i++) {
-    const t = i / 4;
-    const interpolatedValue = tempRange[0] + t * (tempRange[1] - tempRange[0]);
-    tempOptions.push(Number(interpolatedValue.toFixed(2)));
-  }
-  return tempOptions;
-}
-
 const TIMEOUT_OPTIONS = [180000, 300000, 480000, 600000];
 const RETENTION_SIZE_OPTIONS = [20, 15, 10, 5, 0];
-const OPEN_AI_TEMP_RANGE = [0, 2];
-const OPEN_AI_TEMP_OPTIONS = generateTemperatureOptions(OPEN_AI_TEMP_RANGE);
-const ANTHROPIC_TEMP_RANGE = [0, 1];
-const ANTHROPIC_TEMP_OPTIONS = generateTemperatureOptions(ANTHROPIC_TEMP_RANGE);
 
 export const config = {
   botId: '',
   openAi: {
-    defaultChatCompletionModel: textBasedModelEnums.GPT41_MINI,
+    defaultChatCompletionModel: textBasedModelEnums.GPT54_MINI,
     defaultImageModel: imageModelEnums.GPT_IMAGE_2,
-    // temperature ranges - [min, max]
-    temperatureRange: OPEN_AI_TEMP_RANGE,
-    temperatureOptions: OPEN_AI_TEMP_OPTIONS,
     tools: [
       ...DEFAULT_OPENAI_TOOLS,
       {
@@ -253,7 +219,6 @@ export const config = {
                     SELECT_RETENTION_ID,
                     SELECT_RETENTION_SIZE_ID,
                     CLEAR_RETENTION_DATA,
-                    SELECT_PROFILE_TEMPERATURE,
                   ],
                 },
               },
@@ -284,11 +249,6 @@ export const config = {
                   'determines if the user wants to clear the current profile retention data or not',
                 enum: ['true', 'false'],
               },
-              temperature: {
-                type: 'string',
-                description: 'the temperature the profile will use in its responses',
-                enum: Array.from(OPEN_AI_TEMP_OPTIONS, num => num.toString()),
-              },
             },
             required: [
               'selectedSettings',
@@ -297,7 +257,6 @@ export const config = {
               'retention',
               'retentionSize',
               'clearRetentionData',
-              'temperature',
             ],
             additionalProperties: false,
           },
@@ -321,9 +280,6 @@ export const config = {
   },
   anthropic: {
     defaultMessageModel: textBasedModelEnums.CLAUDE_HAIKU_4_5,
-    //temperature ranges - [min, max]
-    temperatureRange: [0, 1],
-    temperatureOptions: ANTHROPIC_TEMP_OPTIONS,
     tools: [
       {
         name: anthropicToolsEnum.GENERATE_IMAGE,
@@ -424,7 +380,6 @@ export const config = {
                   SELECT_RETENTION_ID,
                   SELECT_RETENTION_SIZE_ID,
                   CLEAR_RETENTION_DATA,
-                  SELECT_PROFILE_TEMPERATURE,
                 ],
               },
             },
@@ -455,11 +410,6 @@ export const config = {
                 'determines if the user wants to clear the current profile retention data or not',
               enum: ['true', 'false'],
             },
-            temperature: {
-              type: 'string',
-              description: 'the temperature the profile will use in its responses',
-              enum: Array.from(ANTHROPIC_TEMP_OPTIONS, num => num.toString()),
-            },
           },
           required: [
             'selectedSettings',
@@ -468,7 +418,6 @@ export const config = {
             'retention',
             'retentionSize',
             'clearRetentionData',
-            'temperature',
           ],
         },
       },
