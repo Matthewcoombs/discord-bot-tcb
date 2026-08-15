@@ -7,12 +7,57 @@ import {
   InvalidFileTypeError,
 } from './errors';
 import axios from 'axios';
-import { Attachment } from 'discord.js';
+import { Attachment, Message } from 'discord.js';
 import { JsonContent } from '../openAIClient/chatCompletion/chatCompletion.service';
 import { config } from '../config';
 
 export function generateInteractionTag() {
   return Math.floor(10000 + Math.random() * 90000);
+}
+
+/**
+ * Returns the id of the most recent (latest) non-bot message that carries an
+ * image attachment, or undefined if none exists.
+ *
+ * This is used to avoid re-sending vision content for every message in a
+ * conversation. Images are expensive to tokenize, and the whole transcript is
+ * reformatted and re-sent on every turn, so only the latest image-bearing
+ * message should retain its image content. Older images are dropped from the
+ * model payload (their text is preserved). Image editing is unaffected because
+ * the edit handlers read attachments directly from the raw collected messages.
+ */
+/**
+ * Applies a sliding context window to a transcript before it is sent to the
+ * model. Keeps only the most recent `maxMessages` messages so within-session
+ * prompt size stays bounded instead of growing on every turn.
+ *
+ * Leading bot messages are trimmed so the window begins on a user message. This
+ * satisfies Anthropic's requirement that a conversation start with the user
+ * role, and avoids an orphaned tool_use/tool_result pair at the window edge.
+ *
+ * This is for the live model request only. It must NOT be used when building
+ * retention data, which is capped separately by the profile's retentionSize.
+ */
+export function applyContextWindow(
+  messages: Message[],
+  maxMessages: number = config.messageContextWindowSize,
+): Message[] {
+  if (messages.length <= maxMessages) {
+    return messages;
+  }
+  const windowed = messages.slice(messages.length - maxMessages);
+  const firstUserIndex = windowed.findIndex(msg => !msg.author.bot);
+  return firstUserIndex > 0 ? windowed.slice(firstUserIndex) : windowed;
+}
+
+export function getLatestImageMessageId(messages: Message[]): string | undefined {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (!msg.author.bot && msg.attachments.some(att => att.contentType?.startsWith('image/'))) {
+      return msg.id;
+    }
+  }
+  return undefined;
 }
 
 export function processBotResponseLength(response: string) {

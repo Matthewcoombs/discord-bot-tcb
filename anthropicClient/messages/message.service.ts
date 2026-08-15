@@ -10,13 +10,12 @@ import imagesService, {
 import {
   CLEAR_RETENTION_DATA,
   SELECT_CHAT_TIMEOUT_ID,
-  SELECT_PROFILE_TEMPERATURE,
   SELECT_RETENTION_ID,
   SELECT_RETENTION_SIZE_ID,
   SELECT_TEXT_MODEL_ID,
 } from '../../profiles/profiles.service';
 import { ChatInstance } from '../../shared/discord-js-types';
-import { getRemoteFileBufferData } from '../../shared/utils';
+import { getRemoteFileBufferData, getLatestImageMessageId } from '../../shared/utils';
 
 enum messageRoleEnums {
   ASSISTANT = 'assistant',
@@ -26,6 +25,9 @@ enum messageRoleEnums {
 export default {
   formatClaudeMessages(messages: Message[]): MessageParam[] {
     const formatClaudeMessages: MessageParam[] = [];
+    // Only the latest image-bearing user message keeps its image content. Older
+    // images are dropped to avoid re-tokenizing vision content on every turn.
+    const latestImageMessageId = getLatestImageMessageId(messages);
     messages.forEach(msg => {
       let role: messageRoleEnums = messageRoleEnums.ASSISTANT;
       if (!msg.author.bot) {
@@ -88,8 +90,8 @@ export default {
           },
         ];
 
-        // Add image attachments for user messages
-        if (!msg.author.bot && msg.attachments.size > 0) {
+        // Add image attachments only for the latest image-bearing user message
+        if (!msg.author.bot && msg.id === latestImageMessageId && msg.attachments.size > 0) {
           msg.attachments.forEach(attachment => {
             if (attachment.contentType?.startsWith('image/')) {
               messageContent.push({
@@ -144,7 +146,6 @@ export default {
           messages: claudeMessages,
           max_tokens: 1024,
           system: selectedProfile.profile,
-          temperature: Number(selectedProfile.temperature),
         });
 
         const condensedConversation =
@@ -179,13 +180,39 @@ export default {
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedAnthropicRetentionData}`
         : selectedProfile?.profile || '';
 
+    /**
+     * Prompt caching. Anthropic caches the static prefix of a request (tools,
+     * then system) so it is not re-tokenized on every turn. We place one cache
+     * breakpoint on the last tool — this caches the entire tools block, which is
+     * identical for every user/session and therefore gets a very high hit rate —
+     * and one on the system prompt, which is stable across turns within a
+     * session. Cached input reads cost a fraction of normal input tokens.
+     */
+    const anthropicTools = config.anthropic.tools as any[];
+    const cachedTools = anthropicTools.map((tool, index) =>
+      index === anthropicTools.length - 1
+        ? { ...tool, cache_control: { type: 'ephemeral' } }
+        : tool,
+    );
+
+    // Only mark the system block when it has content. Anthropic rejects empty
+    // text blocks, and the no-profile path produces an empty system string.
+    const system = systemMessage
+      ? [
+          {
+            type: 'text' as const,
+            text: systemMessage,
+            cache_control: { type: 'ephemeral' as const },
+          },
+        ]
+      : systemMessage;
+
     const message = await Anthropic.messages.create({
       model: selectedProfile ? selectedProfile.textModel : config.anthropic.defaultMessageModel,
       messages: claudeMessages,
-      tools: config.anthropic.tools as any,
+      tools: cachedTools,
       max_tokens: 1024,
-      system: systemMessage,
-      temperature: Number(selectedProfile?.temperature),
+      system,
     });
 
     if (message.stop_reason === 'end_turn') {
@@ -324,9 +351,6 @@ export default {
               selectedProfile.anthropicRetentionData = [];
             }
           }
-          if (selectedSetting === SELECT_PROFILE_TEMPERATURE) {
-            selectedProfile.temperature = Number(profileSettings.temperature);
-          }
         }
         userChatInstance.selectedProfile = selectedProfile;
         ChatInstanceCollector.set(user.id, userChatInstance);
@@ -348,7 +372,6 @@ export default {
           `**Profile: ${selectedProfile.name}**\n` +
           `• AI Service: ${selectedProfile.service}\n` +
           `• Text Model: ${selectedProfile.textModel}\n` +
-          `• Temperature: ${selectedProfile.temperature}\n` +
           `• Chat Timeout: ${Math.floor(Number(selectedProfile.timeout) / 1000 / 60)} minutes\n` +
           `• Retention: ${selectedProfile.retention ? 'Enabled' : 'Disabled'}\n` +
           `• Retention Size: ${selectedProfile.retentionSize}\n` +
