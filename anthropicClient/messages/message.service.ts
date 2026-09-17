@@ -114,6 +114,53 @@ export default {
     return formatClaudeMessages;
   },
 
+  /**
+   * Flattens Claude messages into a plain-text transcript so a conversation can
+   * be summarized in a single user turn. This sidesteps Anthropic's role-order
+   * and tool_use/tool_result pairing rules, which the raw retention slice can
+   * violate at its boundaries after trimming.
+   **/
+  flattenClaudeMessagesToText(messages: Array<MessageParam>): string {
+    return messages
+      .map(msg => {
+        const text = Array.isArray(msg.content)
+          ? msg.content
+              .map(block => (block.type === 'text' ? block.text : ''))
+              .filter(Boolean)
+              .join(' ')
+          : msg.content;
+        return text ? `${msg.role}: ${text}` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  },
+
+  /**
+   * Produces an updated rolling summary from a prior summary plus the messages
+   * being evicted from the raw retention window. Runs at most once per session
+   * end (only when the window overflows), so it adds no per-turn cost.
+   **/
+  async summarizeClaudeConversation(
+    messages: Array<MessageParam>,
+    priorSummary: string,
+    selectedProfile: UserProfile,
+  ): Promise<string> {
+    const transcript = this.flattenClaudeMessagesToText(messages);
+    if (!transcript) {
+      return priorSummary;
+    }
+    const instruction = priorSummary
+      ? `Existing conversation summary:\n${priorSummary}\n\nUpdate the summary to incorporate the additional messages below. Keep it concise and include only the most relevant information.\n\nAdditional messages:\n${transcript}`
+      : `Condense the following conversation into a short summary. Include only the most relevant information and remove any unnecessary details.\n\n${transcript}`;
+    const message = await Anthropic.messages.create({
+      model: selectedProfile.textModel,
+      max_tokens: 1024,
+      system: selectedProfile.profile,
+      messages: [{ role: messageRoleEnums.USER, content: [{ type: 'text', text: instruction }] }],
+    });
+    return message.content[0].type === 'text' ? message.content[0].text : priorSummary;
+  },
+
   async processAnthropicRetentionData(
     claudeMessages: Array<MessageParam>,
     selectedProfile: UserProfile,
@@ -125,41 +172,45 @@ export default {
     const latestSelectedProfile = await userProfilesDao.getSelectedProfile(
       selectedProfile.discordId,
     );
+    const retentionSize = Number(selectedProfile.retentionSize);
+    const priorSummary = selectedProfile.optimizedAnthropicRetentionData || '';
 
     /**
-     * If retention size is set to 0, we do not save messages, but instead we update
-     * the profile with a condensed version of the conversation history.
+     * Hybrid retention: maintain a rolling summary of older context alongside
+     * the last `retentionSize` raw messages. This widens effective memory while
+     * keeping per-turn token cost bounded — the raw tail never grows past the
+     * cap, and older turns are folded into the summary instead of being dropped.
+     * When retentionSize is 0 we keep only the summary and no raw messages.
      **/
-    if (selectedProfile.retentionSize === 0) {
+    if (retentionSize === 0) {
       try {
-        claudeMessages.push({
-          role: messageRoleEnums.USER,
-          content: [
-            {
-              type: 'text',
-              text: `Condense this conversation into a short summary. Include only the most relevant information and remove any unnecessary details. The summary should be concise and to the point.`,
-            },
-          ],
-        });
-        const message = await Anthropic.messages.create({
-          model: selectedProfile.textModel,
-          messages: claudeMessages,
-          max_tokens: 1024,
-          system: selectedProfile.profile,
-        });
-
-        const condensedConversation =
-          message.content[0].type === 'text' ? message.content[0].text : '';
-        latestSelectedProfile.optimizedAnthropicRetentionData = condensedConversation;
+        latestSelectedProfile.optimizedAnthropicRetentionData =
+          await this.summarizeClaudeConversation(claudeMessages, priorSummary, selectedProfile);
       } catch (err) {
         console.error('[ERROR] - There was an error processing the anthropic retention data', err);
-        latestSelectedProfile.optimizedAnthropicRetentionData = '';
+        latestSelectedProfile.optimizedAnthropicRetentionData = priorSummary;
       }
+      latestSelectedProfile.anthropicRetentionData = [];
     } else {
-      latestSelectedProfile.anthropicRetentionData = [
-        ...(selectedProfile.anthropicRetentionData || []),
-        ...claudeMessages,
-      ];
+      const combined = [...(selectedProfile.anthropicRetentionData || []), ...claudeMessages];
+      if (combined.length > retentionSize) {
+        const toSummarize = combined.slice(0, combined.length - retentionSize);
+        const toKeep = combined.slice(combined.length - retentionSize);
+        try {
+          latestSelectedProfile.optimizedAnthropicRetentionData =
+            await this.summarizeClaudeConversation(toSummarize, priorSummary, selectedProfile);
+        } catch (err) {
+          console.error(
+            '[ERROR] - There was an error processing the anthropic retention data',
+            err,
+          );
+          latestSelectedProfile.optimizedAnthropicRetentionData = priorSummary;
+        }
+        latestSelectedProfile.anthropicRetentionData = toKeep;
+      } else {
+        latestSelectedProfile.anthropicRetentionData = combined;
+        latestSelectedProfile.optimizedAnthropicRetentionData = priorSummary;
+      }
     }
     await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
@@ -176,7 +227,7 @@ export default {
     }
 
     const systemMessage =
-      selectedProfile?.retention && selectedProfile?.retentionSize === 0
+      selectedProfile?.retention && selectedProfile.optimizedAnthropicRetentionData
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedAnthropicRetentionData}`
         : selectedProfile?.profile || '';
 
