@@ -71,16 +71,6 @@ export enum chatCompletionRoles {
   TOOL = 'tool',
 }
 
-export const CONDENSED_CONVO_PROMPT: ChatCompletionMessage = {
-  role: chatCompletionRoles.USER,
-  content: [
-    {
-      type: chatCompletionTypes.TEXT,
-      text: `Condense this conversation into a short summary. Include only the most relevant information and remove any unnecessary details. The summary should be concise and to the point.`,
-    },
-  ],
-};
-
 function generateDeveloperContentMessage(
   chatCompletionMessages: ChatCompletionMessage[],
   selectedProfile?: UserProfile,
@@ -88,7 +78,7 @@ function generateDeveloperContentMessage(
   let profileText;
   if (selectedProfile) {
     profileText =
-      selectedProfile.retention && selectedProfile.retentionSize === 0
+      selectedProfile.retention && selectedProfile.optimizedOpenAiRetentionData
         ? `${selectedProfile.profile}\nConversation history:${selectedProfile.optimizedOpenAiRetentionData}`
         : selectedProfile.profile;
   }
@@ -219,6 +209,56 @@ export default {
     return cleanedMsgs;
   },
 
+  /**
+   * Flattens chat completion messages into a plain-text transcript so a
+   * conversation can be summarized in a single user turn, regardless of the
+   * role ordering or tool-call pairing of the raw retention slice.
+   **/
+  flattenChatCompletionMsgsToText(messages: ChatCompletionMessage[]): string {
+    return messages
+      .map(msg => {
+        const text = Array.isArray(msg.content)
+          ? msg.content
+              .map(block => (block.type === chatCompletionTypes.TEXT ? block.text : ''))
+              .filter(Boolean)
+              .join(' ')
+          : '';
+        return text ? `${msg.role}: ${text}` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  },
+
+  /**
+   * Produces an updated rolling summary from a prior summary plus the messages
+   * being evicted from the raw retention window. Runs at most once per session
+   * end (only when the window overflows), so it adds no per-turn cost.
+   **/
+  async summarizeOpenAiConversation(
+    messages: ChatCompletionMessage[],
+    priorSummary: string,
+    selectedProfile: UserProfile,
+  ): Promise<string> {
+    const transcript = this.flattenChatCompletionMsgsToText(messages);
+    if (!transcript) {
+      return priorSummary;
+    }
+    const instruction = priorSummary
+      ? `Existing conversation summary:\n${priorSummary}\n\nUpdate the summary to incorporate the additional messages below. Keep it concise and include only the most relevant information.\n\nAdditional messages:\n${transcript}`
+      : `Condense the following conversation into a short summary. Include only the most relevant information and remove any unnecessary details.\n\n${transcript}`;
+    const chatCompletion = await OpenAi.chat.completions.create({
+      model: selectedProfile.textModel,
+      messages: [
+        {
+          role: chatCompletionRoles.USER,
+          content: [{ type: chatCompletionTypes.TEXT, text: instruction }],
+        },
+      ] as any,
+      response_format: { type: 'text' },
+    });
+    return (chatCompletion.choices[0].message.content as string) || priorSummary;
+  },
+
   async processOpenAiRetentionData(
     chatCompMsgs: ChatCompletionMessage[],
     selectedProfile: UserProfile,
@@ -230,28 +270,50 @@ export default {
     const latestSelectedProfile = await userProfilesDao.getSelectedProfile(
       selectedProfile.discordId,
     );
+    const retentionSize = Number(selectedProfile.retentionSize);
+    const priorSummary = selectedProfile.optimizedOpenAiRetentionData || '';
+
+    // `chatCompMsgs` already has the profile's existing retention data prepended
+    // by formatChatCompletionMessages; cleaning strips the developer/tool turns
+    // so the result is the full accumulated raw history for this profile.
+    const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
 
     /**
-     * If retention size is set to 0, we do not save messages, but instead we update
-     * the profile with a condensed version of the conversation history.
+     * Hybrid retention: maintain a rolling summary of older context alongside
+     * the last `retentionSize` raw messages. This widens effective memory while
+     * keeping per-turn token cost bounded — the raw tail never grows past the
+     * cap, and older turns are folded into the summary instead of being dropped.
+     * When retentionSize is 0 we keep only the summary and no raw messages.
      **/
-    if (selectedProfile.retentionSize === 0) {
+    if (retentionSize === 0) {
       try {
-        chatCompMsgs.push(CONDENSED_CONVO_PROMPT);
-        const chatCompletion = await OpenAi.chat.completions.create({
-          model: selectedProfile.textModel,
-          messages: chatCompMsgs as any,
-          response_format: { type: 'text' },
-        });
-        const condensedConversation = chatCompletion.choices[0].message.content;
-        latestSelectedProfile.optimizedOpenAiRetentionData = condensedConversation as string;
+        latestSelectedProfile.optimizedOpenAiRetentionData = await this.summarizeOpenAiConversation(
+          cleanedMsgs,
+          priorSummary,
+          selectedProfile,
+        );
       } catch (err) {
         console.error('[ERROR] - There was an error processing the openai retention data', err);
-        latestSelectedProfile.optimizedOpenAiRetentionData = '';
+        latestSelectedProfile.optimizedOpenAiRetentionData = priorSummary;
       }
+      latestSelectedProfile.openAiRetentionData = [];
+    } else if (cleanedMsgs.length > retentionSize) {
+      const toSummarize = cleanedMsgs.slice(0, cleanedMsgs.length - retentionSize);
+      const toKeep = cleanedMsgs.slice(cleanedMsgs.length - retentionSize);
+      try {
+        latestSelectedProfile.optimizedOpenAiRetentionData = await this.summarizeOpenAiConversation(
+          toSummarize,
+          priorSummary,
+          selectedProfile,
+        );
+      } catch (err) {
+        console.error('[ERROR] - There was an error processing the openai retention data', err);
+        latestSelectedProfile.optimizedOpenAiRetentionData = priorSummary;
+      }
+      latestSelectedProfile.openAiRetentionData = toKeep;
     } else {
-      const cleanedMsgs = this.cleanChatCompletionMsgs(chatCompMsgs);
       latestSelectedProfile.openAiRetentionData = cleanedMsgs;
+      latestSelectedProfile.optimizedOpenAiRetentionData = priorSummary;
     }
     await userProfilesDao.updateUserProfile(latestSelectedProfile);
   },
